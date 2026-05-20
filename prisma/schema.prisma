@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GuideSectionType {
+  WELCOME
+  WIFI
+  CHECK_IN_OUT
+  PARKING
+  HOUSE_RULES
+  EMERGENCY
+  CONTACT
+  CUSTOM
+}
+
+enum ReviewPlatform {
+  GOOGLE
+  BOOKING
+  AIRBNB
+}
+
+enum OAuthProvider {
+  GOOGLE
+  APPLE
+}
+
+enum UserRole {
+  ADMIN
+  OWNER
+}
+
+model User {
+  id                 String                   @id @default(cuid())
+  name               String
+  email              String                   @unique
+  passwordHash       String?
+  emailVerifiedAt    DateTime?
+  role               UserRole                 @default(OWNER)
+  mustChangePassword Boolean                  @default(false)
+  properties         Property[]
+  sessions           Session[]
+  oauthAccounts      OAuthAccount[]
+  verificationTokens EmailVerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model OAuthAccount {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          OAuthProvider
+  providerAccountId String
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Property {
+  id              String           @id @default(cuid())
+  ownerId         String
+  owner           User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name            String
+  slug            String           @unique
+  logoUrl         String?
+  coverImageUrl   String?
+  accentColor     String           @default("#4a8a8f")
+  welcomeMessage  String           @db.Text
+  wifiName        String?
+  wifiPassword    String?
+  checkInInfo     String?          @db.Text
+  checkOutInfo    String?          @db.Text
+  parkingInfo     String?          @db.Text
+  houseRules      String?          @db.Text
+  emergencyInfo   String?          @db.Text
+  hostContactName String?
+  hostPhone       String?
+  hostEmail       String?
+  guideSections   GuideSection[]
+  recommendations Recommendation[]
+  reviewLinks     ReviewLink[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model GuideSection {
+  id         String           @id @default(cuid())
+  propertyId String
+  property   Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  type       GuideSectionType
+  title      String
+  content    String           @db.Text
+  sortOrder  Int              @default(0)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([propertyId, sortOrder])
+}
+
+model Recommendation {
+  id          String   @id @default(cuid())
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  title       String
+  category    String
+  description String   @db.Text
+  address     String?
+  url         String?
+  imageUrl    String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([propertyId, sortOrder])
+}
+
+model ReviewLink {
+  id         String         @id @default(cuid())
+  propertyId String
+  property   Property       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  platform   ReviewPlatform
+  url        String
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([propertyId, platform])
+}
