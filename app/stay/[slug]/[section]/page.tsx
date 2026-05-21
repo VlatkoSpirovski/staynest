@@ -181,15 +181,10 @@ function RecommendationCard({
     description: string;
     address: string | null;
     url: string | null;
-    imageUrl: string | null;
   };
 }) {
   return (
     <MiniCard title={item.title}>
-      {item.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.imageUrl} alt={item.title} className="mb-4 h-40 w-full rounded-[14px] object-cover" />
-      ) : null}
       <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)]">{item.category}</p>
       <p className="mt-2">{item.description}</p>
       {item.address ? <p className="mt-3 font-semibold text-ink/70">{item.address}</p> : null}

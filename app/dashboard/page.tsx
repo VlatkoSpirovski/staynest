@@ -299,16 +299,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                           <input name="url" className={inputClass} placeholder="https://maps.google.com" />
                         </Field>
                       </div>
-                      <ImageUploadField
-                        label="Recommendation image"
-                        fileName="recommendationImageFile"
-                        urlName="imageUrl"
-                        removeName="removeRecommendationImage"
-                        uploadsEnabled={uploadsEnabled}
-                      />
                       <SubmitButton variant="secondary" pendingText="Adding..." className="w-full sm:w-fit">
                         <Plus size={16} />
-                        Add recommendation
+                        Save recommendation
                       </SubmitButton>
                     </form>
                   </SubPanel>
@@ -345,18 +338,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                               <input name="address" className={inputClass} defaultValue={item.address || ""} placeholder="Address" />
                               <input name="url" className={inputClass} defaultValue={item.url || ""} placeholder="Map or website URL" />
                             </div>
-                            <ImageUploadField
-                              label="Recommendation image"
-                              fileName="recommendationImageFile"
-                              urlName="imageUrl"
-                              removeName="removeRecommendationImage"
-                              currentUrl={item.imageUrl}
-                              uploadsEnabled={uploadsEnabled}
-                            />
                           </form>
                           <div className="flex flex-wrap items-center justify-end gap-3">
                             <SubmitButton form={`recommendation-${item.id}`} variant="secondary" pendingText="Saving...">
-                              Save
+                              Save recommendation
                             </SubmitButton>
                             <form action={deleteRecommendation}>
                               <input type="hidden" name="id" value={item.id} />
@@ -390,7 +375,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                       <input name="airbnb" className={inputClass} defaultValue={reviewValue(property, "AIRBNB")} placeholder="https://..." />
                     </Field>
                     <SubmitButton variant="secondary" pendingText="Saving links..." className="w-full sm:w-fit">
-                      Save review links
+                      Save reviews
                     </SubmitButton>
                   </form>
                 </SubPanel>

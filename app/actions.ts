@@ -121,16 +121,6 @@ export async function saveRecommendation(formData: FormData) {
     redirect("/dashboard?error=Fill%20in%20recommendation%20title,%20category%20and%20description.");
   }
 
-  let imageUrl = optionalValue(formData, "imageUrl");
-  if (checkedValue(formData, "removeRecommendationImage")) imageUrl = null;
-
-  try {
-    const imageFile = fileValue(formData, "recommendationImageFile");
-    if (imageFile) imageUrl = await uploadImage(imageFile, "staynest/recommendations");
-  } catch (error) {
-    dashboardError(error instanceof Error ? error.message : "Image upload failed.");
-  }
-
   if (recommendationId) {
     await prisma.recommendation.updateMany({
       where: { id: recommendationId, propertyId },
@@ -139,8 +129,7 @@ export async function saveRecommendation(formData: FormData) {
         category,
         description,
         address: optionalValue(formData, "address"),
-        url: optionalValue(formData, "url"),
-        imageUrl
+        url: optionalValue(formData, "url")
       }
     });
   } else {
@@ -153,7 +142,6 @@ export async function saveRecommendation(formData: FormData) {
         description,
         address: optionalValue(formData, "address"),
         url: optionalValue(formData, "url"),
-        imageUrl,
         sortOrder: recommendationCount + 1
       }
     });

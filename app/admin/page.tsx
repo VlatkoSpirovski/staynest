@@ -1,6 +1,16 @@
 import { ExternalLink, Shield, Trash2 } from "lucide-react";
 import { logoutOwner } from "@/app/auth-actions";
-import { createAdminProperty, createUser, deleteAdminProperty, deleteUser, updateAdminProperty, updateUser } from "@/app/admin/actions";
+import {
+  createAdminProperty,
+  createUser,
+  deleteAdminProperty,
+  deleteAdminRecommendation,
+  deleteUser,
+  saveAdminRecommendation,
+  saveAdminReviewLinks,
+  updateAdminProperty,
+  updateUser
+} from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass, Panel, textareaClass } from "@/components/ui/panel";
 import { requireAdminUser } from "@/lib/auth";
@@ -27,12 +37,18 @@ async function getAdminData() {
     prisma.property.findMany({
       orderBy: { updatedAt: "desc" },
       include: {
-        owner: true
+        owner: true,
+        recommendations: { orderBy: { sortOrder: "asc" } },
+        reviewLinks: true
       }
     })
   ]);
 
   return { users, properties };
+}
+
+function reviewValue(property: Awaited<ReturnType<typeof getAdminData>>["properties"][number], platform: string) {
+  return property.reviewLinks.find((link) => link.platform === platform)?.url || "";
 }
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
@@ -190,6 +206,36 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <Field label="Welcome message">
               <textarea name="welcomeMessage" className={textareaClass} />
             </Field>
+            <Field label="Wi-Fi network">
+              <input name="wifiName" className={inputClass} />
+            </Field>
+            <Field label="Wi-Fi password">
+              <input name="wifiPassword" className={inputClass} />
+            </Field>
+            <Field label="Check-in info">
+              <textarea name="checkInInfo" className={textareaClass} />
+            </Field>
+            <Field label="Check-out info">
+              <textarea name="checkOutInfo" className={textareaClass} />
+            </Field>
+            <Field label="Parking info">
+              <textarea name="parkingInfo" className={textareaClass} />
+            </Field>
+            <Field label="House rules">
+              <textarea name="houseRules" className={textareaClass} />
+            </Field>
+            <Field label="Emergency contacts">
+              <textarea name="emergencyInfo" className={textareaClass} />
+            </Field>
+            <Field label="Host contact name">
+              <input name="hostContactName" className={inputClass} />
+            </Field>
+            <Field label="Host phone">
+              <input name="hostPhone" className={inputClass} />
+            </Field>
+            <Field label="Host email">
+              <input name="hostEmail" className={inputClass} type="email" />
+            </Field>
             <Button type="submit" className="md:col-span-2 md:w-fit">
               Create property
             </Button>
@@ -228,6 +274,36 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <Field label="Welcome message">
                   <textarea name="welcomeMessage" className={textareaClass} defaultValue={property.welcomeMessage} />
                 </Field>
+                <Field label="Wi-Fi network">
+                  <input name="wifiName" className={inputClass} defaultValue={property.wifiName || ""} />
+                </Field>
+                <Field label="Wi-Fi password">
+                  <input name="wifiPassword" className={inputClass} defaultValue={property.wifiPassword || ""} />
+                </Field>
+                <Field label="Check-in info">
+                  <textarea name="checkInInfo" className={textareaClass} defaultValue={property.checkInInfo || ""} />
+                </Field>
+                <Field label="Check-out info">
+                  <textarea name="checkOutInfo" className={textareaClass} defaultValue={property.checkOutInfo || ""} />
+                </Field>
+                <Field label="Parking info">
+                  <textarea name="parkingInfo" className={textareaClass} defaultValue={property.parkingInfo || ""} />
+                </Field>
+                <Field label="House rules">
+                  <textarea name="houseRules" className={textareaClass} defaultValue={property.houseRules || ""} />
+                </Field>
+                <Field label="Emergency contacts">
+                  <textarea name="emergencyInfo" className={textareaClass} defaultValue={property.emergencyInfo || ""} />
+                </Field>
+                <Field label="Host contact name">
+                  <input name="hostContactName" className={inputClass} defaultValue={property.hostContactName || ""} />
+                </Field>
+                <Field label="Host phone">
+                  <input name="hostPhone" className={inputClass} defaultValue={property.hostPhone || ""} />
+                </Field>
+                <Field label="Host email">
+                  <input name="hostEmail" className={inputClass} type="email" defaultValue={property.hostEmail || ""} />
+                </Field>
                 <div className="flex flex-wrap items-end gap-2">
                   <Button type="submit" variant="secondary">
                     Save property
@@ -245,6 +321,98 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   Delete property
                 </button>
               </form>
+
+              <div className="mt-5 grid gap-4 border-t border-ink/10 pt-5">
+                <div>
+                  <p className="text-sm font-semibold text-lagoon">Restaurants and activities</p>
+                  <h3 className="text-xl font-bold">Recommendations</h3>
+                </div>
+                <form action={saveAdminRecommendation} className="grid gap-3 md:grid-cols-2">
+                  <input type="hidden" name="propertyId" value={property.id} />
+                  <Field label="Title">
+                    <input name="title" className={inputClass} placeholder="Beach restaurant" required />
+                  </Field>
+                  <Field label="Category">
+                    <input name="category" className={inputClass} placeholder="Restaurant or Activity" required />
+                  </Field>
+                  <Field label="Description">
+                    <textarea name="description" className={textareaClass} required />
+                  </Field>
+                  <div className="grid gap-3">
+                    <Field label="Address">
+                      <input name="address" className={inputClass} />
+                    </Field>
+                    <Field label="Map or website URL">
+                      <input name="url" className={inputClass} placeholder="https://..." />
+                    </Field>
+                  </div>
+                  <Button type="submit" variant="secondary" className="md:col-span-2 md:w-fit">
+                    Save recommendation
+                  </Button>
+                </form>
+
+                {property.recommendations.length > 0 ? (
+                  <div className="grid gap-3">
+                    {property.recommendations.map((item) => (
+                      <form key={item.id} action={saveAdminRecommendation} className="grid gap-3 rounded-[8px] border border-ink/10 bg-mist p-4 md:grid-cols-2">
+                        <input type="hidden" name="propertyId" value={property.id} />
+                        <input type="hidden" name="recommendationId" value={item.id} />
+                        <Field label="Title">
+                          <input name="title" className={inputClass} defaultValue={item.title} required />
+                        </Field>
+                        <Field label="Category">
+                          <input name="category" className={inputClass} defaultValue={item.category} required />
+                        </Field>
+                        <Field label="Description">
+                          <textarea name="description" className={textareaClass} defaultValue={item.description} required />
+                        </Field>
+                        <div className="grid gap-3">
+                          <Field label="Address">
+                            <input name="address" className={inputClass} defaultValue={item.address || ""} />
+                          </Field>
+                          <Field label="Map or website URL">
+                            <input name="url" className={inputClass} defaultValue={item.url || ""} />
+                          </Field>
+                        </div>
+                        <div className="flex flex-wrap gap-3 md:col-span-2">
+                          <Button type="submit" variant="secondary">
+                            Save recommendation
+                          </Button>
+                          <button form={`delete-recommendation-${item.id}`} type="submit" className="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold text-red-600">
+                            <Trash2 size={15} />
+                            Delete
+                          </button>
+                        </div>
+                      </form>
+                    ))}
+                    {property.recommendations.map((item) => (
+                      <form key={`delete-${item.id}`} id={`delete-recommendation-${item.id}`} action={deleteAdminRecommendation}>
+                        <input type="hidden" name="id" value={item.id} />
+                      </form>
+                    ))}
+                  </div>
+                ) : null}
+
+                <div className="border-t border-ink/10 pt-5">
+                  <p className="text-sm font-semibold text-lagoon">Reviews</p>
+                  <h3 className="text-xl font-bold">Review links</h3>
+                </div>
+                <form action={saveAdminReviewLinks} className="grid gap-3 md:grid-cols-3">
+                  <input type="hidden" name="propertyId" value={property.id} />
+                  <Field label="Google review link">
+                    <input name="google" className={inputClass} defaultValue={reviewValue(property, "GOOGLE")} placeholder="https://..." />
+                  </Field>
+                  <Field label="Booking review link">
+                    <input name="booking" className={inputClass} defaultValue={reviewValue(property, "BOOKING")} placeholder="https://..." />
+                  </Field>
+                  <Field label="Airbnb review link">
+                    <input name="airbnb" className={inputClass} defaultValue={reviewValue(property, "AIRBNB")} placeholder="https://..." />
+                  </Field>
+                  <Button type="submit" variant="secondary" className="md:col-span-3 md:w-fit">
+                    Save reviews
+                  </Button>
+                </form>
+              </div>
             </Panel>
           ))}
         </div>

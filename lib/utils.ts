@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getAppUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3000";
+  return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || (process.env.NODE_ENV === "production" ? "https://staynest.site" : "http://localhost:3000");
 }
 
 export function normalizeSlug(value: string) {

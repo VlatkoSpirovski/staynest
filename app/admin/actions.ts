@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { UserRole } from "@prisma/client";
+import { ReviewPlatform, UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
@@ -127,7 +127,17 @@ export async function createAdminProperty(formData: FormData) {
       accentColor: stringValue(formData, "accentColor") || "#4a8a8f",
       logoUrl: optionalValue(formData, "logoUrl"),
       coverImageUrl: optionalValue(formData, "coverImageUrl"),
-      welcomeMessage: stringValue(formData, "welcomeMessage") || "Welcome. We are happy to host you."
+      welcomeMessage: stringValue(formData, "welcomeMessage") || "Welcome. We are happy to host you.",
+      wifiName: optionalValue(formData, "wifiName"),
+      wifiPassword: optionalValue(formData, "wifiPassword"),
+      checkInInfo: optionalValue(formData, "checkInInfo"),
+      checkOutInfo: optionalValue(formData, "checkOutInfo"),
+      parkingInfo: optionalValue(formData, "parkingInfo"),
+      houseRules: optionalValue(formData, "houseRules"),
+      emergencyInfo: optionalValue(formData, "emergencyInfo"),
+      hostContactName: optionalValue(formData, "hostContactName"),
+      hostPhone: optionalValue(formData, "hostPhone"),
+      hostEmail: optionalValue(formData, "hostEmail")
     }
   });
 
@@ -154,7 +164,17 @@ export async function updateAdminProperty(formData: FormData) {
       accentColor: stringValue(formData, "accentColor") || "#4a8a8f",
       logoUrl: optionalValue(formData, "logoUrl"),
       coverImageUrl: optionalValue(formData, "coverImageUrl"),
-      welcomeMessage: stringValue(formData, "welcomeMessage") || "Welcome. We are happy to host you."
+      welcomeMessage: stringValue(formData, "welcomeMessage") || "Welcome. We are happy to host you.",
+      wifiName: optionalValue(formData, "wifiName"),
+      wifiPassword: optionalValue(formData, "wifiPassword"),
+      checkInInfo: optionalValue(formData, "checkInInfo"),
+      checkOutInfo: optionalValue(formData, "checkOutInfo"),
+      parkingInfo: optionalValue(formData, "parkingInfo"),
+      houseRules: optionalValue(formData, "houseRules"),
+      emergencyInfo: optionalValue(formData, "emergencyInfo"),
+      hostContactName: optionalValue(formData, "hostContactName"),
+      hostPhone: optionalValue(formData, "hostPhone"),
+      hostEmail: optionalValue(formData, "hostEmail")
     }
   });
 
@@ -172,5 +192,118 @@ export async function deleteAdminProperty(formData: FormData) {
   }
 
   revalidatePath("/admin");
+  redirect("/admin");
+}
+
+export async function saveAdminRecommendation(formData: FormData) {
+  await requireAdminUser();
+  const propertyId = stringValue(formData, "propertyId");
+  const recommendationId = stringValue(formData, "recommendationId");
+  const title = stringValue(formData, "title");
+  const category = stringValue(formData, "category");
+  const description = stringValue(formData, "description");
+
+  if (!propertyId || !title || !category || !description) {
+    redirectWithAdminError("Fill in recommendation title, category and description.");
+  }
+
+  const property = await prisma.property.findUnique({
+    where: { id: propertyId },
+    select: { slug: true }
+  });
+
+  if (!property) {
+    redirectWithAdminError("Choose an existing property.");
+  }
+
+  if (recommendationId) {
+    await prisma.recommendation.updateMany({
+      where: { id: recommendationId, propertyId },
+      data: {
+        title,
+        category,
+        description,
+        address: optionalValue(formData, "address"),
+        url: optionalValue(formData, "url")
+      }
+    });
+  } else {
+    const recommendationCount = await prisma.recommendation.count({ where: { propertyId } });
+    await prisma.recommendation.create({
+      data: {
+        propertyId,
+        title,
+        category,
+        description,
+        address: optionalValue(formData, "address"),
+        url: optionalValue(formData, "url"),
+        sortOrder: recommendationCount + 1
+      }
+    });
+  }
+
+  revalidatePath("/admin");
+  revalidatePath(`/stay/${property.slug}`);
+  redirect("/admin");
+}
+
+export async function deleteAdminRecommendation(formData: FormData) {
+  await requireAdminUser();
+  const id = stringValue(formData, "id");
+
+  if (id) {
+    await prisma.recommendation.delete({ where: { id } });
+  }
+
+  revalidatePath("/admin");
+  redirect("/admin");
+}
+
+export async function saveAdminReviewLinks(formData: FormData) {
+  await requireAdminUser();
+  const propertyId = stringValue(formData, "propertyId");
+
+  if (!propertyId) {
+    redirectWithAdminError("Choose an existing property.");
+  }
+
+  const property = await prisma.property.findUnique({
+    where: { id: propertyId },
+    select: { slug: true }
+  });
+
+  if (!property) {
+    redirectWithAdminError("Choose an existing property.");
+  }
+
+  const platforms = [ReviewPlatform.GOOGLE, ReviewPlatform.BOOKING, ReviewPlatform.AIRBNB];
+
+  await Promise.all(
+    platforms.map(async (platform) => {
+      const url = optionalValue(formData, platform.toLowerCase());
+      if (!url) {
+        await prisma.reviewLink.deleteMany({ where: { propertyId, platform } });
+        return;
+      }
+
+      await prisma.reviewLink.upsert({
+        where: {
+          propertyId_platform: {
+            propertyId,
+            platform
+          }
+        },
+        update: { url },
+        create: {
+          propertyId,
+          platform,
+          url
+        }
+      });
+    })
+  );
+
+  revalidatePath("/admin");
+  revalidatePath(`/stay/${property.slug}`);
   redirect("/admin");
 }
