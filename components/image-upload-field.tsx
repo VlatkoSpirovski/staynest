@@ -13,7 +13,8 @@ export function ImageUploadField({
   urlName,
   removeName,
   currentUrl,
-  hint = "JPG, PNG or WEBP. Max 5MB."
+  hint = "JPG, PNG or WEBP. Max 5MB.",
+  uploadsEnabled = false
 }: {
   label: string;
   fileName: string;
@@ -21,6 +22,7 @@ export function ImageUploadField({
   removeName: string;
   currentUrl?: string | null;
   hint?: string;
+  uploadsEnabled?: boolean;
 }) {
   const [previewUrl, setPreviewUrl] = useState(currentUrl || "");
   const [error, setError] = useState("");
@@ -32,7 +34,7 @@ export function ImageUploadField({
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-ink">{label}</p>
-          <p className="text-xs text-ink/55">{hint}</p>
+          <p className="text-xs text-ink/55">{uploadsEnabled ? hint : "Paste an image URL."}</p>
         </div>
         <ImageIcon className="text-lagoon" size={20} />
       </div>
@@ -48,35 +50,37 @@ export function ImageUploadField({
 
       {error ? <div className="rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</div> : null}
 
-      <label className="focus-ring inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80">
-        <Upload size={16} />
-        Choose image
-        <input
-          name={fileName}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className="sr-only"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            setError("");
-            setRemoved(false);
-            if (!file) return;
-            if (!allowedTypes.includes(file.type)) {
-              setError("Images must be JPG, PNG or WEBP.");
-              event.target.value = "";
-              return;
-            }
-            if (file.size > maxFileSize) {
-              setError("Images must be 5MB or smaller.");
-              event.target.value = "";
-              return;
-            }
-            setPreviewUrl(URL.createObjectURL(file));
-          }}
-        />
-      </label>
+      {uploadsEnabled ? (
+        <label className="focus-ring inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80">
+          <Upload size={16} />
+          Choose image
+          <input
+            name={fileName}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              setError("");
+              setRemoved(false);
+              if (!file) return;
+              if (!allowedTypes.includes(file.type)) {
+                setError("Images must be JPG, PNG or WEBP.");
+                event.target.value = "";
+                return;
+              }
+              if (file.size > maxFileSize) {
+                setError("Images must be 5MB or smaller.");
+                event.target.value = "";
+                return;
+              }
+              setPreviewUrl(URL.createObjectURL(file));
+            }}
+          />
+        </label>
+      ) : null}
 
-      <input name={urlName} className={inputClass} defaultValue={currentUrl || ""} placeholder="Or paste image URL if uploads are not configured" />
+      <input name={urlName} className={inputClass} defaultValue={currentUrl || ""} placeholder="https://..." />
 
       <label className="inline-flex items-center gap-2 text-sm font-semibold text-ink/60">
         <input

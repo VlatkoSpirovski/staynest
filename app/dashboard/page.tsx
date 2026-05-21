@@ -25,6 +25,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass, Panel, textareaClass } from "@/components/ui/panel";
 import { requireReadyUser } from "@/lib/auth";
+import { isUploadConfigured } from "@/lib/image-upload";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/utils";
 
@@ -103,6 +104,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const publicUrl = property ? `${getAppUrl()}/stay/${property.slug}` : "";
   const qrCode = publicUrl ? await QRCode.toDataURL(publicUrl, { margin: 1, width: 240, color: { dark: "#1f2933" } }) : "";
   const success = savedMessage(searchParams?.saved);
+  const uploadsEnabled = isUploadConfigured();
 
   return (
     <main className="min-h-screen bg-mist text-ink">
@@ -180,6 +182,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     urlName="logoUrl"
                     removeName="removeLogo"
                     currentUrl={property?.logoUrl}
+                    uploadsEnabled={uploadsEnabled}
                   />
                   <ImageUploadField
                     label="Cover image"
@@ -187,6 +190,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     urlName="coverImageUrl"
                     removeName="removeCoverImage"
                     currentUrl={property?.coverImageUrl}
+                    uploadsEnabled={uploadsEnabled}
                   />
                 </div>
               </SubPanel>
@@ -300,6 +304,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                         fileName="recommendationImageFile"
                         urlName="imageUrl"
                         removeName="removeRecommendationImage"
+                        uploadsEnabled={uploadsEnabled}
                       />
                       <SubmitButton variant="secondary" pendingText="Adding..." className="w-full sm:w-fit">
                         <Plus size={16} />
@@ -346,6 +351,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                               urlName="imageUrl"
                               removeName="removeRecommendationImage"
                               currentUrl={item.imageUrl}
+                              uploadsEnabled={uploadsEnabled}
                             />
                           </form>
                           <div className="flex flex-wrap items-center justify-end gap-3">
