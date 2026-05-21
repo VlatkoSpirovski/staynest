@@ -151,29 +151,44 @@ Uploaded image URLs are stored in PostgreSQL and used automatically on the publi
 
 Google and Apple login are disabled for the MVP. The app keeps disabled route stubs that redirect back to login with a clear message.
 
-## Vercel Deployment Notes
+## Online PostgreSQL Setup
 
-1. Create a PostgreSQL database with Vercel Postgres, Supabase, Neon or another hosted PostgreSQL provider.
-2. Add these environment variables in Vercel:
+StayNest uses Prisma with PostgreSQL. For production, use a hosted PostgreSQL database and a pooled connection string when the provider offers one, especially on serverless hosting.
+
+Recommended production flow:
+
+1. Create a PostgreSQL database with Neon, Supabase, Prisma Postgres, Vercel Marketplace storage or another hosted PostgreSQL provider.
+2. Copy the production connection string.
+   - Prefer a pooled connection string for the app runtime.
+   - Keep the direct connection string available for migrations if your provider recommends that.
+3. Add these environment variables in your hosting dashboard:
    - `DATABASE_URL`
-   - `NEXT_PUBLIC_APP_URL`, for example `https://your-domain.com`
-3. Run Prisma migration against production during deployment or from a secure local terminal:
+   - `NEXT_PUBLIC_APP_URL=https://staynest.site`
+4. Run Prisma migration against production from a secure terminal:
 
 ```bash
-npx prisma migrate deploy
+npm run db:deploy
 ```
 
-4. Build command:
+5. Optional: seed demo/admin data only if this is a fresh production database and you want the seed users/property:
+
+```bash
+npm run seed
+```
+
+6. Build command:
 
 ```bash
 npm run build
 ```
 
-5. Start command:
+7. Start command:
 
 ```bash
 npm run start
 ```
+
+After changing production environment variables, redeploy the app so the live site uses the online database.
 
 ## Notes
 

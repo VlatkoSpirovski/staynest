@@ -37,7 +37,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
         <form action={loginOwner} className="grid gap-4">
           <input type="hidden" name="next" value={searchParams?.next || "/dashboard"} />
           <Field label="Email">
-            <input name="email" className={inputClass} defaultValue="owner@villabeti.com" type="email" autoComplete="email" required />
+            <input name="email" className={inputClass} type="email" autoComplete="email" required />
           </Field>
           <Field label="Password">
             <input name="password" className={inputClass} type="password" autoComplete="current-password" required />
@@ -49,7 +49,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
         <Button href="/forgot-password" variant="ghost" className="mt-4 w-full">
           Forgot password?
         </Button>
-        <p className="mt-5 text-sm leading-6 text-ink/55">New accounts are created by the StayNest platform admin.</p>
+        <p className="mt-5 text-sm leading-6 text-ink/55">Hosts log in after StayNest creates their account and temporary password.</p>
       </Panel>
     </main>
   );

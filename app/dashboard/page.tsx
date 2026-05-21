@@ -1,15 +1,31 @@
 import QRCode from "qrcode";
-import { ExternalLink, Home, LinkIcon, LogOut, Plus, QrCode, Save } from "lucide-react";
+import {
+  BadgeCheck,
+  ExternalLink,
+  Home,
+  ImageIcon,
+  KeyRound,
+  LinkIcon,
+  LogOut,
+  MapPin,
+  MessageSquareText,
+  Plus,
+  QrCode,
+  Save,
+  Sparkles,
+  Star,
+  Wifi
+} from "lucide-react";
 import { logoutOwner } from "@/app/auth-actions";
+import { deleteRecommendation, saveProperty, saveRecommendation, saveReviewLinks } from "@/app/actions";
 import { AiPlaceholders } from "@/components/ai-placeholders";
 import { CollapsibleSection } from "@/components/collapsible-section";
 import { ConfirmSubmitButton } from "@/components/confirm-submit";
 import { CopyButton } from "@/components/copy-button";
 import { ImageUploadField } from "@/components/image-upload-field";
+import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass, Panel, textareaClass } from "@/components/ui/panel";
-import { SubmitButton } from "@/components/submit-button";
-import { deleteRecommendation, saveProperty, saveRecommendation, saveReviewLinks } from "@/app/actions";
 import { requireReadyUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/utils";
@@ -46,6 +62,52 @@ function savedMessage(saved?: string) {
   return null;
 }
 
+function SectionHeader({
+  icon: Icon,
+  eyebrow,
+  title,
+  text
+}: {
+  icon: typeof Home;
+  eyebrow: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="mb-5 flex flex-col gap-3 border-b border-ink/10 pb-5 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex gap-3">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[8px] bg-ink text-white shadow-soft">
+          <Icon size={18} />
+        </div>
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-lagoon">{eyebrow}</p>
+          <h3 className="mt-1 text-xl font-bold">{title}</h3>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/60">{text}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SubPanel({
+  children,
+  className = ""
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <div className={`rounded-[8px] border border-ink/10 bg-white/75 p-4 shadow-[0_12px_38px_rgba(31,41,51,0.06)] ${className}`}>{children}</div>;
+}
+
+function GuideStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-[8px] border border-ink/10 bg-white/70 px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">{label}</p>
+      <p className="mt-1 text-lg font-bold text-ink">{value}</p>
+    </div>
+  );
+}
+
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const user = await requireReadyUser();
   const property = await getDashboardProperty(user.id);
@@ -55,18 +117,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   return (
     <main className="min-h-screen bg-mist text-ink">
-      <header className="border-b border-ink/10 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
+      <header className="border-b border-ink/10 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-[8px] bg-lagoon text-white">
+            <div className="grid h-11 w-11 place-items-center rounded-[8px] bg-ink text-white shadow-soft">
               <Home size={19} />
             </div>
             <div>
-              <h1 className="font-bold">StayNest Dashboard</h1>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-lagoon">Host workspace</p>
+              <h1 className="text-lg font-bold">StayNest Dashboard</h1>
               <p className="text-sm text-ink/55">Signed in as {user.email}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {user.role === "ADMIN" ? (
               <Button href="/admin" variant="secondary">
                 Admin
@@ -85,61 +148,119 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-5 px-5 py-6 lg:grid-cols-[1fr_360px]">
+      <section className="border-b border-ink/10 bg-[linear-gradient(135deg,#f8faf6_0%,#eef5f1_48%,#f7f6f1_100%)]">
+        <div className="mx-auto grid max-w-7xl gap-5 px-5 py-7 lg:grid-cols-[1fr_360px] lg:items-end">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-sm ring-1 ring-ink/10">
+              <Sparkles size={15} className="text-clay" />
+              Guest-ready guide control
+            </div>
+            <h2 className="mt-5 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl">
+              Keep every arrival detail polished, current and easy to scan.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-ink/65">
+              Update the host-facing content here. Guests see the clean public guide; you manage the property details, recommendations, review links and QR code from one workspace.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <GuideStat label="Guide" value={property ? "Live" : "Draft"} />
+            <GuideStat label="Places" value={property?.recommendations.length || 0} />
+            <GuideStat label="Reviews" value={property?.reviewLinks.length || 0} />
+          </div>
+        </div>
+      </section>
+
+      <div className="mx-auto grid max-w-7xl gap-5 px-5 py-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="grid gap-5">
           {success ? <div className="rounded-[8px] border border-olive/20 bg-olive/10 px-4 py-3 text-sm font-semibold text-olive">{success}</div> : null}
           {searchParams?.error ? <div className="rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{searchParams.error}</div> : null}
 
-          <CollapsibleSection eyebrow="Property setup" title={property ? property.name : "Create your first property"} defaultOpen>
-            <div className="mb-5 flex justify-end">
+          <CollapsibleSection eyebrow="Property guide" title={property ? property.name : "Create your first property"} defaultOpen>
+            <div className="mb-5 flex flex-col gap-3 rounded-[8px] border border-ink/10 bg-mist p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-bold">Main guide editor</p>
+                <p className="mt-1 text-sm leading-6 text-ink/60">Start with essentials, then refine guest instructions and visuals.</p>
+              </div>
               <AiPlaceholders />
             </div>
+
             <form action={saveProperty} className="grid gap-5">
               <input type="hidden" name="propertyId" value={property?.id || ""} />
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Property name">
-                  <input name="name" className={inputClass} defaultValue={property?.name || "Villa Beti"} required />
-                </Field>
-                <Field label="Public slug">
-                  <input name="slug" className={inputClass} defaultValue={property?.slug || "villa-beti"} required pattern="[a-z0-9-]+" />
-                </Field>
-                <Field label="Accent color" hint="Used on the public guest guide.">
-                  <input name="accentColor" className={inputClass} defaultValue={property?.accentColor || "#4a8a8f"} type="color" />
-                </Field>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <ImageUploadField
-                  label="Property logo"
-                  fileName="logoFile"
-                  urlName="logoUrl"
-                  removeName="removeLogo"
-                  currentUrl={property?.logoUrl}
+              <SubPanel>
+                <SectionHeader
+                  icon={BadgeCheck}
+                  eyebrow="Essentials"
+                  title="Identity and public link"
+                  text="These fields shape the public guide name, URL and visual accent."
                 />
-                <ImageUploadField
-                  label="Cover image"
-                  fileName="coverImageFile"
-                  urlName="coverImageUrl"
-                  removeName="removeCoverImage"
-                  currentUrl={property?.coverImageUrl}
+                <div className="grid gap-4 md:grid-cols-[1fr_1fr_150px]">
+                  <Field label="Property name">
+                    <input name="name" className={inputClass} defaultValue={property?.name || "Villa Beti"} required />
+                  </Field>
+                  <Field label="Public slug" hint="Only lowercase letters, numbers and hyphens.">
+                    <input name="slug" className={inputClass} defaultValue={property?.slug || "villa-beti"} required pattern="[a-z0-9-]+" />
+                  </Field>
+                  <Field label="Accent color">
+                    <input name="accentColor" className={`${inputClass} p-1`} defaultValue={property?.accentColor || "#4a8a8f"} type="color" />
+                  </Field>
+                </div>
+              </SubPanel>
+
+              <SubPanel>
+                <SectionHeader
+                  icon={ImageIcon}
+                  eyebrow="Brand visuals"
+                  title="Logo and cover image"
+                  text="Use a crisp logo and a bright cover image. These are the first signals guests see."
                 />
-              </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <ImageUploadField
+                    label="Property logo"
+                    fileName="logoFile"
+                    urlName="logoUrl"
+                    removeName="removeLogo"
+                    currentUrl={property?.logoUrl}
+                  />
+                  <ImageUploadField
+                    label="Cover image"
+                    fileName="coverImageFile"
+                    urlName="coverImageUrl"
+                    removeName="removeCoverImage"
+                    currentUrl={property?.coverImageUrl}
+                  />
+                </div>
+              </SubPanel>
 
-              <Field label="Welcome message">
-                <textarea name="welcomeMessage" className={textareaClass} defaultValue={property?.welcomeMessage || ""} />
-              </Field>
+              <SubPanel>
+                <SectionHeader
+                  icon={Wifi}
+                  eyebrow="Guest essentials"
+                  title="Welcome, Wi-Fi and arrival basics"
+                  text="Keep this part practical. It should answer the questions guests ask first."
+                />
+                <div className="grid gap-4">
+                  <Field label="Welcome message">
+                    <textarea name="welcomeMessage" className={textareaClass} defaultValue={property?.welcomeMessage || ""} />
+                  </Field>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Field label="Wi-Fi network">
+                      <input name="wifiName" className={inputClass} defaultValue={property?.wifiName || ""} required />
+                    </Field>
+                    <Field label="Wi-Fi password">
+                      <input name="wifiPassword" className={inputClass} defaultValue={property?.wifiPassword || ""} required />
+                    </Field>
+                  </div>
+                </div>
+              </SubPanel>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Wi-Fi network">
-                  <input name="wifiName" className={inputClass} defaultValue={property?.wifiName || ""} required />
-                </Field>
-                <Field label="Wi-Fi password">
-                  <input name="wifiPassword" className={inputClass} defaultValue={property?.wifiPassword || ""} required />
-                </Field>
-              </div>
-
-              <CollapsibleSection title="Guest information" defaultOpen={false} className="shadow-none">
+              <SubPanel>
+                <SectionHeader
+                  icon={KeyRound}
+                  eyebrow="Stay instructions"
+                  title="Check-in, rules and contact details"
+                  text="Separate operational details so guests can jump straight to what they need during the stay."
+                />
                 <div className="grid gap-5">
                   <div className="grid gap-4 md:grid-cols-2">
                     <Field label="Check-in info">
@@ -149,12 +270,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                       <textarea name="checkOutInfo" className={textareaClass} defaultValue={property?.checkOutInfo || ""} />
                     </Field>
                   </div>
-                  <Field label="Parking info">
-                    <textarea name="parkingInfo" className={textareaClass} defaultValue={property?.parkingInfo || ""} />
-                  </Field>
-                  <Field label="House rules">
-                    <textarea name="houseRules" className={textareaClass} defaultValue={property?.houseRules || ""} />
-                  </Field>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Field label="Parking info">
+                      <textarea name="parkingInfo" className={textareaClass} defaultValue={property?.parkingInfo || ""} />
+                    </Field>
+                    <Field label="House rules">
+                      <textarea name="houseRules" className={textareaClass} defaultValue={property?.houseRules || ""} />
+                    </Field>
+                  </div>
                   <Field label="Emergency contacts">
                     <textarea name="emergencyInfo" className={textareaClass} defaultValue={property?.emergencyInfo || ""} />
                   </Field>
@@ -170,114 +293,142 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     </Field>
                   </div>
                 </div>
-              </CollapsibleSection>
+              </SubPanel>
 
-              <SubmitButton pendingText="Saving property..." className="w-full sm:w-fit">
-                <Save size={17} />
-                Save Property
-              </SubmitButton>
+              <div className="flex justify-end rounded-[8px] border border-ink/10 bg-white p-3 shadow-[0_12px_34px_rgba(31,41,51,0.06)]">
+                <SubmitButton pendingText="Saving property..." className="w-full sm:w-fit">
+                  <Save size={17} />
+                  Save Property
+                </SubmitButton>
+              </div>
             </form>
           </CollapsibleSection>
 
           {property ? (
             <>
-              <CollapsibleSection eyebrow="Local recommendations" title="Recommendations" defaultOpen={false}>
-                <form action={saveRecommendation} className="grid gap-4">
-                  <input type="hidden" name="propertyId" value={property.id} />
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Title">
-                      <input name="title" className={inputClass} placeholder="Beach restaurant" required />
-                    </Field>
-                    <Field label="Category">
-                      <input name="category" className={inputClass} placeholder="Restaurant" required />
-                    </Field>
-                  </div>
-                  <Field label="Description">
-                    <textarea name="description" className={textareaClass} placeholder="Why guests should go there..." required />
-                  </Field>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Address">
-                      <input name="address" className={inputClass} />
-                    </Field>
-                    <Field label="Map or website URL">
-                      <input name="url" className={inputClass} placeholder="https://maps.google.com" />
-                    </Field>
-                  </div>
-                  <ImageUploadField
-                    label="Recommendation image"
-                    fileName="recommendationImageFile"
-                    urlName="imageUrl"
-                    removeName="removeRecommendationImage"
-                  />
-                  <SubmitButton variant="secondary" pendingText="Adding..." className="w-full sm:w-fit">
-                    <Plus size={16} />
-                    Add recommendation
-                  </SubmitButton>
-                </form>
+              <CollapsibleSection eyebrow="Local guide" title="Recommendations" defaultOpen={false}>
+                <div className="grid gap-5">
+                  <SubPanel>
+                    <SectionHeader
+                      icon={MapPin}
+                      eyebrow="Add a place"
+                      title="Recommend restaurants, beaches and useful stops"
+                      text="Each recommendation appears as a polished card in the guest guide."
+                    />
+                    <form action={saveRecommendation} className="grid gap-4">
+                      <input type="hidden" name="propertyId" value={property.id} />
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <Field label="Title">
+                          <input name="title" className={inputClass} placeholder="Beach restaurant" required />
+                        </Field>
+                        <Field label="Category">
+                          <input name="category" className={inputClass} placeholder="Restaurant" required />
+                        </Field>
+                      </div>
+                      <Field label="Description">
+                        <textarea name="description" className={textareaClass} placeholder="Why guests should go there..." required />
+                      </Field>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <Field label="Address">
+                          <input name="address" className={inputClass} />
+                        </Field>
+                        <Field label="Map or website URL">
+                          <input name="url" className={inputClass} placeholder="https://maps.google.com" />
+                        </Field>
+                      </div>
+                      <ImageUploadField
+                        label="Recommendation image"
+                        fileName="recommendationImageFile"
+                        urlName="imageUrl"
+                        removeName="removeRecommendationImage"
+                      />
+                      <SubmitButton variant="secondary" pendingText="Adding..." className="w-full sm:w-fit">
+                        <Plus size={16} />
+                        Add recommendation
+                      </SubmitButton>
+                    </form>
+                  </SubPanel>
 
-                <div className="mt-6 grid gap-3">
-                  {property.recommendations.length === 0 ? (
-                    <div className="rounded-[8px] border border-dashed border-ink/15 bg-mist p-5 text-sm text-ink/60">
-                      No recommendations yet. Add restaurants, beaches, viewpoints or practical places guests should know.
-                    </div>
-                  ) : (
-                    property.recommendations.map((item) => (
-                      <article key={item.id} className="grid gap-3 rounded-[8px] border border-ink/10 bg-mist p-4">
-                        <form action={saveRecommendation} className="grid gap-3" id={`recommendation-${item.id}`}>
-                          <input type="hidden" name="propertyId" value={property.id} />
-                          <input type="hidden" name="recommendationId" value={item.id} />
-                          <div className="grid gap-3 md:grid-cols-2">
-                            <input name="title" className={inputClass} defaultValue={item.title} required />
-                            <input name="category" className={inputClass} defaultValue={item.category} required />
+                  <div className="grid gap-3">
+                    {property.recommendations.length === 0 ? (
+                      <div className="rounded-[8px] border border-dashed border-ink/15 bg-mist p-5 text-sm text-ink/60">
+                        No recommendations yet. Add restaurants, beaches, viewpoints or practical places guests should know.
+                      </div>
+                    ) : (
+                      property.recommendations.map((item) => (
+                        <article key={item.id} className="grid gap-4 rounded-[8px] border border-ink/10 bg-white p-4 shadow-[0_12px_34px_rgba(31,41,51,0.06)]">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-[0.16em] text-lagoon">{item.category}</p>
+                              <h3 className="mt-1 text-lg font-bold">{item.title}</h3>
+                            </div>
+                            {item.url ? (
+                              <span className="inline-flex items-center gap-2 rounded-full bg-mist px-3 py-2 text-xs font-semibold text-ink/60">
+                                <LinkIcon size={14} />
+                                Link added
+                              </span>
+                            ) : null}
                           </div>
-                          <textarea name="description" className={textareaClass} defaultValue={item.description} required />
-                          <div className="grid gap-3 md:grid-cols-2">
-                            <input name="address" className={inputClass} defaultValue={item.address || ""} placeholder="Address" />
-                            <input name="url" className={inputClass} defaultValue={item.url || ""} placeholder="Map or website URL" />
-                          </div>
-                          <ImageUploadField
-                            label="Recommendation image"
-                            fileName="recommendationImageFile"
-                            urlName="imageUrl"
-                            removeName="removeRecommendationImage"
-                            currentUrl={item.imageUrl}
-                          />
-                        </form>
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-lagoon">
-                            {item.url ? <LinkIcon size={15} /> : null}
-                            {item.category}
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <SubmitButton form={`recommendation-${item.id}`} variant="secondary" pendingText="Saving...">Save</SubmitButton>
+                          <form action={saveRecommendation} className="grid gap-3" id={`recommendation-${item.id}`}>
+                            <input type="hidden" name="propertyId" value={property.id} />
+                            <input type="hidden" name="recommendationId" value={item.id} />
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <input name="title" className={inputClass} defaultValue={item.title} required />
+                              <input name="category" className={inputClass} defaultValue={item.category} required />
+                            </div>
+                            <textarea name="description" className={textareaClass} defaultValue={item.description} required />
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <input name="address" className={inputClass} defaultValue={item.address || ""} placeholder="Address" />
+                              <input name="url" className={inputClass} defaultValue={item.url || ""} placeholder="Map or website URL" />
+                            </div>
+                            <ImageUploadField
+                              label="Recommendation image"
+                              fileName="recommendationImageFile"
+                              urlName="imageUrl"
+                              removeName="removeRecommendationImage"
+                              currentUrl={item.imageUrl}
+                            />
+                          </form>
+                          <div className="flex flex-wrap items-center justify-end gap-3">
+                            <SubmitButton form={`recommendation-${item.id}`} variant="secondary" pendingText="Saving...">
+                              Save
+                            </SubmitButton>
                             <form action={deleteRecommendation}>
                               <input type="hidden" name="id" value={item.id} />
                               <ConfirmSubmitButton message={`Remove ${item.title}?`} />
                             </form>
                           </div>
-                        </div>
-                      </article>
-                    ))
-                  )}
+                        </article>
+                      ))
+                    )}
+                  </div>
                 </div>
               </CollapsibleSection>
 
-              <CollapsibleSection eyebrow="Reviews" title="Review links" defaultOpen={false}>
-                <form action={saveReviewLinks} className="grid gap-4">
-                  <input type="hidden" name="propertyId" value={property.id} />
-                  <Field label="Google review link">
-                    <input name="google" className={inputClass} defaultValue={reviewValue(property, "GOOGLE")} placeholder="https://..." />
-                  </Field>
-                  <Field label="Booking review link">
-                    <input name="booking" className={inputClass} defaultValue={reviewValue(property, "BOOKING")} placeholder="https://..." />
-                  </Field>
-                  <Field label="Airbnb review link">
-                    <input name="airbnb" className={inputClass} defaultValue={reviewValue(property, "AIRBNB")} placeholder="https://..." />
-                  </Field>
-                  <SubmitButton variant="secondary" pendingText="Saving links..." className="w-full sm:w-fit">
-                    Save review links
-                  </SubmitButton>
-                </form>
+              <CollapsibleSection eyebrow="Guest feedback" title="Review links" defaultOpen={false}>
+                <SubPanel>
+                  <SectionHeader
+                    icon={Star}
+                    eyebrow="Reputation"
+                    title="Send guests to the right review pages"
+                    text="Add only the platforms you actively use. Empty fields are hidden from the public guide."
+                  />
+                  <form action={saveReviewLinks} className="grid gap-4">
+                    <input type="hidden" name="propertyId" value={property.id} />
+                    <Field label="Google review link">
+                      <input name="google" className={inputClass} defaultValue={reviewValue(property, "GOOGLE")} placeholder="https://..." />
+                    </Field>
+                    <Field label="Booking review link">
+                      <input name="booking" className={inputClass} defaultValue={reviewValue(property, "BOOKING")} placeholder="https://..." />
+                    </Field>
+                    <Field label="Airbnb review link">
+                      <input name="airbnb" className={inputClass} defaultValue={reviewValue(property, "AIRBNB")} placeholder="https://..." />
+                    </Field>
+                    <SubmitButton variant="secondary" pendingText="Saving links..." className="w-full sm:w-fit">
+                      Save review links
+                    </SubmitButton>
+                  </form>
+                </SubPanel>
               </CollapsibleSection>
             </>
           ) : (
@@ -289,9 +440,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </div>
 
         <aside className="grid h-fit gap-5 lg:sticky lg:top-5">
-          <CollapsibleSection eyebrow="Public guide" title="QR/public link" defaultOpen>
+          <Panel className="overflow-hidden p-0">
+            <div className="bg-ink p-5 text-white">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">Public guide</p>
+                  <h2 className="mt-1 text-2xl font-bold">QR and live link</h2>
+                </div>
+                <div className="grid h-12 w-12 place-items-center rounded-[8px] bg-white/10">
+                  <QrCode size={24} />
+                </div>
+              </div>
+            </div>
             {property ? (
-              <div className="grid gap-4">
+              <div className="grid gap-4 p-5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={qrCode} alt="QR code for public guest guide" className="mx-auto h-52 w-52 rounded-[8px] bg-white p-3 ring-1 ring-ink/10" />
                 <div className="break-all rounded-[8px] bg-mist p-3 text-sm text-ink/70">{publicUrl}</div>
@@ -302,15 +464,22 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 <CopyButton value={publicUrl} label="Copy link" copiedLabel="Link copied" />
               </div>
             ) : (
-              <p className="text-sm leading-6 text-ink/60">Save your first property to generate a public guide URL and QR code.</p>
+              <p className="p-5 text-sm leading-6 text-ink/60">Save your first property to generate a public guide URL and QR code.</p>
             )}
-          </CollapsibleSection>
+          </Panel>
 
           <Panel>
-            <p className="text-sm font-semibold text-lagoon">Plan</p>
-            <div className="mt-2">
-              <span className="text-3xl font-bold">€15</span>
-              <span className="text-sm text-ink/55"> / property / month</span>
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-[8px] bg-clay/10 text-clay">
+                <MessageSquareText size={18} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-lagoon">Plan</p>
+                <div>
+                  <span className="text-3xl font-bold">€15</span>
+                  <span className="text-sm text-ink/55"> / property / month</span>
+                </div>
+              </div>
             </div>
             <p className="mt-3 text-sm leading-6 text-ink/60">Stripe is intentionally left out for this MVP.</p>
           </Panel>

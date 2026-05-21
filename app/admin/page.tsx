@@ -73,8 +73,30 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         ) : null}
 
         <Panel>
-          <p className="text-sm font-semibold text-lagoon">Owners and admins</p>
-          <h2 className="mb-5 text-2xl font-bold">Create user</h2>
+          <p className="text-sm font-semibold text-lagoon">Platform workflow</p>
+          <h2 className="text-2xl font-bold">How accounts work</h2>
+          <div className="mt-4 grid gap-3 text-sm leading-6 text-ink/65 md:grid-cols-3">
+            <p>
+              <strong className="block text-ink">1. You are the platform admin.</strong>
+              Use this page to create host accounts and manage properties.
+            </p>
+            <p>
+              <strong className="block text-ink">2. Hosts are owners.</strong>
+              Create them with role OWNER and give them a temporary password.
+            </p>
+            <p>
+              <strong className="block text-ink">3. Assign a property.</strong>
+              The host logs in, changes their password, and edits their guest guide.
+            </p>
+          </div>
+        </Panel>
+
+        <Panel>
+          <p className="text-sm font-semibold text-lagoon">Hosts and admins</p>
+          <h2 className="mb-2 text-2xl font-bold">Create account</h2>
+          <p className="mb-5 text-sm leading-6 text-ink/60">
+            Use OWNER for rental hosts. Use ADMIN only for people who should manage all StayNest users and properties.
+          </p>
           <form action={createUser} className="grid gap-4 md:grid-cols-2">
             <Field label="Name">
               <input name="name" className={inputClass} required />
@@ -87,12 +109,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </Field>
             <Field label="Role">
               <select name="role" className={inputClass} defaultValue="OWNER">
-                <option value="OWNER">OWNER</option>
-                <option value="ADMIN">ADMIN</option>
+                <option value="OWNER">Owner / host</option>
+                <option value="ADMIN">Platform admin</option>
               </select>
             </Field>
             <Button type="submit" className="md:col-span-2 md:w-fit">
-              Create user
+              Create account
             </Button>
           </form>
         </Panel>
@@ -110,8 +132,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 </Field>
                 <Field label="Role">
                   <select name="role" className={inputClass} defaultValue={user.role}>
-                    <option value="OWNER">OWNER</option>
-                    <option value="ADMIN">ADMIN</option>
+                    <option value="OWNER">Owner / host</option>
+                    <option value="ADMIN">Platform admin</option>
                   </select>
                 </Field>
                 <Field label="New temp password">
