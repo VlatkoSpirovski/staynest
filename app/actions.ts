@@ -42,8 +42,8 @@ export async function saveProperty(formData: FormData) {
   const hostPhone = stringValue(formData, "hostPhone");
   const hostEmail = stringValue(formData, "hostEmail");
 
-  if (!name || !slug || !wifiName || !wifiPassword || (!hostPhone && !hostEmail)) {
-    redirect("/dashboard?error=Property%20name,%20slug,%20Wi-Fi%20and%20host%20contact%20are%20required.");
+  if (!name || !slug || !wifiName || !wifiPassword || !hostPhone || !hostEmail) {
+    redirect("/dashboard?error=Fill%20in%20property%20name,%20slug,%20Wi-Fi,%20host%20phone%20and%20host%20email.");
   }
 
   const duplicateSlug = await prisma.property.findFirst({
@@ -118,7 +118,7 @@ export async function saveRecommendation(formData: FormData) {
   const description = stringValue(formData, "description");
 
   if (!title || !category || !description) {
-    redirect("/dashboard?error=Recommendation%20title,%20category%20and%20description%20are%20required.");
+    redirect("/dashboard?error=Fill%20in%20recommendation%20title,%20category%20and%20description.");
   }
 
   let imageUrl = optionalValue(formData, "imageUrl");

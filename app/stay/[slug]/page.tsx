@@ -64,7 +64,7 @@ export default async function PublicGuidePage({ params }: PageProps) {
           <MenuLink href={`${baseHref}/wifi`} icon={<Wifi size={21} />} title="Wi-Fi" subtitle="Connect" />
           <MenuLink href={`${baseHref}/contact`} icon={<Phone size={21} />} title="Contact" subtitle="We are here" />
           <MenuLink href={`${baseHref}/arrival`} icon={<KeyRound size={21} />} title="Check-in/out" subtitle="Arrival and departure" />
-          <MenuLink href={`${baseHref}/house`} icon={<Home size={21} />} title="House Guide" subtitle="All about the villa" />
+          <MenuLink href={`${baseHref}/house`} icon={<Home size={21} />} title="House Guide" subtitle="About the property" />
           <MenuLink href={`${baseHref}/restaurants`} icon={<Utensils size={21} />} title="Restaurants" subtitle="Food nearby" />
           <MenuLink href={`${baseHref}/activities`} icon={<Map size={21} />} title="Activities" subtitle="Things to do" />
           <MenuLink href={`${baseHref}/reviews`} icon={<Star size={21} />} title="Reviews" subtitle="Share your stay" />

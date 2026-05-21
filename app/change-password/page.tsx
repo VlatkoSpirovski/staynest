@@ -3,7 +3,6 @@ import { changePassword } from "@/app/auth-actions";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass, Panel } from "@/components/ui/panel";
 import { requireCurrentUser } from "@/lib/auth";
-import { passwordRulesText } from "@/lib/password-policy";
 
 type ChangePasswordPageProps = {
   searchParams?: {
@@ -23,7 +22,7 @@ export default async function ChangePasswordPage({ searchParams }: ChangePasswor
           </div>
           <div>
             <h1 className="text-xl font-bold">Change password</h1>
-            <p className="text-sm text-ink/60">{user.mustChangePassword ? "Required before dashboard access" : "Update your account password"}</p>
+            <p className="text-sm text-ink/60">{user.mustChangePassword ? "Change it before dashboard access" : "Update your account password"}</p>
           </div>
         </div>
         {searchParams?.error ? (
@@ -35,7 +34,7 @@ export default async function ChangePasswordPage({ searchParams }: ChangePasswor
           <Field label="Current password">
             <input name="currentPassword" className={inputClass} type="password" autoComplete="current-password" required />
           </Field>
-          <Field label="New password" hint={passwordRulesText()}>
+          <Field label="New password">
             <input name="newPassword" className={inputClass} type="password" autoComplete="new-password" required />
           </Field>
           <Field label="Confirm new password">

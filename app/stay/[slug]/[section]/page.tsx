@@ -17,7 +17,7 @@ const sectionMeta: Record<string, { eyebrow: string; title: string }> = {
   wifi: { eyebrow: "Wi-Fi", title: "Connect to the internet." },
   contact: { eyebrow: "Contact", title: "Need help during your stay?" },
   arrival: { eyebrow: "Arrival", title: "Check-in and check-out." },
-  house: { eyebrow: "House guide", title: "Everything inside the villa." },
+  house: { eyebrow: "House guide", title: "Everything inside the property." },
   restaurants: { eyebrow: "Restaurants", title: "Where to eat." },
   activities: { eyebrow: "Activities", title: "Things to do nearby." },
   reviews: { eyebrow: "Reviews", title: "Enjoying your stay?" },

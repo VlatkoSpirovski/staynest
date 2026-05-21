@@ -31,9 +31,9 @@ StayNest is a production-ready MVP SaaS for rental and villa owners. Owners crea
 - Public mobile-first guest guide at `/stay/[slug]`
 - QR code for the public guest guide URL
 - Future AI placeholders: Translate with AI, Improve text with AI, Generate guest answer
-- Seed example property: Villa Beti
+- Seed example property: Example Stay
 
-## Demo Logins
+## Example Logins
 
 After running the seed script, use:
 
@@ -41,7 +41,7 @@ After running the seed script, use:
 Admin email: admin@staynest.app
 Admin password: Admin123!
 
-Owner email: owner@villabeti.com
+Owner email: example-host@staynest.site
 Owner temporary password: Owner123!
 ```
 
@@ -69,7 +69,7 @@ cp .env.example .env
 npx prisma migrate dev
 ```
 
-5. Seed Villa Beti:
+5. Seed the example stay:
 
 ```bash
 npm run seed
@@ -87,7 +87,7 @@ Open:
 - Login: `http://localhost:3000/login`
 - Admin: `http://localhost:3000/admin`
 - Dashboard: `http://localhost:3000/dashboard`
-- Villa Beti guide: `http://localhost:3000/stay/villa-beti`
+- Example guide: `http://localhost:3000/stay/example-stay`
 
 ## Account Creation
 
@@ -170,7 +170,7 @@ Recommended production flow:
 npm run db:deploy
 ```
 
-5. Optional: seed demo/admin data only if this is a fresh production database and you want the seed users/property:
+5. Optional: seed example/admin data only if this is a fresh production database and you want the seed users/property:
 
 ```bash
 npm run seed

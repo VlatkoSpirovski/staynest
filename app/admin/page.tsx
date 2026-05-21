@@ -4,7 +4,6 @@ import { createAdminProperty, createUser, deleteAdminProperty, deleteUser, updat
 import { Button } from "@/components/ui/button";
 import { Field, inputClass, Panel, textareaClass } from "@/components/ui/panel";
 import { requireAdminUser } from "@/lib/auth";
-import { passwordRulesText } from "@/lib/password-policy";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -104,7 +103,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <Field label="Email">
               <input name="email" className={inputClass} type="email" required />
             </Field>
-            <Field label="Temporary password" hint={passwordRulesText()}>
+            <Field label="Temporary password">
               <input name="temporaryPassword" className={inputClass} type="password" required />
             </Field>
             <Field label="Role">
@@ -177,7 +176,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <input name="name" className={inputClass} required />
             </Field>
             <Field label="Slug">
-              <input name="slug" className={inputClass} placeholder="villa-beti" />
+              <input name="slug" className={inputClass} placeholder="example-stay" />
             </Field>
             <Field label="Accent color">
               <input name="accentColor" className={inputClass} type="color" defaultValue="#4a8a8f" />

@@ -2,7 +2,6 @@ import { KeyRound } from "lucide-react";
 import { resetPassword } from "@/app/auth-actions";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass, Panel } from "@/components/ui/panel";
-import { passwordRulesText } from "@/lib/password-policy";
 
 type ResetPasswordPageProps = {
   searchParams?: {
@@ -31,7 +30,7 @@ export default function ResetPasswordPage({ searchParams }: ResetPasswordPagePro
         ) : null}
         <form action={resetPassword} className="grid gap-4">
           <input type="hidden" name="token" value={searchParams?.token || ""} />
-          <Field label="New password" hint={passwordRulesText()}>
+          <Field label="New password">
             <input name="newPassword" className={inputClass} type="password" autoComplete="new-password" required />
           </Field>
           <Field label="Confirm new password">

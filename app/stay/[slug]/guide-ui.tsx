@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export function MenuLink({
@@ -13,7 +12,7 @@ export function MenuLink({
   subtitle: string;
 }) {
   return (
-    <Link
+    <a
       href={href}
       className="grid min-h-44 place-items-center rounded-[18px] border border-white/70 bg-[#f3eadc] px-4 py-6 text-center shadow-[0_12px_35px_rgba(76,55,37,0.08)] transition hover:-translate-y-0.5 hover:bg-[#f8f1e8]"
     >
@@ -22,7 +21,7 @@ export function MenuLink({
       </span>
       <span className="mt-5 block text-base font-extrabold text-ink">{title}</span>
       <span className="mt-1 block text-sm text-ink/60">{subtitle}</span>
-    </Link>
+    </a>
   );
 }
 
@@ -40,10 +39,10 @@ export function DetailShell({
   return (
     <main className="min-h-screen bg-[#2f302e] text-ink">
       <div className="mx-auto min-h-screen max-w-[430px] bg-[#f1e7d8] px-5 py-5 shadow-2xl">
-        <Link href={backHref} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-ink shadow-sm ring-1 ring-ink/10">
+        <a href={backHref} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-ink shadow-sm ring-1 ring-ink/10">
           <ArrowLeft size={16} />
           Back
-        </Link>
+        </a>
         <div className="mt-8">
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--accent)]">{eyebrow}</p>
           <h1 className="mt-3 text-3xl font-bold leading-tight text-ink">{title}</h1>

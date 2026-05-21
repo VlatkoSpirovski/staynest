@@ -38,7 +38,7 @@ export async function createUser(formData: FormData) {
   const role = stringValue(formData, "role") === "ADMIN" ? UserRole.ADMIN : UserRole.OWNER;
 
   if (!name || !email || !temporaryPassword) {
-    redirectWithAdminError("Name, email and temporary password are required.");
+    redirectWithAdminError("Fill in name, email and temporary password.");
   }
 
   validateAdminPassword(temporaryPassword);
@@ -67,7 +67,7 @@ export async function updateUser(formData: FormData) {
   const role = stringValue(formData, "role") === "ADMIN" ? UserRole.ADMIN : UserRole.OWNER;
 
   if (!id || !name || !email) {
-    redirectWithAdminError("User name and email are required.");
+    redirectWithAdminError("Fill in user name and email.");
   }
 
   if (admin.id === id && role !== UserRole.ADMIN) {
@@ -142,7 +142,7 @@ export async function updateAdminProperty(formData: FormData) {
   const name = stringValue(formData, "name") || "Untitled Property";
 
   if (!id || !ownerId) {
-    redirectWithAdminError("Property and owner are required.");
+    redirectWithAdminError("Choose a property and owner.");
   }
 
   const property = await prisma.property.update({

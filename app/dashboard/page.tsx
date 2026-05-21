@@ -12,13 +12,11 @@ import {
   Plus,
   QrCode,
   Save,
-  Sparkles,
   Star,
   Wifi
 } from "lucide-react";
 import { logoutOwner } from "@/app/auth-actions";
 import { deleteRecommendation, saveProperty, saveRecommendation, saveReviewLinks } from "@/app/actions";
-import { AiPlaceholders } from "@/components/ai-placeholders";
 import { CollapsibleSection } from "@/components/collapsible-section";
 import { ConfirmSubmitButton } from "@/components/confirm-submit";
 import { CopyButton } from "@/components/copy-button";
@@ -99,15 +97,6 @@ function SubPanel({
   return <div className={`rounded-[8px] border border-ink/10 bg-white/75 p-4 shadow-[0_12px_38px_rgba(31,41,51,0.06)] ${className}`}>{children}</div>;
 }
 
-function GuideStat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-[8px] border border-ink/10 bg-white/70 px-4 py-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">{label}</p>
-      <p className="mt-1 text-lg font-bold text-ink">{value}</p>
-    </div>
-  );
-}
-
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const user = await requireReadyUser();
   const property = await getDashboardProperty(user.id);
@@ -148,42 +137,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </div>
       </header>
 
-      <section className="border-b border-ink/10 bg-[linear-gradient(135deg,#f8faf6_0%,#eef5f1_48%,#f7f6f1_100%)]">
-        <div className="mx-auto grid max-w-7xl gap-5 px-5 py-7 lg:grid-cols-[1fr_360px] lg:items-end">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-sm ring-1 ring-ink/10">
-              <Sparkles size={15} className="text-clay" />
-              Guest-ready guide control
-            </div>
-            <h2 className="mt-5 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl">
-              Keep every arrival detail polished, current and easy to scan.
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-ink/65">
-              Update the host-facing content here. Guests see the clean public guide; you manage the property details, recommendations, review links and QR code from one workspace.
-            </p>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <GuideStat label="Guide" value={property ? "Live" : "Draft"} />
-            <GuideStat label="Places" value={property?.recommendations.length || 0} />
-            <GuideStat label="Reviews" value={property?.reviewLinks.length || 0} />
-          </div>
-        </div>
-      </section>
-
       <div className="mx-auto grid max-w-7xl gap-5 px-5 py-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="grid gap-5">
           {success ? <div className="rounded-[8px] border border-olive/20 bg-olive/10 px-4 py-3 text-sm font-semibold text-olive">{success}</div> : null}
           {searchParams?.error ? <div className="rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{searchParams.error}</div> : null}
 
           <CollapsibleSection eyebrow="Property guide" title={property ? property.name : "Create your first property"} defaultOpen>
-            <div className="mb-5 flex flex-col gap-3 rounded-[8px] border border-ink/10 bg-mist p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-bold">Main guide editor</p>
-                <p className="mt-1 text-sm leading-6 text-ink/60">Start with essentials, then refine guest instructions and visuals.</p>
-              </div>
-              <AiPlaceholders />
-            </div>
-
             <form action={saveProperty} className="grid gap-5">
               <input type="hidden" name="propertyId" value={property?.id || ""} />
 
@@ -196,10 +155,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 />
                 <div className="grid gap-4 md:grid-cols-[1fr_1fr_150px]">
                   <Field label="Property name">
-                    <input name="name" className={inputClass} defaultValue={property?.name || "Villa Beti"} required />
+                    <input name="name" className={inputClass} defaultValue={property?.name || "Example Stay"} required />
                   </Field>
-                  <Field label="Public slug" hint="Only lowercase letters, numbers and hyphens.">
-                    <input name="slug" className={inputClass} defaultValue={property?.slug || "villa-beti"} required pattern="[a-z0-9-]+" />
+                  <Field label="Public slug">
+                    <input name="slug" className={inputClass} defaultValue={property?.slug || "example-stay"} required pattern="[a-z0-9-]+" />
                   </Field>
                   <Field label="Accent color">
                     <input name="accentColor" className={`${inputClass} p-1`} defaultValue={property?.accentColor || "#4a8a8f"} type="color" />
@@ -285,11 +244,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     <Field label="Host contact name">
                       <input name="hostContactName" className={inputClass} defaultValue={property?.hostContactName || ""} />
                     </Field>
-                    <Field label="Host phone" hint="Required unless host email is set.">
-                      <input name="hostPhone" className={inputClass} defaultValue={property?.hostPhone || ""} />
+                    <Field label="Host phone">
+                      <input name="hostPhone" className={inputClass} defaultValue={property?.hostPhone || ""} required />
                     </Field>
-                    <Field label="Host email" hint="Required unless host phone is set.">
-                      <input name="hostEmail" className={inputClass} defaultValue={property?.hostEmail || ""} type="email" />
+                    <Field label="Host email">
+                      <input name="hostEmail" className={inputClass} defaultValue={property?.hostEmail || ""} type="email" required />
                     </Field>
                   </div>
                 </div>

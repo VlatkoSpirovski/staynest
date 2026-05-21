@@ -2,7 +2,7 @@ import { ArrowRight, CheckCircle2, Globe2, Home, Mail, MessageSquareText, Phone,
 import { Button } from "@/components/ui/button";
 
 const features = [
-  { title: "QR guide", text: "Place one QR code in the villa and guests always have the latest instructions.", icon: QrCode },
+  { title: "QR guide", text: "Place one QR code in the property and guests always have the latest instructions.", icon: QrCode },
   { title: "Multilingual content", text: "Structure ready for future AI translation across guest languages.", icon: Globe2 },
   { title: "Review reminders", text: "Simple review buttons for Google, Booking and Airbnb at the right moment.", icon: Star },
   { title: "Guest instructions", text: "Wi-Fi, arrival, parking, house rules and emergency details in one clean link.", icon: Home },
@@ -12,54 +12,54 @@ const features = [
 export default function LandingPage() {
   return (
     <main className="min-h-screen bg-mist text-ink">
-      <section className="soft-grid">
-        <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-6">
+      <section className="soft-grid overflow-hidden">
+        <div className="mx-auto flex min-h-[100svh] max-w-6xl flex-col px-5 py-4 sm:py-6">
           <header className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/staynest-logo.png"
                 alt="StayNest"
-                className="h-28 w-28 object-contain drop-shadow-sm sm:h-32 sm:w-32"
+                className="h-20 w-20 object-contain drop-shadow-sm sm:h-32 sm:w-32"
               />
             </div>
-            <Button href="/login" variant="secondary" className="hidden sm:inline-flex">
+            <Button href="/login" variant="secondary" className="px-4 text-xs sm:inline-flex sm:px-5 sm:text-sm">
               Owner Login
             </Button>
           </header>
 
-          <div className="grid flex-1 items-center gap-10 py-14 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="grid flex-1 items-center gap-8 py-8 sm:gap-10 sm:py-14 lg:grid-cols-[1.05fr_0.95fr]">
             <div>
-              <p className="mb-4 inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-lagoon shadow-sm">
+              <p className="mb-4 inline-flex rounded-full bg-white px-4 py-2 text-sm font-bold text-lagoon shadow-sm ring-1 ring-ink/5 sm:mb-5">
                 €15/property/month
               </p>
-              <h1 className="max-w-3xl text-5xl font-bold leading-[1.02] tracking-normal sm:text-6xl">
-                Digital guest guide for villas, apartments and rentals
+              <h1 className="max-w-3xl text-[2.85rem] font-extrabold leading-[0.95] tracking-normal sm:text-6xl">
+                Digital guest guide for premium stays
               </h1>
-              <p className="mt-6 max-w-xl text-lg leading-8 text-ink/70">
-                StayNest gives rental owners one polished public guide with arrival details, Wi-Fi, rules,
-                recommendations, review links and host contact info.
+              <p className="mt-5 max-w-xl text-base leading-7 text-ink/68 sm:mt-6 sm:text-lg sm:leading-8">
+                StayNest gives rental owners one polished mobile guide with arrival details, Wi-Fi, rules,
+                recommendations, review links and direct host contact.
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button href="/login" className="gap-2">
+              <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row">
+                <Button href="/login" className="min-h-14 gap-2 text-base sm:min-h-11 sm:text-sm">
                   Get Started <ArrowRight size={17} />
                 </Button>
-                <Button href="/stay/villa-beti" variant="secondary">
-                  View Demo
+                <Button href="/stay/example-stay" variant="secondary" className="min-h-14 text-base sm:min-h-11 sm:text-sm">
+                  View Example
                 </Button>
               </div>
             </div>
 
             <div className="relative">
-              <div className="overflow-hidden rounded-[8px] bg-white shadow-soft ring-1 ring-ink/10">
-                <div className="h-56 bg-[url('https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1200&auto=format&fit=crop')] bg-cover bg-center" />
-                <div className="space-y-5 p-5">
+              <div className="overflow-hidden rounded-[8px] bg-ink shadow-soft ring-1 ring-ink/10">
+                <div className="h-64 bg-[url('https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1200&auto=format&fit=crop')] bg-cover bg-center sm:h-56" />
+                <div className="space-y-4 bg-white p-5">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-lagoon">Guest guide</p>
-                      <h2 className="text-2xl font-bold">StayNest Demo</h2>
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-lagoon">Guest guide</p>
+                      <h2 className="text-2xl font-bold">StayNest Example</h2>
                     </div>
-                    <div className="grid h-14 w-14 place-items-center rounded-[8px] bg-mist">
+                    <div className="grid h-14 w-14 place-items-center rounded-[8px] bg-ink text-white">
                       <QrCode size={28} />
                     </div>
                   </div>
