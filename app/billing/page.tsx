@@ -1,7 +1,9 @@
 import { CreditCard, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PaddleCheckoutButton } from "@/components/paddle-checkout-button";
 import { Panel } from "@/components/ui/panel";
 import { requireReadyUser } from "@/lib/auth";
+import { getAppUrl } from "@/lib/utils";
 
 const planCopy = {
   basic: { name: "Basic", price: "€10/month" },
@@ -24,11 +26,11 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     month: "short",
     year: "numeric"
   });
-  const paypalReady = Boolean(
-    process.env.PAYPAL_CLIENT_ID &&
-      process.env.PAYPAL_CLIENT_SECRET &&
-      (selectedPlan === "ai" ? process.env.PAYPAL_AI_PLAN_ID : process.env.PAYPAL_BASIC_PLAN_ID)
-  );
+  const priceId = selectedPlan === "ai" ? process.env.PADDLE_AI_PRICE_ID : process.env.PADDLE_BASIC_PRICE_ID;
+  const clientToken = process.env.PADDLE_CLIENT_TOKEN || "";
+  const paddleReady = Boolean(clientToken && priceId);
+  const paddleEnvironment = process.env.PADDLE_ENV === "sandbox" ? "sandbox" : "production";
+  const successUrl = `${getAppUrl()}/billing/complete`;
 
   return (
     <main className="grid min-h-screen place-items-center bg-mist px-5 py-10 text-ink">
@@ -54,27 +56,33 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.16em] text-lagoon">{plan.name}</p>
               <p className="mt-2 text-sm leading-6 text-ink/62">
-                Use StayNest now. Connect PayPal before the trial ends so the subscription can continue automatically.
+                Use StayNest now. Connect Paddle checkout before the trial ends so the subscription can continue automatically.
               </p>
             </div>
             <p className="text-right text-2xl font-bold">{plan.price}</p>
           </div>
           <div className="mt-4 flex gap-3 rounded-[8px] bg-mist p-3 text-sm font-medium text-ink/70">
             <ShieldCheck className="mt-0.5 shrink-0 text-olive" size={18} />
-            {trialDate ? `Trial runs until ${trialDate}. PayPal must also have a 7-day trial on this plan.` : "Trial started today."}
+            {trialDate ? `Trial runs until ${trialDate}. Paddle prices include the 7-day trial.` : "Trial started today."}
           </div>
           <p className="mt-3 text-sm leading-6 text-ink/60">
-            If PayPal is connected to a plan with a 7-day trial, PayPal charges automatically after day 7. If PayPal is not connected, there is no automatic charge.
+            Paddle handles tax, checkout and recurring billing. After checkout, webhooks update your StayNest subscription status.
           </p>
         </div>
 
-        {paypalReady ? (
-          <Button href={`/api/paypal/subscribe?plan=${selectedPlan}`} className="mt-6 w-full">
-            Continue to PayPal
-          </Button>
+        {paddleReady && priceId ? (
+          <PaddleCheckoutButton
+            clientToken={clientToken}
+            environment={paddleEnvironment}
+            priceId={priceId}
+            email={user.email}
+            userId={user.id}
+            plan={selectedPlan}
+            successUrl={successUrl}
+          />
         ) : (
           <div className="mt-6 rounded-[8px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-            PayPal is ready in the app, but the PayPal environment values still need to be added in Vercel before live subscriptions can open.
+            Paddle checkout needs PADDLE_CLIENT_TOKEN and the selected plan price ID in Vercel.
           </div>
         )}
 

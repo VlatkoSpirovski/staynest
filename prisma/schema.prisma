@@ -46,6 +46,9 @@ model User {
   trialEndsAt        DateTime?
   subscriptionStatus String?
   paypalSubscriptionId String?
+  paddleCustomerId   String?
+  paddleSubscriptionId String?
+  paddleTransactionId String?
   properties         Property[]
   sessions           Session[]
   oauthAccounts      OAuthAccount[]

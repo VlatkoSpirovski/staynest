@@ -176,7 +176,7 @@ export default function LandingPage() {
               <p className="font-semibold text-lagoon">Ready to start?</p>
               <h2 className="mt-2 text-2xl font-bold leading-tight sm:text-3xl">Create your account and start the free trial.</h2>
               <p className="mt-3 max-w-2xl leading-7 text-ink/65">
-                Register yourself, choose Basic or Full AI, then connect PayPal subscription after the trial is active.
+                Register yourself, choose Basic or Full AI, then connect Paddle checkout after the trial is active.
               </p>
             </div>
 

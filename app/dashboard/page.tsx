@@ -514,7 +514,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </div>
             <p className="mt-3 text-sm font-semibold text-ink/70">{planName}</p>
             <p className="mt-1 text-sm leading-6 text-ink/60">
-              {trialLabel ? `Free trial active until ${trialLabel}.` : "Free trial active."} Connect PayPal before it ends.
+              {trialLabel ? `Free trial active until ${trialLabel}.` : "Free trial active."} Connect Paddle before it ends.
             </p>
             <Button href={`/billing?plan=${selectedPlan}`} variant="secondary" className="mt-4 w-full">
               Billing

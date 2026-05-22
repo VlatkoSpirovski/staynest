@@ -9,9 +9,9 @@ export default function BillingCompletePage() {
         <div className="mx-auto grid h-12 w-12 place-items-center rounded-[8px] bg-olive text-white">
           <CheckCircle2 size={22} />
         </div>
-        <h1 className="mt-5 text-2xl font-bold">PayPal subscription connected</h1>
+        <h1 className="mt-5 text-2xl font-bold">Checkout complete</h1>
         <p className="mt-3 text-sm leading-6 text-ink/65">
-          Your StayNest account is ready. You can now create and manage your guest guide.
+          Paddle is confirming the subscription. Your dashboard will update automatically after the webhook arrives.
         </p>
         <Button href="/dashboard" className="mt-6 w-full">
           Open dashboard
