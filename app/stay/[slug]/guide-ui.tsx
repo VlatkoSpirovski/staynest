@@ -27,11 +27,15 @@ export function MenuLink({
 
 export function DetailShell({
   backHref,
+  backLabel,
+  poweredByLabel,
   eyebrow,
   title,
   children
 }: {
   backHref: string;
+  backLabel: string;
+  poweredByLabel: string;
   eyebrow: string;
   title: string;
   children: React.ReactNode;
@@ -39,15 +43,19 @@ export function DetailShell({
   return (
     <main className="min-h-screen bg-[#2f302e] text-ink">
       <div className="mx-auto min-h-screen max-w-[430px] bg-[#f1e7d8] px-5 py-5 shadow-2xl">
-        <a href={backHref} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-ink shadow-sm ring-1 ring-ink/10">
+        <a
+          href={backHref}
+          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-ink shadow-sm ring-1 ring-ink/10"
+        >
           <ArrowLeft size={16} />
-          Back
+          {backLabel}
         </a>
         <div className="mt-8">
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--accent)]">{eyebrow}</p>
           <h1 className="mt-3 text-3xl font-bold leading-tight text-ink">{title}</h1>
         </div>
         <div className="mt-6 grid gap-4">{children}</div>
+        <PoweredByStayNest className="mt-8 pb-6" label={poweredByLabel} />
       </div>
     </main>
   );
@@ -64,4 +72,15 @@ export function MiniCard({ title, children }: { title: string; children: React.R
 
 export function EmptyNote({ children }: { children: React.ReactNode }) {
   return <div className="rounded-[16px] border border-dashed border-ink/15 bg-white/45 p-4 text-sm leading-6 text-ink/60">{children}</div>;
+}
+
+export function PoweredByStayNest({ className = "", label = "Powered by" }: { className?: string; label?: string }) {
+  return (
+    <p className={`text-center text-xs font-semibold text-ink/45 ${className}`}>
+      {label}{" "}
+      <a href="https://staynest.site" target="_blank" rel="noreferrer" className="font-bold text-ink/55 underline-offset-2 hover:text-ink/75 hover:underline">
+        staynest.site
+      </a>
+    </p>
+  );
 }

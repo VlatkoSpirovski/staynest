@@ -447,13 +447,13 @@ export async function saveProperty(formData: FormData) {
       })
     : null;
 
-  const slug =
+  let slug =
     currentProperty && (!requestedSlug || requestedSlug === currentProperty.slug)
       ? currentProperty.slug
       : await createUniqueSecureSlug(requestedSlug || name, propertyId || undefined);
 
   if (!hasSecureSlugSuffix(slug)) {
-    redirect("/dashboard?error=Public%20guide%20links%20must%20use%20a%20secure%20generated%20suffix.");
+    slug = await createUniqueSecureSlug(name, propertyId || undefined);
   }
 
   let logoUrl = optionalValue(formData, "logoUrl") || currentProperty?.logoUrl || null;

@@ -82,7 +82,7 @@ export default function LandingPage() {
                 <Button href="#plans" className="min-h-14 gap-2 text-base sm:min-h-11 sm:text-sm">
                   View Plans <ArrowRight size={17} />
                 </Button>
-                <Button href="/stay/example-stay" variant="secondary" className="min-h-14 text-base sm:min-h-11 sm:text-sm">
+                <Button href="/stay/accommodation" variant="secondary" className="min-h-14 text-base sm:min-h-11 sm:text-sm">
                   View Example
                 </Button>
               </div>

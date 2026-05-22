@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { GUEST_LOCALES, type GuestLocale, getGuestMessages, isGuestLocale } from "@/lib/guest-i18n";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,10 @@ type RouteContext = {
 
 function textValue(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function localeName(locale: GuestLocale) {
+  return GUEST_LOCALES.find((item) => item.code === locale)?.label || "English";
 }
 
 function openAiModel() {
@@ -85,22 +90,25 @@ function extractResponseText(data: unknown) {
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
-  const body = (await request.json().catch(() => null)) as { message?: unknown } | null;
+  const body = (await request.json().catch(() => null)) as { message?: unknown; locale?: unknown } | null;
   const message = textValue(body?.message).slice(0, 600);
+  const requestedLocale = textValue(body?.locale);
+  const locale = isGuestLocale(requestedLocale) ? requestedLocale : "en";
+  const t = getGuestMessages(locale);
 
   if (!message) {
-    return NextResponse.json({ answer: "Please ask a question about your stay." }, { status: 400 });
+    return NextResponse.json({ answer: t.chat.askAnything }, { status: 400 });
   }
 
   const property = await getPropertyForChat(params.slug);
   if (!property) {
-    return NextResponse.json({ answer: "I could not find this property guide." }, { status: 404 });
+    return NextResponse.json({ answer: t.chat.errorAnswer }, { status: 404 });
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({
-      answer: "The guest assistant is not configured yet. Please contact your host using the contact section."
+      answer: t.chat.errorNow
     });
   }
 
@@ -114,7 +122,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     body: JSON.stringify({
       model: openAiModel(),
       instructions:
-        "You are StayNest's guest assistant. Answer only from the provided property context. Be concise, warm, and practical. If the answer is missing, say you do not have that detail and tell the guest to contact the host. Never invent codes, prices, policies, addresses, or emergency instructions.",
+        `You are StayNest's guest assistant. Answer only from the provided property context. Reply in ${localeName(locale)}. Be concise, warm, and practical. If the answer is missing, say you do not have that detail and tell the guest to contact the host. Never invent codes, prices, policies, addresses, or emergency instructions.`,
       input: [
         {
           role: "user",
@@ -126,12 +134,12 @@ export async function POST(request: Request, { params }: RouteContext) {
 
   if (!response.ok) {
     return NextResponse.json({
-      answer: "I could not answer right now. Please contact your host using the contact section."
+      answer: t.chat.errorNow
     });
   }
 
   const data = await response.json();
-  const answer = extractResponseText(data) || "I do not have that detail. Please contact your host using the contact section.";
+  const answer = extractResponseText(data) || t.chat.errorAnswer;
 
   return NextResponse.json({ answer });
 }

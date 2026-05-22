@@ -1,0 +1,948 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  BadgeCheck,
+  BedDouble,
+  Bot,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  Heart,
+  Home,
+  ImageIcon,
+  KeyRound,
+  LogOut,
+  MapPin,
+  Phone,
+  Plus,
+  QrCode,
+  Save,
+  Settings,
+  ShieldAlert,
+  Star,
+  Utensils,
+  Wifi
+} from "lucide-react";
+
+import { ConfirmSubmitButton } from "@/components/confirm-submit";
+import { CopyButton } from "@/components/copy-button";
+import { ImageUploadField } from "@/components/image-upload-field";
+import { SubmitButton } from "@/components/submit-button";
+import { Field, inputClass, textareaClass } from "@/components/ui/panel";
+
+interface Recommendation {
+  id: string;
+  propertyId: string;
+  title: string;
+  category: string;
+  description: string;
+  address: string | null;
+  url: string | null;
+  imageUrl: string | null;
+  sortOrder: number;
+}
+
+interface ReviewLink {
+  id: string;
+  propertyId: string;
+  platform: "GOOGLE" | "BOOKING" | "AIRBNB";
+  url: string;
+}
+
+interface Property {
+  id: string;
+  ownerId: string;
+  name: string;
+  slug: string;
+  logoUrl: string | null;
+  coverImageUrl: string | null;
+  accentColor: string;
+  welcomeMessage: string;
+  wifiName: string | null;
+  wifiPassword: string | null;
+  checkInInfo: string | null;
+  checkOutInfo: string | null;
+  parkingInfo: string | null;
+  houseRules: string | null;
+  emergencyInfo: string | null;
+  hostContactName: string | null;
+  hostPhone: string | null;
+  hostEmail: string | null;
+  aiKnowledge: string | null;
+  recommendations: Recommendation[];
+  reviewLinks: ReviewLink[];
+}
+
+interface User {
+  id: string;
+  email: string;
+  role: "ADMIN" | "OWNER";
+  selectedPlan: string | null;
+  trialEndsAt: Date | null;
+}
+
+interface DashboardClientProps {
+  property: Property | null;
+  user: User;
+  publicUrl: string;
+  qrCode: string;
+  successMessage: string | null;
+  errorMessage: string | null;
+  planName: string;
+  planPrice: string;
+  selectedPlan: string;
+  trialLabel: string | null;
+  logoutAction: any;
+  importListingAction: any;
+  savePropertyAction: any;
+  saveRecommendationAction: any;
+  deleteRecommendationAction: any;
+  saveReviewLinksAction: any;
+}
+
+type TabId = "setup" | "modules" | "settings";
+type ModuleId = "photos" | "welcome" | "wifi" | "checkin" | "rules" | "restaurants" | "activities" | "contact" | "emergency" | "ai" | "reviews";
+
+const villaCover = "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1400&q=85";
+const villaLogo = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=260&q=80";
+
+const demoRecommendations: Recommendation[] = [
+  {
+    id: "rec-1",
+    propertyId: "demo-property",
+    title: "Casa Antica",
+    category: "Dinner",
+    description: "A candlelit lakeside table for grilled trout, handmade pasta and a quiet first evening.",
+    address: "Old Harbor Promenade, Ohrid",
+    url: "https://maps.google.com/?q=Casa+Antica+Ohrid",
+    imageUrl: null,
+    sortOrder: 1
+  },
+  {
+    id: "rec-2",
+    propertyId: "demo-property",
+    title: "Villa Minami Wine Bar",
+    category: "Wine",
+    description: "Local Macedonian wines, soft jazz and the host-favorite cheese board after sunset.",
+    address: "Kaneo, Ohrid",
+    url: "https://maps.google.com/?q=Kaneo+Ohrid",
+    imageUrl: null,
+    sortOrder: 2
+  },
+  {
+    id: "rec-3",
+    propertyId: "demo-property",
+    title: "Saint Naum Boat Morning",
+    category: "Experience",
+    description: "A private wooden boat, clear water swim stop and slow coffee on the return.",
+    address: "Ohrid Marina",
+    url: "https://maps.google.com/?q=Ohrid+Marina",
+    imageUrl: null,
+    sortOrder: 3
+  }
+];
+
+const demoReviewLinks: ReviewLink[] = [
+  { id: "review-1", propertyId: "demo-property", platform: "AIRBNB", url: "https://www.airbnb.com/rooms/villa-asteria" }
+];
+
+const tabs: Array<{ id: TabId; label: string; icon: typeof Home }> = [
+  { id: "setup", label: "Setup", icon: BadgeCheck },
+  { id: "modules", label: "Modules", icon: BedDouble },
+  { id: "settings", label: "Settings", icon: Settings }
+];
+
+const moduleCopy: Record<
+  ModuleId,
+  {
+    title: string;
+    subtitle: string;
+    preview: (property: Property) => string;
+    icon: typeof Home;
+    accent: string;
+  }
+> = {
+  photos: {
+    title: "Photos",
+    subtitle: "Logo and cover",
+    preview: (property) => (property.logoUrl && property.coverImageUrl ? "Brand visuals ready" : "Upload logo and property photo"),
+    icon: ImageIcon,
+    accent: "bg-[#EEF2F6] text-[#24364C] ring-1 ring-[#172234]/10 shadow-[0_12px_26px_rgba(17,24,39,0.06)]"
+  },
+  welcome: {
+    title: "Welcome",
+    subtitle: "First impression",
+    preview: (property) => property.welcomeMessage || "Add a warm arrival note",
+    icon: Heart,
+    accent: "bg-[#F3F4F6] text-[#374151] ring-1 ring-[#172234]/10 shadow-[0_12px_26px_rgba(17,24,39,0.06)]"
+  },
+  wifi: {
+    title: "Wi-Fi",
+    subtitle: "Instant connection",
+    preview: (property) => property.wifiName || "Add network and password",
+    icon: Wifi,
+    accent: "bg-[#E8F4F3] text-[#447977] ring-1 ring-[#5F9D99]/18 shadow-[0_12px_26px_rgba(95,157,153,0.10)]"
+  },
+  checkin: {
+    title: "Check-in",
+    subtitle: "Arrival made easy",
+    preview: (property) => property.checkInInfo || "Add entry instructions",
+    icon: KeyRound,
+    accent: "bg-[#EEF2F6] text-[#24364C] ring-1 ring-[#172234]/10 shadow-[0_12px_26px_rgba(17,24,39,0.06)]"
+  },
+  rules: {
+    title: "House Rules",
+    subtitle: "Calm stay rhythm",
+    preview: (property) => property.houseRules || property.parkingInfo || "Add the essentials",
+    icon: Home,
+    accent: "bg-[#EEF4E8] text-[#64734D] ring-1 ring-[#76875D]/18 shadow-[0_12px_26px_rgba(118,135,93,0.10)]"
+  },
+  restaurants: {
+    title: "Restaurants",
+    subtitle: "Local favorites",
+    preview: (property) => restaurantItems(property)[0]?.title || "Add dinner and cafe picks",
+    icon: Utensils,
+    accent: "bg-[#EEF2F6] text-[#374151] ring-1 ring-[#172234]/10 shadow-[0_12px_26px_rgba(17,24,39,0.06)]"
+  },
+  activities: {
+    title: "Activities",
+    subtitle: "Things to do",
+    preview: (property) => activityItems(property)[0]?.title || "Add beaches, tours and walks",
+    icon: MapPin,
+    accent: "bg-[#E8F4F3] text-[#447977] ring-1 ring-[#5F9D99]/18 shadow-[0_12px_26px_rgba(95,157,153,0.10)]"
+  },
+  contact: {
+    title: "Contact",
+    subtitle: "Host help",
+    preview: (property) => property.hostContactName || property.hostPhone || "Add host contact",
+    icon: Phone,
+    accent: "bg-[#E8F4F3] text-[#447977] ring-1 ring-[#5F9D99]/18 shadow-[0_12px_26px_rgba(95,157,153,0.10)]"
+  },
+  emergency: {
+    title: "Emergency",
+    subtitle: "Safety contact",
+    preview: (property) => property.emergencyInfo || "Add urgent help details",
+    icon: ShieldAlert,
+    accent: "bg-[#FEF2F2] text-[#991B1B] ring-1 ring-[#FECACA]/80 shadow-[0_12px_26px_rgba(17,24,39,0.06)]"
+  },
+  ai: {
+    title: "AI",
+    subtitle: "Guest chat knowledge",
+    preview: (property) => property.aiKnowledge || "Add answers the assistant should know",
+    icon: Bot,
+    accent: "bg-[#E8F4F3] text-[#447977] ring-1 ring-[#5F9D99]/18 shadow-[0_12px_26px_rgba(95,157,153,0.10)]"
+  },
+  reviews: {
+    title: "Reviews",
+    subtitle: "Google review link",
+    preview: (property) => getReviewValue(property, "GOOGLE") || "Add Google review URL",
+    icon: Star,
+    accent: "bg-[#EEF4E8] text-[#64734D] ring-1 ring-[#76875D]/18 shadow-[0_12px_26px_rgba(118,135,93,0.10)]"
+  }
+};
+
+function restaurantItems(property: Property) {
+  return property.recommendations.filter((item) => /restaurant|dinner|wine|bar|cafe|food|tavern|grill/i.test(`${item.category} ${item.title}`));
+}
+
+function activityItems(property: Property) {
+  const restaurants = new Set(restaurantItems(property).map((item) => item.id));
+  return property.recommendations.filter((item) => !restaurants.has(item.id));
+}
+
+function getReviewValue(property: Property, platform: "GOOGLE" | "BOOKING" | "AIRBNB") {
+  return property.reviewLinks.find((link) => link.platform === platform)?.url || "";
+}
+
+function displayPropertyName(name: string) {
+  return /^example stay$/i.test(name.trim()) ? "Villa Asteria" : name;
+}
+
+function shortText(value: string, fallback: string) {
+  return value.length > 72 ? `${value.slice(0, 72).trim()}...` : value || fallback;
+}
+
+function StayNestLogoMark() {
+  return (
+    <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-[18px] bg-[#F8F3EA] shadow-[0_16px_38px_rgba(17,24,39,0.14),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-[#172234]/8">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/staynest-logo.png" alt="StayNest" className="h-full w-full object-cover" />
+    </div>
+  );
+}
+
+function StayNestHeaderTitle() {
+  return (
+    <div className="text-center">
+      <p className="text-lg font-black leading-none tracking-tight text-[#111827]">StayNest</p>
+      <p className="mt-1 text-[9px] font-black uppercase tracking-[0.22em] text-[#5F9D99]">Host app</p>
+    </div>
+  );
+}
+
+export default function DashboardClient(props: DashboardClientProps) {
+  const {
+    property: initialProperty,
+    user,
+    publicUrl: initialPublicUrl,
+    qrCode: initialQrCode,
+    successMessage,
+    errorMessage,
+    planName,
+    planPrice,
+    selectedPlan,
+    logoutAction,
+    savePropertyAction,
+    saveRecommendationAction,
+    deleteRecommendationAction,
+    saveReviewLinksAction
+  } = props;
+
+  const property = useMemo<Property>(() => {
+    const fallback: Property = {
+      id: "demo-property",
+      ownerId: user.id,
+      name: "Villa Asteria",
+      slug: "villa-asteria",
+      logoUrl: villaLogo,
+      coverImageUrl: villaCover,
+      accentColor: "#5D9C9A",
+      welcomeMessage:
+        "Welcome to Villa Asteria. The lake is just below the terrace, Wi-Fi is ready, and our favorite dinner spots are waiting inside this guide.",
+      wifiName: "VillaAsteria_Guest",
+      wifiPassword: "lakeview-2026",
+      checkInInfo:
+        "Check-in is from 3:00 PM. Use gate code 4826, follow the stone path, and open the brass lockbox beside the olive-green door.",
+      checkOutInfo: "Checkout is by 11:00 AM. Close terrace doors, turn off AC, and place keys back in the lockbox.",
+      parkingInfo: "One private parking space is reserved beside the cypress wall.",
+      houseRules: "Quiet hours begin at 10:00 PM. Smoking is welcome only on the terrace.",
+      emergencyInfo: null,
+      hostContactName: "Elena Petrova",
+      hostPhone: "+389 70 226 888",
+      hostEmail: "elena@villaasteria.stay",
+      aiKnowledge: null,
+      recommendations: demoRecommendations,
+      reviewLinks: demoReviewLinks
+    };
+
+    if (!initialProperty) return fallback;
+
+    return {
+      ...fallback,
+      ...initialProperty,
+      name: displayPropertyName(initialProperty.name || fallback.name),
+      logoUrl: initialProperty.logoUrl || fallback.logoUrl,
+      coverImageUrl: initialProperty.coverImageUrl || fallback.coverImageUrl,
+      welcomeMessage: initialProperty.welcomeMessage || fallback.welcomeMessage,
+      wifiName: initialProperty.wifiName || fallback.wifiName,
+      wifiPassword: initialProperty.wifiPassword || fallback.wifiPassword,
+      checkInInfo: initialProperty.checkInInfo || fallback.checkInInfo,
+      checkOutInfo: initialProperty.checkOutInfo || fallback.checkOutInfo,
+      parkingInfo: initialProperty.parkingInfo || fallback.parkingInfo,
+      houseRules: initialProperty.houseRules || fallback.houseRules,
+      emergencyInfo: initialProperty.emergencyInfo || fallback.emergencyInfo,
+      hostContactName: initialProperty.hostContactName || fallback.hostContactName,
+      hostPhone: initialProperty.hostPhone || fallback.hostPhone,
+      hostEmail: initialProperty.hostEmail || user.email || fallback.hostEmail,
+      aiKnowledge: initialProperty.aiKnowledge || fallback.aiKnowledge,
+      recommendations: initialProperty.recommendations.length ? initialProperty.recommendations : fallback.recommendations,
+      reviewLinks: initialProperty.reviewLinks.length ? initialProperty.reviewLinks : fallback.reviewLinks
+    };
+  }, [initialProperty, user.email, user.id]);
+
+  const publicUrl = initialPublicUrl || `https://staynest.app/stay/${property.slug}`;
+  const qrCode = initialQrCode || "";
+  const [activeTab, setActiveTab] = useState<TabId>("setup");
+  const [activeModule, setActiveModule] = useState<ModuleId>("wifi");
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [propertyMenuOpen, setPropertyMenuOpen] = useState(false);
+
+  const setupItems = useMemo(
+    () => [
+      { id: "photos" as ModuleId, label: "Photos", done: Boolean(property.logoUrl && property.coverImageUrl) },
+      { id: "welcome" as ModuleId, label: "Welcome", done: Boolean(property.welcomeMessage) },
+      { id: "wifi" as ModuleId, label: "Wi-Fi", done: Boolean(property.wifiName && property.wifiPassword) },
+      { id: "checkin" as ModuleId, label: "Check-in", done: Boolean(property.checkInInfo) },
+      { id: "rules" as ModuleId, label: "Rules", done: Boolean(property.houseRules || property.parkingInfo) },
+      { id: "restaurants" as ModuleId, label: "Restaurants", done: restaurantItems(property).length >= 1 },
+      { id: "activities" as ModuleId, label: "Activities", done: activityItems(property).length >= 1 },
+      { id: "contact" as ModuleId, label: "Contact", done: Boolean(property.hostPhone && property.hostEmail) },
+      { id: "emergency" as ModuleId, label: "Emergency", done: Boolean(property.emergencyInfo) },
+      { id: "ai" as ModuleId, label: "AI", done: Boolean(property.aiKnowledge) },
+      { id: "reviews" as ModuleId, label: "Google reviews", done: Boolean(getReviewValue(property, "GOOGLE")) }
+    ],
+    [property]
+  );
+
+  const completion = Math.round((setupItems.filter((item) => item.done).length / setupItems.length) * 100);
+  const missingItems = setupItems.filter((item) => !item.done).slice(0, 3);
+  const quickActions = missingItems.length ? missingItems : setupItems.slice(1, 4);
+
+  const openModule = (id: ModuleId) => {
+    setActiveModule(id);
+    setSheetOpen(true);
+  };
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [activeTab]);
+
+  return (
+    <main className="min-h-screen overflow-x-hidden bg-white text-[#111827]">
+      <div className="fixed inset-0 -z-10 bg-white" />
+
+      <header className="sticky top-0 z-40 border-b border-[#172234]/6 bg-white/90 px-4 py-3 shadow-[0_10px_36px_rgba(17,24,39,0.04)] backdrop-blur-2xl lg:px-8">
+        <div className="relative mx-auto flex max-w-5xl items-center justify-between">
+          <StayNestLogoMark />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <StayNestHeaderTitle />
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPropertyMenuOpen((open) => !open)}
+              aria-label="Open account menu"
+              className="grid h-11 w-11 place-items-center rounded-[18px] bg-[#111827] text-xs font-black text-white shadow-[0_18px_44px_rgba(17,24,39,0.28),inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:bg-[#162033] focus:outline-none focus:ring-2 focus:ring-[#5F9D99]/35 focus:ring-offset-2"
+            >
+              {(property.hostContactName || user.email).slice(0, 1).toUpperCase()}
+            </button>
+            {propertyMenuOpen ? (
+              <div className="absolute right-4 top-16 z-50 w-64 rounded-[24px] border border-[#172234]/8 bg-[#FFFFFF] p-3 shadow-[0_30px_90px_rgba(17,24,39,0.18),inset_0_1px_0_rgba(255,255,255,0.9)]">
+                <p className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#111827]/40">Active guide</p>
+                <div className="flex items-center gap-3 rounded-[18px] bg-[#F9FAFB] p-3">
+                  <img src={property.logoUrl || villaLogo} alt="" className="h-11 w-11 rounded-[16px] object-cover" />
+                  <div>
+                    <p className="text-sm font-black">{property.name}</p>
+                    <p className="text-xs font-semibold text-[#111827]/50">Ready for guests</p>
+                  </div>
+                </div>
+                <form action={logoutAction} className="mt-2 border-t border-[#172234]/8 pt-2">
+                  <button type="submit" className="flex min-h-11 w-full items-center gap-2 rounded-[16px] px-3 text-left text-sm font-black text-[#111827]/72 transition hover:bg-[#F9FAFB] hover:text-[#111827]">
+                    <LogOut size={16} />
+                    Log out
+                  </button>
+                </form>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-5xl px-4 pb-28 pt-5 lg:px-8">
+        {successMessage ? <div className="mb-4 rounded-[18px] border border-[#76875D]/18 bg-[#76875D]/10 px-4 py-3 text-sm font-bold text-[#5F704B] shadow-[0_16px_42px_rgba(17,24,39,0.06)]">{successMessage}</div> : null}
+        {errorMessage ? <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div> : null}
+
+        {activeTab === "setup" ? (
+          <SetupScreen
+            property={property}
+            completion={completion}
+            quickActions={quickActions}
+            openModule={openModule}
+          />
+        ) : null}
+
+        {activeTab === "modules" ? (
+          <ModulesScreen
+            property={property}
+            setupItems={setupItems}
+            activeModule={activeModule}
+            openModule={openModule}
+          />
+        ) : null}
+
+        {activeTab === "settings" ? (
+          <SettingsScreen property={property} publicUrl={publicUrl} qrCode={qrCode} planName={planName} planPrice={planPrice} selectedPlan={selectedPlan} />
+        ) : null}
+      </div>
+
+      {sheetOpen ? (
+        <ModuleSheet
+          property={property}
+          activeModule={activeModule}
+          onClose={() => setSheetOpen(false)}
+          user={user}
+          savePropertyAction={savePropertyAction}
+          saveRecommendationAction={saveRecommendationAction}
+          deleteRecommendationAction={deleteRecommendationAction}
+          saveReviewLinksAction={saveReviewLinksAction}
+        />
+      ) : null}
+
+      <nav className="fixed bottom-4 left-4 right-4 z-40 rounded-[24px] border border-[#172234]/8 bg-white/95 px-3 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_24px_82px_rgba(17,24,39,0.14)] backdrop-blur-2xl">
+        <div className="mx-auto grid max-w-md grid-cols-3 gap-1">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-[18px] text-[10px] font-black transition focus:outline-none focus:ring-2 focus:ring-[#5F9D99]/25 focus:ring-offset-2 focus:ring-offset-white ${
+                  active ? "bg-[#111827] text-white shadow-[0_16px_40px_rgba(17,24,39,0.28),inset_0_1px_0_rgba(255,255,255,0.12)]" : "text-[#111827]/48 hover:bg-[#F9FAFB]"
+                }`}
+              >
+                <Icon size={19} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </main>
+  );
+}
+
+function SetupScreen({
+  property,
+  completion,
+  quickActions,
+  openModule
+}: {
+  property: Property;
+  completion: number;
+  quickActions: Array<{ id: ModuleId; label: string; done: boolean }>;
+  openModule: (id: ModuleId) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <section className="overflow-hidden rounded-[24px] border border-white/55 bg-[#111827] text-white shadow-[0_34px_110px_rgba(17,24,39,0.30),inset_0_1px_0_rgba(255,255,255,0.10)]">
+        <div className="relative h-48">
+          <img src={property.coverImageUrl || villaCover} alt="" className="h-full w-full object-cover opacity-90 saturate-[0.96] contrast-[1.04]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,transparent_0%,rgba(17,24,39,0.30)_43%,rgba(17,24,39,0.82)_100%)]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#162033]/54 to-transparent" />
+          <div className="absolute bottom-5 left-5 right-5">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-white/66">Good afternoon</p>
+            <h1 className="mt-2 max-w-xs text-3xl font-black leading-[1.04] tracking-tight">Your guest guide is almost ready</h1>
+          </div>
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-[24px] border border-[#172234]/8 bg-white shadow-[0_30px_90px_rgba(17,24,39,0.10)]">
+        <div className="bg-[radial-gradient(circle_at_82%_0%,rgba(95,157,153,0.22),transparent_34%),linear-gradient(145deg,#111827_0%,#162033_100%)] px-5 py-5 text-white">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#B7DAD5]">Setup progress</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight">{completion}% complete</h2>
+              <p className="mt-1 text-sm font-semibold leading-6 text-white/58">Finish the essentials in under 3 minutes.</p>
+            </div>
+            <div className="relative grid h-[72px] w-[72px] shrink-0 place-items-center">
+              <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 72 72" aria-hidden>
+                <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="5" />
+                <circle
+                  cx="36"
+                  cy="36"
+                  r="30"
+                  fill="none"
+                  stroke="#B7DAD5"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(completion / 100) * 188.5} 188.5`}
+                  className="transition-all duration-700"
+                />
+              </svg>
+              <span className="text-sm font-black">{completion}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-2 p-4">
+          {quickActions.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => openModule(item.id)}
+              className="flex min-h-12 items-center justify-between rounded-[18px] border border-[#172234]/7 bg-[#FFFFFF] px-4 text-left shadow-[0_12px_34px_rgba(17,24,39,0.055),inset_0_1px_0_rgba(255,255,255,0.78)] transition hover:-translate-y-0.5 hover:bg-[#FFFFFF] hover:shadow-[0_18px_48px_rgba(17,24,39,0.10)]"
+            >
+              <span className="flex items-center gap-3">
+                <span className={`grid h-6 w-6 place-items-center rounded-[10px] ${item.done ? "bg-[#76875D]/14 text-[#5F704B]" : "bg-[#E8F4F3] text-[#5F9D99]"}`}>
+                  {item.done ? <Check size={13} /> : <Plus size={13} />}
+                </span>
+                <span className="text-sm font-black">{item.done ? `Review ${item.label}` : `Add ${item.label}`}</span>
+              </span>
+              <ChevronRight size={16} className="text-[#111827]/28" />
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ModulesScreen({
+  property,
+  setupItems,
+  activeModule,
+  openModule
+}: {
+  property: Property;
+  setupItems: Array<{ id: ModuleId; label: string; done: boolean }>;
+  activeModule: ModuleId;
+  openModule: (id: ModuleId) => void;
+}) {
+  const moduleIds = Object.keys(moduleCopy) as ModuleId[];
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#5F9D99]">Modules</p>
+        <h1 className="mt-2 text-3xl font-black tracking-tight">Build the guide fast</h1>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        {moduleIds.map((id) => {
+          const info = moduleCopy[id];
+          const Icon = info.icon;
+          const done = setupItems.find((item) => item.id === id)?.done;
+          const selected = activeModule === id;
+
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => openModule(id)}
+              className={`min-h-[158px] rounded-[20px] border p-4 text-left shadow-[0_22px_62px_rgba(17,24,39,0.085),inset_0_1px_0_rgba(255,255,255,0.82)] transition hover:-translate-y-0.5 hover:shadow-[0_28px_78px_rgba(17,24,39,0.14)] ${
+                selected
+                  ? "border-[#111827]/32 bg-white ring-4 ring-[#111827]/8"
+                  : "border-[#172234]/7 bg-white"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className={`grid h-10 w-10 place-items-center rounded-[16px] ${info.accent}`}>
+                  <Icon size={18} />
+                </div>
+                <span className={`rounded-[10px] px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] ${done ? "bg-[#76875D]/12 text-[#5F704B]" : "bg-[#F3F4F6] text-[#6B7280]"}`}>
+                  {done ? "Done" : "Add"}
+                </span>
+              </div>
+              <h2 className="mt-4 text-lg font-black leading-tight">{info.title}</h2>
+              <p className="mt-1 text-xs font-bold text-[#111827]/48">{info.subtitle}</p>
+              <p className="mt-3 line-clamp-2 text-xs font-semibold leading-5 text-[#111827]/62">{shortText(info.preview(property), "Ready to edit")}</p>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SettingsScreen({
+  property,
+  publicUrl,
+  qrCode,
+  planName,
+  planPrice,
+  selectedPlan
+}: {
+  property: Property;
+  publicUrl: string;
+  qrCode: string;
+  planName: string;
+  planPrice: string;
+  selectedPlan: string;
+}) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#5F9D99]">Settings</p>
+        <h1 className="mt-2 text-3xl font-black tracking-tight">Guide & account</h1>
+      </div>
+
+      <section className="rounded-[24px] border border-white/12 bg-[#111827] bg-[radial-gradient(circle_at_82%_0%,rgba(95,157,153,0.22),transparent_34%),linear-gradient(145deg,#111827_0%,#162033_100%)] p-5 text-white shadow-[0_36px_116px_rgba(17,24,39,0.34),inset_0_1px_0_rgba(255,255,255,0.10)]">
+        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#B7DAD5]">Your guide is live</p>
+        <h1 className="mt-2 text-3xl font-black leading-tight tracking-tight">Ready for the next guest</h1>
+        <p className="mt-2 text-sm font-semibold leading-6 text-white/66">Share the link, print the QR, or open the guest view.</p>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-[160px_1fr]">
+          <div className="grid place-items-center rounded-[20px] bg-[#FFFFFF] p-4 shadow-[0_18px_46px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.92)]">
+            {qrCode ? <img src={qrCode} alt="Guest guide QR code" className="h-32 w-32 object-contain" /> : <QrCode size={104} className="text-[#111827]" />}
+          </div>
+          <div className="flex flex-col justify-between gap-3">
+            <div className="rounded-[18px] border border-white/10 bg-white/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+              <p className="text-xs font-bold text-white/48">Guest link</p>
+              <p className="mt-1 break-all text-xs font-black leading-5">{publicUrl}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <CopyButton value={publicUrl} label="Share link" copiedLabel="Copied" className="rounded-[16px] border border-[#172234]/10 bg-[#FFFFFF] text-[#111827] shadow-[0_14px_34px_rgba(17,24,39,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] hover:bg-white" />
+              <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[16px] bg-[#5F9D99] px-4 text-sm font-black text-white shadow-[0_18px_48px_rgba(95,157,153,0.30),inset_0_1px_0_rgba(255,255,255,0.16)] transition hover:-translate-y-0.5 hover:bg-[#558F8B] focus:outline-none focus:ring-2 focus:ring-[#B7DAD5]/60 focus:ring-offset-2 focus:ring-offset-[#111827]">
+                <span>Open preview</span>
+                <ExternalLink size={15} />
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-[24px] border border-[#172234]/8 bg-white p-5 shadow-[0_30px_90px_rgba(17,24,39,0.12),inset_0_1px_0_rgba(255,255,255,0.92)]">
+        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#5F9D99]">Billing</p>
+        <h2 className="mt-2 text-2xl font-black tracking-tight">Choose your host plan</h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {[
+            { id: "basic", name: "Basic", price: "€10", text: "Beautiful guest guide, QR sharing, restaurants and house info." },
+            { id: "ai", name: "AI Concierge", price: "€15", text: "Everything in Basic plus guest chat knowledge and AI answers." }
+          ].map((plan) => {
+            const active = selectedPlan === plan.id || planName.toLowerCase().includes(plan.name.toLowerCase());
+            return (
+              <a
+                key={plan.id}
+                href={`/billing?plan=${plan.id}`}
+                className={`rounded-[20px] border p-4 shadow-[0_18px_48px_rgba(17,24,39,0.085),inset_0_1px_0_rgba(255,255,255,0.76)] transition hover:-translate-y-0.5 ${
+                  active ? "border-[#111827]/35 bg-[#111827] text-white" : "border-[#172234]/7 bg-[#FFFFFF] text-[#111827]"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className={`text-[10px] font-black uppercase tracking-[0.16em] ${active ? "text-[#B7DAD5]" : "text-[#5F9D99]"}`}>{active ? "Current plan" : "Upgrade option"}</p>
+                    <h3 className="mt-2 text-lg font-black">{plan.name}</h3>
+                  </div>
+                  <p className="text-2xl font-black">{active ? planPrice || plan.price : plan.price}</p>
+                </div>
+                <p className={`mt-3 text-xs font-semibold leading-5 ${active ? "text-white/66" : "text-[#111827]/58"}`}>{plan.text}</p>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ModuleSheet({
+  property,
+  activeModule,
+  onClose,
+  user,
+  savePropertyAction,
+  saveRecommendationAction,
+  deleteRecommendationAction,
+  saveReviewLinksAction
+}: {
+  property: Property;
+  activeModule: ModuleId;
+  onClose: () => void;
+  user: User;
+  savePropertyAction: any;
+  saveRecommendationAction: any;
+  deleteRecommendationAction: any;
+  saveReviewLinksAction: any;
+}) {
+  const info = moduleCopy[activeModule];
+  const Icon = info.icon;
+  const isPropertyModule = !["restaurants", "activities", "reviews"].includes(activeModule);
+  const visibleRecommendations = activeModule === "restaurants" ? restaurantItems(property) : activityItems(property);
+  const defaultCategory = activeModule === "restaurants" ? "Restaurant" : "Activity";
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-[#0B1220]/64 backdrop-blur-md">
+      <button type="button" aria-label="Close editor" className="flex-1" onClick={onClose} />
+      <section className="max-h-[82vh] overflow-y-auto rounded-t-[24px] border-t border-[#172234]/8 bg-white px-4 pb-5 pt-3 shadow-[0_-38px_110px_rgba(17,24,39,0.34)] lg:mx-auto lg:mb-6 lg:max-w-2xl lg:rounded-[24px] lg:border">
+        <div className="mx-auto h-1.5 w-11 rounded-full bg-[#111827]/18" />
+        <div className="mt-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className={`grid h-11 w-11 place-items-center rounded-[16px] ${info.accent}`}>
+              <Icon size={19} />
+            </div>
+            <div>
+              <h2 className="text-xl font-black tracking-tight">{info.title}</h2>
+              <p className="text-xs font-bold text-[#111827]/48">{info.subtitle}</p>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-[14px] bg-[#FFFFFF] px-4 py-2 text-xs font-black shadow-[0_14px_38px_rgba(17,24,39,0.10),inset_0_1px_0_rgba(255,255,255,0.86)]">
+            Close
+          </button>
+        </div>
+
+        <div className="mt-4">
+          {isPropertyModule ? (
+            <form action={savePropertyAction} className="space-y-4">
+              <input type="hidden" name="propertyId" value={property.id} />
+              <input type="hidden" name="name" value={property.name} />
+              <input type="hidden" name="accentColor" value={property.accentColor || "#5D9C9A"} />
+
+              <div className="overflow-hidden rounded-[20px] border border-[#172234]/8 bg-white shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)]">
+                {activeModule === "photos" ? (
+                  <div className="grid gap-3 p-4 sm:grid-cols-2">
+                    <ImageUploadField label="Property logo" fileName="logoFile" urlName="logoUrl" removeName="removeLogo" currentUrl={property.logoUrl} />
+                    <ImageUploadField label="Property photo" fileName="coverImageFile" urlName="coverImageUrl" removeName="removeCoverImage" currentUrl={property.coverImageUrl} />
+                  </div>
+                ) : null}
+
+                {activeModule === "welcome" ? (
+                  <div className="p-4">
+                    <Field label="Welcome note">
+                      <textarea name="welcomeMessage" className={`${textareaClass} min-h-24 bg-[#F9FAFB]`} defaultValue={property.welcomeMessage} />
+                    </Field>
+                  </div>
+                ) : null}
+
+                {activeModule === "wifi" ? (
+                  <div className="grid gap-0 divide-y divide-[#172234]/7">
+                    <div className="p-4">
+                      <Field label="Network">
+                        <input name="wifiName" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.wifiName || ""} required />
+                      </Field>
+                    </div>
+                    <div className="p-4">
+                      <Field label="Password">
+                        <input name="wifiPassword" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.wifiPassword || ""} required />
+                      </Field>
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeModule === "checkin" ? (
+                  <div className="grid gap-0 divide-y divide-[#172234]/7">
+                    <div className="p-4">
+                      <Field label="Check-in">
+                        <textarea name="checkInInfo" className={`${textareaClass} min-h-24 bg-[#F9FAFB]`} defaultValue={property.checkInInfo || ""} />
+                      </Field>
+                    </div>
+                    <div className="p-4">
+                      <Field label="Checkout">
+                        <textarea name="checkOutInfo" className={`${textareaClass} min-h-20 bg-[#F9FAFB]`} defaultValue={property.checkOutInfo || ""} />
+                      </Field>
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeModule === "rules" ? (
+                  <div className="grid gap-0 divide-y divide-[#172234]/7">
+                    <div className="p-4">
+                      <Field label="House rules">
+                        <textarea name="houseRules" className={`${textareaClass} min-h-24 bg-[#F9FAFB]`} defaultValue={property.houseRules || ""} />
+                      </Field>
+                    </div>
+                    <div className="p-4">
+                      <Field label="Parking">
+                        <textarea name="parkingInfo" className={`${textareaClass} min-h-20 bg-[#F9FAFB]`} defaultValue={property.parkingInfo || ""} />
+                      </Field>
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeModule === "contact" ? (
+                  <div className="grid gap-0 divide-y divide-[#172234]/7">
+                    <div className="p-4">
+                      <Field label="Host name">
+                        <input name="hostContactName" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.hostContactName || ""} />
+                      </Field>
+                    </div>
+                    <div className="grid gap-0 divide-y divide-[#172234]/7 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+                      <div className="p-4">
+                        <Field label="Phone">
+                          <input name="hostPhone" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.hostPhone || ""} required />
+                        </Field>
+                      </div>
+                      <div className="p-4">
+                        <Field label="Email">
+                          <input name="hostEmail" type="email" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.hostEmail || user.email} required />
+                        </Field>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeModule === "emergency" ? (
+                  <div className="p-4">
+                    <Field label="Emergency contact and safety notes">
+                      <textarea name="emergencyInfo" className={`${textareaClass} min-h-24 bg-[#F9FAFB]`} defaultValue={property.emergencyInfo || ""} />
+                    </Field>
+                  </div>
+                ) : null}
+
+                {activeModule === "ai" ? (
+                  <div className="p-4">
+                    <Field label="AI guest chat knowledge">
+                      <textarea name="aiKnowledge" className={`${textareaClass} min-h-32 bg-[#F9FAFB]`} defaultValue={property.aiKnowledge || ""} />
+                    </Field>
+                  </div>
+                ) : null}
+              </div>
+
+              {activeModule !== "welcome" ? <input type="hidden" name="welcomeMessage" value={property.welcomeMessage || ""} /> : null}
+              {activeModule !== "wifi" ? <input type="hidden" name="wifiName" value={property.wifiName || ""} /> : null}
+              {activeModule !== "wifi" ? <input type="hidden" name="wifiPassword" value={property.wifiPassword || ""} /> : null}
+              {activeModule !== "checkin" ? <input type="hidden" name="checkInInfo" value={property.checkInInfo || ""} /> : null}
+              {activeModule !== "checkin" ? <input type="hidden" name="checkOutInfo" value={property.checkOutInfo || ""} /> : null}
+              {activeModule !== "rules" ? <input type="hidden" name="parkingInfo" value={property.parkingInfo || ""} /> : null}
+              {activeModule !== "rules" ? <input type="hidden" name="houseRules" value={property.houseRules || ""} /> : null}
+              {activeModule !== "emergency" ? <input type="hidden" name="emergencyInfo" value={property.emergencyInfo || ""} /> : null}
+              {activeModule !== "contact" ? <input type="hidden" name="hostContactName" value={property.hostContactName || ""} /> : null}
+              {activeModule !== "contact" ? <input type="hidden" name="hostPhone" value={property.hostPhone || ""} /> : null}
+              {activeModule !== "contact" ? <input type="hidden" name="hostEmail" value={property.hostEmail || user.email} /> : null}
+              {activeModule !== "ai" ? <input type="hidden" name="aiKnowledge" value={property.aiKnowledge || ""} /> : null}
+
+              <div className="sticky bottom-2">
+                <SubmitButton pendingText="Saving..." className="luxury-btn-teal w-full">
+                  <Save size={16} />
+                  Save changes
+                </SubmitButton>
+              </div>
+            </form>
+          ) : activeModule === "reviews" ? (
+            <form action={saveReviewLinksAction} className="space-y-4 rounded-[20px] border border-[#172234]/8 bg-white p-4 shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)]">
+              <input type="hidden" name="propertyId" value={property.id} />
+              <input type="hidden" name="booking" value="" />
+              <input type="hidden" name="airbnb" value="" />
+              <Field label="Google review link">
+                <input name="google" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={getReviewValue(property, "GOOGLE")} placeholder="https://g.page/r/..." />
+              </Field>
+              <SubmitButton pendingText="Saving..." className="min-h-12 w-full rounded-[16px] bg-[#111827] text-white shadow-[0_18px_50px_rgba(17,24,39,0.26),inset_0_1px_0_rgba(255,255,255,0.12)]">
+                <Save size={16} />
+                Save Google link
+              </SubmitButton>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <form action={saveRecommendationAction} className="rounded-[20px] border border-[#172234]/8 bg-white p-4 shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)]">
+                <input type="hidden" name="propertyId" value={property.id} />
+                <input type="hidden" name="category" value={defaultCategory} />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Place">
+                    <input name="title" className={`${inputClass} bg-[#F9FAFB]`} placeholder={activeModule === "restaurants" ? "Casa Antica" : "Sunset boat tour"} required />
+                  </Field>
+                  <Field label="Link">
+                    <input name="url" className={`${inputClass} bg-[#F9FAFB]`} placeholder="https://maps.google.com/..." />
+                  </Field>
+                </div>
+                <Field label="Why guests love it">
+                  <textarea name="description" className={`${textareaClass} mt-2 min-h-24 bg-[#F9FAFB]`} placeholder="A candlelit terrace, handmade pasta and a perfect first evening." required />
+                </Field>
+                <SubmitButton pendingText="Adding..." className="mt-4 min-h-12 w-full rounded-[16px] bg-[#111827] text-white shadow-[0_18px_50px_rgba(17,24,39,0.26),inset_0_1px_0_rgba(255,255,255,0.12)]">
+                  <Plus size={16} />
+                  Add {activeModule === "restaurants" ? "restaurant" : "activity"}
+                </SubmitButton>
+              </form>
+
+              <div className="grid gap-2">
+                {visibleRecommendations.map((item) => (
+                  <article key={item.id} className="rounded-[18px] border border-[#172234]/8 bg-white p-3 shadow-[0_14px_38px_rgba(17,24,39,0.075),inset_0_1px_0_rgba(255,255,255,0.84)]">
+                    <form id={`recommendation-${item.id}`} action={saveRecommendationAction} className="grid gap-2">
+                      <input type="hidden" name="propertyId" value={property.id} />
+                      <input type="hidden" name="recommendationId" value={item.id} />
+                      <input type="hidden" name="category" value={item.category || defaultCategory} />
+                      <input name="title" className={`${inputClass} min-h-10 bg-[#F9FAFB] text-xs font-bold`} defaultValue={item.title} required />
+                      <textarea name="description" className={`${textareaClass} min-h-20 bg-[#F9FAFB] text-xs font-semibold`} defaultValue={item.description} required />
+                      <input name="url" className={`${inputClass} min-h-10 bg-[#F9FAFB] text-xs font-semibold`} defaultValue={item.url || ""} placeholder="Link only" />
+                    </form>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <SubmitButton form={`recommendation-${item.id}`} pendingText="Saving..." className="min-h-10 rounded-[14px] bg-[#111827] px-4 text-xs text-white">
+                        Save
+                      </SubmitButton>
+                      <form action={deleteRecommendationAction}>
+                        <input type="hidden" name="id" value={item.id} />
+                        <ConfirmSubmitButton message={`Remove ${item.title}?`} />
+                      </form>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}

@@ -88,6 +88,7 @@ Open:
 - Admin: `http://localhost:3000/admin`
 - Dashboard: `http://localhost:3000/dashboard`
 - Example guide: `http://localhost:3000/stay/example-stay`
+- Preview demo: `http://localhost:3000/stay/accommodation`
 
 ## Account Creation
 

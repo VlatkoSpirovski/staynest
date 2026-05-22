@@ -167,13 +167,13 @@ export async function updateAdminProperty(formData: FormData) {
     redirectWithAdminError("Choose an existing property.");
   }
 
-  const slug =
+  let slug =
     requestedSlug && requestedSlug !== existingProperty.slug
       ? await createUniqueSecureSlug(requestedSlug, id)
       : existingProperty.slug;
 
   if (!hasSecureSlugSuffix(slug)) {
-    redirectWithAdminError("Public guide links must use a secure generated suffix. Regenerate the link before launch.");
+    slug = await createUniqueSecureSlug(name, id);
   }
 
   const property = await prisma.property.update({
