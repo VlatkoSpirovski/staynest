@@ -83,9 +83,6 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           <PaddleCheckoutButton
             clientToken={clientToken}
             environment={paddleEnvironment}
-            priceId={priceId}
-            email={user.email}
-            userId={user.id}
             plan={selectedPlan}
             successUrl={successUrl}
           />

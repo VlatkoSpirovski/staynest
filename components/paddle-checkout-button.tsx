@@ -6,9 +6,6 @@ import { useEffect, useState } from "react";
 type PaddleCheckoutButtonProps = {
   clientToken: string;
   environment: string;
-  priceId: string;
-  email: string;
-  userId: string;
   plan: string;
   successUrl: string;
 };
@@ -30,6 +27,15 @@ type PaddleWindow = Window & {
         items: Array<{ priceId: string; quantity: number }>;
         customer: { email: string };
         customData: Record<string, string>;
+      }): void;
+      open(options: {
+        settings: {
+          displayMode: "overlay";
+          variant: "one-page";
+          theme: "light";
+          successUrl: string;
+        };
+        transactionId: string;
       }): void;
     };
   };
@@ -66,9 +72,6 @@ function loadPaddleScript() {
 export function PaddleCheckoutButton({
   clientToken,
   environment,
-  priceId,
-  email,
-  userId,
   plan,
   successUrl
 }: PaddleCheckoutButtonProps) {
@@ -114,27 +117,42 @@ export function PaddleCheckoutButton({
         disabled={!ready || busy}
         onClick={() => {
           const paddle = (window as PaddleWindow).Paddle;
-          if (!paddle) {
-            setError("Paddle is still loading. Try again in a moment.");
-            return;
-          }
-          setBusy(true);
-          paddle.Checkout.open({
-            settings: {
-              displayMode: "overlay",
-              variant: "one-page",
-              theme: "light",
-              successUrl
-            },
-            items: [{ priceId, quantity: 1 }],
-            customer: { email },
-            customData: {
-              userId,
-              plan
+        if (!paddle) {
+          setError("Paddle is still loading. Try again in a moment.");
+          return;
+        }
+        setBusy(true);
+        setError("");
+        fetch("/api/paddle/checkout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ plan })
+        })
+          .then(async (response) => {
+            const payload = (await response.json().catch(() => ({}))) as { transactionId?: string; error?: string };
+            if (!response.ok || !payload.transactionId) {
+              throw new Error(payload.error || "Could not create Paddle checkout.");
             }
+
+            paddle.Checkout.open({
+              settings: {
+                displayMode: "overlay",
+                variant: "one-page",
+                theme: "light",
+                successUrl
+              },
+              transactionId: payload.transactionId
+            });
+          })
+          .catch((checkoutError) => {
+            setError(checkoutError instanceof Error ? checkoutError.message : "Could not create Paddle checkout.");
+          })
+          .finally(() => {
+            setTimeout(() => setBusy(false), 800);
           });
-          setTimeout(() => setBusy(false), 1500);
-        }}
+      }}
         className="focus-ring inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white shadow-soft transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {!ready || busy ? <Loader2 className="animate-spin" size={16} /> : null}
