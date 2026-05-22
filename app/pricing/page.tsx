@@ -1,5 +1,6 @@
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getAppUrl } from "@/lib/utils";
 
 const plans = [
   {
@@ -19,6 +20,8 @@ const plans = [
 ];
 
 export default function PricingPage() {
+  const appUrl = getAppUrl();
+
   return (
     <main className="min-h-screen bg-mist text-ink">
       <section className="mx-auto max-w-6xl px-5 py-10">
@@ -26,7 +29,7 @@ export default function PricingPage() {
           <a href="/" className="text-lg font-extrabold">
             StayNest
           </a>
-          <Button href="/login" variant="secondary">
+          <Button href={`${appUrl}/login`} variant="secondary">
             Login
           </Button>
         </header>
@@ -56,7 +59,7 @@ export default function PricingPage() {
                   </div>
                 ))}
               </div>
-              <Button href={plan.href} className="mt-7 w-full">
+              <Button href={`${appUrl}${plan.href}`} className="mt-7 w-full">
                 Start {plan.name}
               </Button>
             </article>

@@ -4,9 +4,14 @@ import { randomBytes, createHash } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getAppUrl } from "@/lib/utils";
 
 const sessionCookieName = "staynest_session";
 const sessionTtlDays = 30;
+
+function sessionCookieDomain() {
+  return process.env.SESSION_COOKIE_DOMAIN || (process.env.NODE_ENV === "production" ? ".staynest.site" : undefined);
+}
 
 export function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
@@ -32,6 +37,7 @@ export async function createSession(userId: string) {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
+    domain: sessionCookieDomain(),
     path: "/",
     expires: expiresAt
   });
@@ -47,7 +53,14 @@ export async function destroySession() {
     });
   }
 
-  cookies().delete(sessionCookieName);
+  cookies().set(sessionCookieName, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    domain: sessionCookieDomain(),
+    path: "/",
+    expires: new Date(0)
+  });
 }
 
 export async function getCurrentUser() {
@@ -92,7 +105,7 @@ export async function requireReadyUser() {
 export async function requireAdminUser() {
   const user = await requireReadyUser();
   if (user.role !== "ADMIN") {
-    redirect("/dashboard");
+    redirect(`${getAppUrl()}/dashboard`);
   }
 
   return user;

@@ -4,7 +4,7 @@ import { deleteRecommendation, importListingFromUrl, saveProperty, saveRecommend
 import DashboardClient from "@/components/dashboard-client";
 import { requireReadyUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getAppUrl } from "@/lib/utils";
+import { getSiteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +37,7 @@ function savedMessage(saved?: string) {
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const user = await requireReadyUser();
   const property = await getDashboardProperty(user.id);
-  const publicUrl = property ? `${getAppUrl()}/stay/${property.slug}` : "";
+  const publicUrl = property ? `${getSiteUrl()}/stay/${property.slug}` : "";
   const qrCode = publicUrl ? await QRCode.toDataURL(publicUrl, { margin: 1, width: 260, color: { dark: "#111827" } }) : "";
   const selectedPlan = user.selectedPlan === "ai" ? "ai" : "basic";
   const planName = selectedPlan === "ai" ? "Premium AI Concierge" : "Essential Guest Guide";

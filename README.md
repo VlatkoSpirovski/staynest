@@ -88,7 +88,6 @@ Open:
 - Admin: `http://localhost:3000/admin`
 - Dashboard: `http://localhost:3000/dashboard`
 - Example guide: `http://localhost:3000/stay/example-stay`
-- Preview demo: `http://localhost:3000/stay/accommodation`
 
 ## Account Creation
 
@@ -175,7 +174,10 @@ Recommended production flow:
    - Keep the direct connection string available for migrations if your provider recommends that.
 3. Add these environment variables in your hosting dashboard:
    - `DATABASE_URL`
-   - `NEXT_PUBLIC_APP_URL=https://staynest.site`
+   - `NEXT_PUBLIC_SITE_URL=https://staynest.site`
+   - `NEXT_PUBLIC_APP_URL=https://app.staynest.site`
+   - `NEXT_PUBLIC_ADMIN_URL=https://admin.staynest.site`
+   - `SESSION_COOKIE_DOMAIN=.staynest.site`
 4. Run Prisma migration against production from a secure terminal:
 
 ```bash

@@ -1,5 +1,6 @@
 import { ArrowRight, Bot, CheckCircle2, FileText, Home, QrCode, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getAppUrl } from "@/lib/utils";
 
 const features = [
   { title: "QR guide", text: "Place one QR code in the property and guests always have the latest instructions.", icon: QrCode },
@@ -21,18 +22,20 @@ const plans = [
     price: "€10",
     text: "For owners who need a clean QR guest guide without AI.",
     items: ["Mobile guest guide", "QR code and public link", "Wi-Fi, rules and recommendations", "Review links"],
-    href: "/register?plan=basic"
+    plan: "basic"
   },
   {
     name: "Full AI",
     price: "€15",
     text: "For premium stays that want guest chat and faster setup.",
     items: ["Everything in Basic", "AI guest assistant", "Property knowledge training", "Booking/Airbnb import support"],
-    href: "/register?plan=ai"
+    plan: "ai"
   }
 ];
 
 export default function LandingPage() {
+  const appUrl = getAppUrl();
+
   return (
     <main className="min-h-screen bg-mist text-ink">
       <section className="soft-grid overflow-hidden">
@@ -46,7 +49,7 @@ export default function LandingPage() {
                 className="h-20 w-20 object-contain drop-shadow-sm sm:h-32 sm:w-32"
               />
             </div>
-            <Button href="/login" variant="secondary" className="px-4 text-xs sm:inline-flex sm:px-5 sm:text-sm">
+            <Button href={`${appUrl}/login`} variant="secondary" className="px-4 text-xs sm:inline-flex sm:px-5 sm:text-sm">
               Owner Login
             </Button>
           </header>
@@ -82,7 +85,7 @@ export default function LandingPage() {
                 <Button href="#plans" className="min-h-14 gap-2 text-base sm:min-h-11 sm:text-sm">
                   View Plans <ArrowRight size={17} />
                 </Button>
-                <Button href="/stay/accommodation" variant="secondary" className="min-h-14 text-base sm:min-h-11 sm:text-sm">
+                <Button href="/stay/example-stay" variant="secondary" className="min-h-14 text-base sm:min-h-11 sm:text-sm">
                   View Example
                 </Button>
               </div>
@@ -147,7 +150,7 @@ export default function LandingPage() {
                     </div>
                   ))}
                 </div>
-                <a href={plan.href} className="focus-ring mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-5 text-sm font-semibold text-white shadow-soft transition hover:bg-ink/90">
+                <a href={`${appUrl}/register?plan=${plan.plan}`} className="focus-ring mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-5 text-sm font-semibold text-white shadow-soft transition hover:bg-ink/90">
                   Choose {plan.name}
                 </a>
               </article>
@@ -181,10 +184,10 @@ export default function LandingPage() {
             </div>
 
             <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
-              <a href="/register?plan=basic" className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white shadow-soft transition hover:bg-ink/90 sm:w-auto">
+              <a href={`${appUrl}/register?plan=basic`} className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white shadow-soft transition hover:bg-ink/90 sm:w-auto">
                 Start Basic
               </a>
-              <a href="/register?plan=ai" className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80 sm:w-auto">
+              <a href={`${appUrl}/register?plan=ai`} className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80 sm:w-auto">
                 Start Full AI
               </a>
             </div>
