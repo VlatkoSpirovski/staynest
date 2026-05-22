@@ -72,16 +72,16 @@ export function GuestLanguageMenu() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex h-10 items-center gap-1.5 rounded-full border border-white/25 bg-white/14 py-1.5 pl-2 pr-2 text-xs font-black text-white shadow-[0_14px_40px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl transition hover:bg-white/22"
+        className="inline-flex h-10 items-center gap-1.5 rounded-full border border-[var(--guide-card-border)] bg-[var(--guide-language-bg)] py-1.5 pl-2 pr-2 text-xs font-black text-[var(--guide-language-text)] shadow-[0_14px_40px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl transition hover:brightness-105"
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label="Choose guide language"
       >
-        <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-ink shadow-[0_8px_22px_rgba(0,0,0,0.16)]">
+        <span className="grid h-7 w-7 place-items-center rounded-full bg-[var(--guide-language-icon-bg)] text-[var(--guide-language-icon-text)] shadow-[0_8px_22px_rgba(0,0,0,0.14)]">
           <Languages size={14} />
         </span>
         <span>{active.short}</span>
-        <ChevronDown size={14} className={`text-white/72 transition ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={14} className={`opacity-70 transition ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open ? (

@@ -14,9 +14,11 @@ import {
   Home,
   ImageIcon,
   KeyRound,
+  Link2,
   LogOut,
   MapPin,
   Phone,
+  Palette,
   Plus,
   QrCode,
   Save,
@@ -24,6 +26,7 @@ import {
   ShieldAlert,
   Star,
   Utensils,
+  WandSparkles,
   Wifi
 } from "lucide-react";
 
@@ -32,6 +35,7 @@ import { CopyButton } from "@/components/copy-button";
 import { ImageUploadField } from "@/components/image-upload-field";
 import { SubmitButton } from "@/components/submit-button";
 import { Field, inputClass, textareaClass } from "@/components/ui/panel";
+import { getGuideTheme, guideThemeStyle, guideThemes, type GuideTheme, type GuideThemeId } from "@/themes";
 
 interface Recommendation {
   id: string;
@@ -60,6 +64,9 @@ interface Property {
   logoUrl: string | null;
   coverImageUrl: string | null;
   accentColor: string;
+  templateId: string;
+  designSerif: boolean;
+  designRounded: boolean;
   welcomeMessage: string;
   wifiName: string | null;
   wifiPassword: string | null;
@@ -99,17 +106,19 @@ interface DashboardClientProps {
   logoutAction: any;
   importListingAction: any;
   savePropertyAction: any;
+  savePropertyDesignAction: any;
   saveRecommendationAction: any;
   deleteRecommendationAction: any;
   saveReviewLinksAction: any;
 }
 
-type TabId = "setup" | "modules" | "settings";
+type TabId = "setup" | "modules" | "design" | "settings";
 type ModuleId = "photos" | "welcome" | "wifi" | "checkin" | "rules" | "restaurants" | "activities" | "contact" | "emergency" | "ai" | "reviews";
 
 const tabs: Array<{ id: TabId; label: string; icon: typeof Home }> = [
   { id: "setup", label: "Setup", icon: BadgeCheck },
   { id: "modules", label: "Modules", icon: BedDouble },
+  { id: "design", label: "Design", icon: Palette },
   { id: "settings", label: "Settings", icon: Settings }
 ];
 
@@ -262,7 +271,9 @@ export default function DashboardClient(props: DashboardClientProps) {
     planPrice,
     selectedPlan,
     logoutAction,
+    importListingAction,
     savePropertyAction,
+    savePropertyDesignAction,
     saveRecommendationAction,
     deleteRecommendationAction,
     saveReviewLinksAction
@@ -277,6 +288,9 @@ export default function DashboardClient(props: DashboardClientProps) {
       logoUrl: null,
       coverImageUrl: null,
       accentColor: "#5D9C9A",
+      templateId: "classic",
+      designSerif: true,
+      designRounded: true,
       welcomeMessage: "",
       wifiName: null,
       wifiPassword: null,
@@ -393,6 +407,7 @@ export default function DashboardClient(props: DashboardClientProps) {
             completion={completion}
             quickActions={quickActions}
             openModule={openModule}
+            importListingAction={importListingAction}
           />
         ) : null}
 
@@ -402,6 +417,13 @@ export default function DashboardClient(props: DashboardClientProps) {
             setupItems={setupItems}
             activeModule={activeModule}
             openModule={openModule}
+          />
+        ) : null}
+
+        {activeTab === "design" ? (
+          <DesignScreen
+            property={property}
+            savePropertyDesignAction={savePropertyDesignAction}
           />
         ) : null}
 
@@ -451,12 +473,14 @@ function SetupScreen({
   property,
   completion,
   quickActions,
-  openModule
+  openModule,
+  importListingAction
 }: {
   property: Property;
   completion: number;
   quickActions: Array<{ id: ModuleId; label: string; done: boolean }>;
   openModule: (id: ModuleId) => void;
+  importListingAction: any;
 }) {
   return (
     <div className="space-y-4">
@@ -523,7 +547,77 @@ function SetupScreen({
           ))}
         </div>
       </section>
+
+      <ImportListingCard property={property} importListingAction={importListingAction} />
     </div>
+  );
+}
+
+function ImportListingCard({
+  property,
+  importListingAction
+}: {
+  property: Property;
+  importListingAction: any;
+}) {
+  return (
+    <section className="overflow-hidden rounded-[24px] border border-[#172234]/8 bg-white shadow-[0_30px_90px_rgba(17,24,39,0.10),inset_0_1px_0_rgba(255,255,255,0.94)]">
+      <div className="bg-[radial-gradient(circle_at_12%_0%,rgba(183,218,213,0.22),transparent_34%),linear-gradient(145deg,#FFFFFF_0%,#F7FAFA_100%)] p-5">
+        <div className="flex items-start gap-3">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[16px] bg-[#111827] text-white shadow-[0_16px_42px_rgba(17,24,39,0.22),inset_0_1px_0_rgba(255,255,255,0.12)]">
+            <WandSparkles size={19} />
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#5F9D99]">Smart prefill</p>
+            <h2 className="mt-1 text-2xl font-black tracking-tight">Import from Booking or Airbnb</h2>
+            <p className="mt-2 text-sm font-semibold leading-6 text-[#111827]/58">
+              Paste a listing link. StayNest will pull the public details it can read: name, host name, check-in/out, parking, rules and facilities.
+            </p>
+          </div>
+        </div>
+
+        <form action={importListingAction} className="mt-5 grid gap-3">
+          <input type="hidden" name="propertyId" value={property.id} />
+          <label className="grid gap-2">
+            <span className="text-xs font-black uppercase tracking-[0.14em] text-[#111827]/42">Listing link</span>
+            <span className="flex min-h-12 items-center gap-2 rounded-[16px] border border-[#172234]/8 bg-white px-3 shadow-[0_10px_28px_rgba(17,24,39,0.055),inset_0_1px_0_rgba(255,255,255,0.84)]">
+              <Link2 size={17} className="shrink-0 text-[#5F9D99]" />
+              <input
+                name="listingUrl"
+                type="url"
+                className="min-h-11 min-w-0 flex-1 bg-transparent text-sm font-bold text-[#111827] outline-none placeholder:text-[#111827]/32"
+                placeholder="https://www.booking.com/hotel/... or Airbnb link"
+              />
+            </span>
+          </label>
+
+          <details className="rounded-[18px] border border-[#172234]/8 bg-white">
+            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 text-sm font-black text-[#111827] [&::-webkit-details-marker]:hidden">
+              <span>Paste listing text if the site blocks reading</span>
+              <ChevronDown size={16} className="text-[#111827]/35" />
+            </summary>
+            <div className="border-t border-[#172234]/7 p-3">
+              <textarea
+                name="listingText"
+                className={`${textareaClass} min-h-28 bg-[#F9FAFB] text-sm`}
+                placeholder="Copy the listing description, facilities, house rules and check-in/out details here."
+              />
+            </div>
+          </details>
+
+          <div className="rounded-[18px] border border-[#5F9D99]/14 bg-[#E8F4F3]/55 px-4 py-3">
+            <p className="text-xs font-semibold leading-5 text-[#315F5B]">
+              Private details like Wi-Fi passwords and lockbox codes are never invented. After import, review each field before guests use the guide.
+            </p>
+          </div>
+
+          <SubmitButton pendingText="Importing..." className="min-h-12 rounded-[16px] bg-[#111827] text-white shadow-[0_18px_50px_rgba(17,24,39,0.26),inset_0_1px_0_rgba(255,255,255,0.12)]">
+            <WandSparkles size={16} />
+            Prefill guide
+          </SubmitButton>
+        </form>
+      </div>
+    </section>
   );
 }
 
@@ -580,6 +674,365 @@ function ModulesScreen({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function DesignScreen({
+  property,
+  savePropertyDesignAction
+}: {
+  property: Property;
+  savePropertyDesignAction: any;
+}) {
+  const [selectedThemeId, setSelectedThemeId] = useState<GuideThemeId>(getGuideTheme(property.templateId).id);
+  const selectedTheme = useMemo(() => getGuideTheme(selectedThemeId), [selectedThemeId]);
+  const [accentColor, setAccentColor] = useState(property.accentColor || selectedTheme.defaults.accentColor);
+  const [designSerif, setDesignSerif] = useState(property.designSerif ?? selectedTheme.defaults.serifHeading);
+  const [designRounded, setDesignRounded] = useState(property.designRounded ?? selectedTheme.defaults.roundedCards);
+
+  useEffect(() => {
+    const nextTheme = getGuideTheme(property.templateId);
+    setSelectedThemeId(nextTheme.id);
+    setAccentColor(property.accentColor || nextTheme.defaults.accentColor);
+    setDesignSerif(property.designSerif ?? nextTheme.defaults.serifHeading);
+    setDesignRounded(property.designRounded ?? nextTheme.defaults.roundedCards);
+  }, [property.id, property.templateId, property.accentColor, property.designSerif, property.designRounded]);
+
+  useEffect(() => {
+    if (!selectedTheme.accentOptions.includes(accentColor)) {
+      setAccentColor(selectedTheme.defaults.accentColor);
+    }
+  }, [accentColor, selectedTheme]);
+
+  const canSave = Boolean(property.id);
+  function chooseTheme(themeId: GuideThemeId) {
+    const nextTheme = getGuideTheme(themeId);
+    setSelectedThemeId(nextTheme.id);
+    setAccentColor(nextTheme.defaults.accentColor);
+    setDesignSerif(nextTheme.defaults.serifHeading);
+    setDesignRounded(nextTheme.defaults.roundedCards);
+  }
+
+  return (
+    <div className="space-y-5">
+      <section className="rounded-[28px] border border-[#172234]/8 bg-white p-5 shadow-[0_30px_90px_rgba(17,24,39,0.08),inset_0_1px_0_rgba(255,255,255,0.94)] lg:p-7">
+        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#5F9D99]">Design</p>
+        <div className="mt-3 max-w-2xl">
+          <h1 className="text-3xl font-black leading-[1.02] tracking-tight lg:text-5xl">Choose your guest guide style</h1>
+          <p className="mt-4 text-sm font-semibold leading-7 text-[#111827]/58 lg:text-base">
+            Pick the template that matches your property atmosphere. You can change it anytime.
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="-mx-4 overflow-x-auto px-4 pb-2 lg:mx-0 lg:overflow-visible lg:px-0">
+          <div className="flex w-max gap-3 lg:grid lg:w-auto lg:grid-cols-2 xl:grid-cols-4">
+            {guideThemes.map((theme) => (
+              <TemplateChoiceCard
+                key={theme.id}
+                theme={theme}
+                property={property}
+                selected={selectedThemeId === theme.id}
+                accentColor={selectedThemeId === theme.id ? accentColor : theme.defaults.accentColor}
+                designSerif={selectedThemeId === theme.id ? designSerif : theme.defaults.serifHeading}
+                designRounded={selectedThemeId === theme.id ? designRounded : theme.defaults.roundedCards}
+                onSelect={() => chooseTheme(theme.id)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <form action={savePropertyDesignAction} className="flex flex-col items-stretch gap-3 px-1 sm:flex-row sm:items-center sm:justify-end">
+          <input type="hidden" name="propertyId" value={property.id} />
+          <input type="hidden" name="templateId" value={selectedThemeId} />
+          <input type="hidden" name="accentColor" value={accentColor} />
+          {designSerif ? <input type="hidden" name="designSerif" value="1" /> : null}
+          {designRounded ? <input type="hidden" name="designRounded" value="1" /> : null}
+
+          {!canSave ? (
+            <p className="rounded-[16px] border border-[#F59E0B]/20 bg-[#FFFBEB] px-4 py-3 text-sm font-bold text-[#92400E]">Create the property first, then apply a template.</p>
+          ) : null}
+          <SubmitButton pendingText="Applying..." disabled={!canSave} className="min-h-12 rounded-[16px] bg-[#111827] px-8 text-white shadow-[0_18px_48px_rgba(17,24,39,0.24),inset_0_1px_0_rgba(255,255,255,0.12)] disabled:opacity-50">
+            Apply Template
+          </SubmitButton>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+function TemplateChoiceCard({
+  theme,
+  property,
+  selected,
+  accentColor,
+  designSerif,
+  designRounded,
+  onSelect
+}: {
+  theme: GuideTheme;
+  property: Property;
+  selected: boolean;
+  accentColor: string;
+  designSerif: boolean;
+  designRounded: boolean;
+  onSelect: () => void;
+}) {
+  const shellClass =
+    theme.layout === "darkLuxury"
+      ? "border-[#D6AF6F]/24 bg-[#0B1218] text-[#F7F0E2] shadow-[0_28px_86px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.08)]"
+      : theme.layout === "modern"
+        ? "border-[#111827]/8 bg-[#FFFFFF] text-[#111827] shadow-[0_18px_54px_rgba(17,24,39,0.06),inset_0_1px_0_rgba(255,255,255,0.98)]"
+        : theme.layout === "mediterranean"
+          ? "border-[#6FA1AD]/18 bg-[#FBFAF4] text-[#18313A] shadow-[0_24px_70px_rgba(64,99,112,0.12),inset_0_1px_0_rgba(255,255,255,0.92)]"
+          : "border-[#D8C8AE]/60 bg-[#F7EFE3] text-[#1F2326] shadow-[0_24px_70px_rgba(76,55,37,0.13),inset_0_1px_0_rgba(255,255,255,0.9)]";
+  const selectedClass =
+    theme.layout === "darkLuxury"
+      ? "ring-4 ring-[#D6AF6F]/18 border-[#D6AF6F]/55"
+      : theme.layout === "modern"
+        ? "ring-4 ring-[#111827]/8 border-[#111827]/28"
+        : theme.layout === "mediterranean"
+          ? "ring-4 ring-[#6FA1AD]/16 border-[#6FA1AD]/42"
+          : "ring-4 ring-[#9B7C4B]/16 border-[#9B7C4B]/42";
+  const mutedClass = "opacity-60";
+  const pillClass =
+    theme.layout === "darkLuxury"
+      ? "bg-[#D6AF6F]/10 text-[#D6AF6F] ring-1 ring-[#D6AF6F]/18"
+      : theme.layout === "modern"
+        ? "bg-[#F4F6F8] text-[#65707C]"
+        : theme.layout === "mediterranean"
+          ? "bg-[#EAF3F1] text-[#4F8793] ring-1 ring-[#6FA1AD]/14"
+          : "bg-[#FFF9EF] text-[#9B7C4B] ring-1 ring-[#9B7C4B]/12";
+
+  return (
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") onSelect();
+      }}
+      className={`w-[282px] shrink-0 cursor-pointer rounded-[28px] border p-3 transition duration-200 hover:-translate-y-1 lg:w-auto ${shellClass} ${
+        selected ? selectedClass : ""
+      }`}
+    >
+      <div className="relative">
+        {selected ? (
+          <span className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-full text-white shadow-[0_12px_30px_rgba(17,24,39,0.28)]" style={{ backgroundColor: accentColor }}>
+            <Check size={16} />
+          </span>
+        ) : null}
+        <TemplatePhonePreview
+          theme={theme}
+          property={property}
+          accentColor={accentColor}
+          designSerif={designSerif}
+          designRounded={designRounded}
+          compact
+        />
+      </div>
+
+      <div className="px-1 pb-1 pt-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-black tracking-tight">{theme.name}</h2>
+            <p className={`mt-1 min-h-[40px] text-xs font-semibold leading-5 ${mutedClass}`}>{theme.description}</p>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="flex -space-x-1">
+            {theme.palette.map((color) => (
+              <span key={color} className="h-5 w-5 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: color }} />
+            ))}
+          </div>
+          <button type="button" onClick={(event) => { event.stopPropagation(); onSelect(); }} className={`rounded-full px-3 py-2 text-xs font-black ${pillClass}`}>
+            Preview
+          </button>
+        </div>
+        <p className={`mt-3 rounded-[14px] px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] ${pillClass}`}>
+          Best for: {theme.bestFor}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function TemplatePhonePreview({
+  theme,
+  property,
+  accentColor,
+  designSerif,
+  designRounded,
+  compact = false
+}: {
+  theme: GuideTheme;
+  property: Property;
+  accentColor: string;
+  designSerif: boolean;
+  designRounded: boolean;
+  compact?: boolean;
+}) {
+  const style = guideThemeStyle(theme, { accentColor, designSerif, designRounded }) as React.CSSProperties;
+  const displayName = property.name || theme.preview.propertyName;
+  const previewCards: Array<{ title: string; subtitle: string; icon: typeof Home }> = [
+    { title: "Wi-Fi", subtitle: "Connect", icon: Wifi },
+    { title: "Contact", subtitle: "We are here", icon: Phone },
+    { title: "Check-in", subtitle: "Arrival", icon: KeyRound },
+    { title: "House Guide", subtitle: "About", icon: Home }
+  ];
+  const heightClass = compact ? "h-[388px]" : "h-[520px]";
+
+  function PreviewLogo({ small = false }: { small?: boolean }) {
+    return (
+      <div className={`${small ? "h-9 w-9 rounded-[13px]" : "h-12 w-12 rounded-[18px]"} grid shrink-0 place-items-center overflow-hidden bg-[var(--guide-elevated-bg)] p-1 text-[10px] font-black text-[var(--guide-text)] shadow-[0_12px_34px_rgba(0,0,0,0.16)] ring-1 ring-[var(--guide-card-border)]`}>
+        {property.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={property.logoUrl} alt="" className="h-full w-full rounded-[inherit] object-cover" />
+        ) : (
+          theme.preview.logoText
+        )}
+      </div>
+    );
+  }
+
+  function HeroLayer({ className = "" }: { className?: string }) {
+    return (
+      <div className={`relative overflow-hidden ${className}`} style={{ background: theme.preview.heroBackground }}>
+        {property.coverImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={property.coverImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : null}
+        <div className="absolute inset-0" style={{ background: "var(--guide-hero-overlay)" }} />
+      </div>
+    );
+  }
+
+  function MiniMenu({ variant = theme.layout }: { variant?: GuideTheme["layout"] }) {
+    return (
+      <>
+        {previewCards.map((item) => {
+          const Icon = item.icon;
+          if (variant === "modern") {
+            return (
+              <div key={item.title} className="flex min-h-[54px] items-center gap-2 rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] bg-[var(--guide-card-bg)] px-3 text-left shadow-[var(--guide-card-shadow)]">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--guide-icon-radius)] bg-[var(--guide-icon-bg)] text-[var(--guide-accent)]">
+                  <Icon size={13} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-[11px] font-black">{item.title}</span>
+                  <span className="block truncate text-[9px] font-semibold text-[var(--guide-muted)]">{item.subtitle}</span>
+                </span>
+              </div>
+            );
+          }
+
+          return (
+            <div key={item.title} className={`${compact ? "min-h-[74px] p-3" : "min-h-[108px] p-4"} rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] bg-[var(--guide-card-bg)] ${variant === "darkLuxury" ? "text-left" : "text-center"} shadow-[var(--guide-card-shadow)]`}>
+              <span className={`${compact ? "h-8 w-8" : "h-11 w-11"} ${variant === "darkLuxury" ? "" : "mx-auto"} grid place-items-center rounded-[var(--guide-icon-radius)] bg-[var(--guide-icon-bg)] text-[var(--guide-accent)] shadow-[var(--guide-icon-shadow)]`}>
+                <Icon size={compact ? 14 : 17} />
+              </span>
+              <p className={`${compact ? "mt-2 text-[11px]" : "mt-3 text-sm"} font-black`}>{item.title}</p>
+              <p className={`${compact ? "text-[10px]" : "text-xs"} mt-1 font-semibold text-[var(--guide-muted)]`}>{item.subtitle}</p>
+            </div>
+          );
+        })}
+      </>
+    );
+  }
+
+  if (theme.layout === "modern") {
+    return (
+      <div style={style} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] bg-[var(--guide-shell-bg)] text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
+        <header className={`${compact ? "px-4 py-3" : "px-5 py-4"} flex items-center justify-between border-b border-[var(--guide-section-divider)]`}>
+          <div className="flex items-center gap-2">
+            <PreviewLogo small={compact} />
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--guide-muted)]">Stay guide</p>
+              <p className={`${compact ? "text-xs" : "text-sm"} font-black`}>{displayName}</p>
+            </div>
+          </div>
+          <span className="rounded-full border border-[var(--guide-card-border)] bg-white px-2.5 py-1 text-[9px] font-black">EN</span>
+        </header>
+        <section className={`${compact ? "p-4" : "p-5"}`}>
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
+          <h3 className={`${compact ? "mt-2 text-2xl" : "mt-3 text-3xl"} font-black leading-[0.95] tracking-tight`} style={{ fontFamily: "var(--guide-heading-font)" }}>
+            Welcome to {displayName}
+          </h3>
+          <HeroLayer className={`${compact ? "mt-3 h-28" : "mt-4 h-36"} rounded-[var(--guide-hero-radius)]`} />
+        </section>
+        <section className={`${compact ? "px-4" : "px-5"} grid gap-2`}>
+          <MiniMenu variant="modern" />
+        </section>
+      </div>
+    );
+  }
+
+  if (theme.layout === "mediterranean") {
+    return (
+      <div style={style} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] bg-[var(--guide-shell-bg)] p-3 text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
+        <header className="mb-3 flex items-center justify-between">
+          <PreviewLogo small={compact} />
+          <span className="rounded-full border border-[var(--guide-card-border)] bg-white/75 px-2.5 py-1 text-[9px] font-black text-[var(--guide-text)]">EN</span>
+        </header>
+        <section className="relative overflow-hidden rounded-[var(--guide-hero-radius)]">
+          <HeroLayer className={compact ? "h-32" : "h-44"} />
+          <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+            <p className="text-[9px] font-black uppercase tracking-[0.22em] text-white/82">{theme.preview.eyebrow}</p>
+            <h3 className={`${compact ? "text-2xl" : "text-4xl"} font-semibold leading-none`} style={{ fontFamily: "var(--guide-heading-font)" }}>{displayName}</h3>
+          </div>
+        </section>
+        <section className={`${compact ? "mt-3 gap-2" : "mt-4 gap-3"} grid grid-cols-2`}>
+          <MiniMenu variant="mediterranean" />
+        </section>
+      </div>
+    );
+  }
+
+  if (theme.layout === "darkLuxury") {
+    return (
+      <div style={style} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] bg-[var(--guide-shell-bg)] text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-[#D6AF6F]/20`}>
+        <section className={`${compact ? "h-40" : "h-56"} relative overflow-hidden`}>
+          <HeroLayer className="absolute inset-0" />
+          <div className={`${compact ? "p-4" : "p-5"} relative flex h-full flex-col justify-between`}>
+            <div className="flex items-start justify-between">
+              <PreviewLogo small={compact} />
+              <span className="rounded-full border border-[#D6AF6F]/28 bg-white/8 px-2.5 py-1 text-[9px] font-black text-[#F7F0E2]">EN</span>
+            </div>
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.24em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
+              <h3 className={`${compact ? "text-3xl" : "text-4xl"} font-semibold leading-none`} style={{ fontFamily: "var(--guide-heading-font)" }}>{displayName}</h3>
+            </div>
+          </div>
+        </section>
+        <section className={`${compact ? "gap-2 p-3" : "gap-3 p-4"} grid grid-cols-2`}>
+          <MiniMenu variant="darkLuxury" />
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div style={style} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] bg-[var(--guide-shell-bg)] text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
+      <section className={`${compact ? "h-44" : "h-64"} relative overflow-hidden`}>
+        <HeroLayer className="absolute inset-0" />
+        <div className={`${compact ? "p-4" : "p-5"} relative flex h-full flex-col justify-between text-white`}>
+          <div className="flex items-start justify-between gap-3">
+            <PreviewLogo small={compact} />
+            <span className="rounded-full bg-white/18 px-3 py-1.5 text-[10px] font-black tracking-[0.12em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl">EN</span>
+          </div>
+          <div>
+            <p className={`${compact ? "text-sm" : "text-xl"} leading-tight`} style={{ fontFamily: "var(--guide-heading-font)" }}>Welcome to</p>
+            <h3 className={`${compact ? "text-2xl" : "text-4xl"} font-black leading-none`} style={{ fontFamily: "var(--guide-heading-font)" }}>{displayName}</h3>
+            <p className={`${compact ? "mt-2 text-[11px] leading-4" : "mt-4 text-sm leading-6"} max-w-[260px] font-semibold text-white/82`}>Your polished mobile guide for Wi-Fi, arrival, house info and more.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className={`${compact ? "grid-cols-2 gap-2 p-3" : "grid-cols-2 gap-3 p-5"} grid`}>
+        <MiniMenu variant="classic" />
+      </section>
     </div>
   );
 }

@@ -25,6 +25,9 @@ export default async function PublicGuidePage({ params }: PageProps) {
       logoUrl: true,
       coverImageUrl: true,
       accentColor: true,
+      templateId: true,
+      designSerif: true,
+      designRounded: true,
       translationLocales: true
     }
   });

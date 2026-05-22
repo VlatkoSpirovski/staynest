@@ -4,6 +4,7 @@ import { Car, MapPin, MessageCircle, Phone } from "lucide-react";
 import { CopyButton } from "@/components/copy-button";
 import { GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
 import { DetailShell, EmptyNote, MiniCard } from "@/app/stay/[slug]/guide-ui";
+import { getGuideTheme, guideThemeStyle } from "@/themes";
 
 type GuideSection = {
   id: string;
@@ -32,6 +33,9 @@ type GuestProperty = {
   slug: string;
   name: string;
   accentColor: string;
+  templateId: string;
+  designSerif: boolean;
+  designRounded: boolean;
   wifiName: string | null;
   wifiPassword: string | null;
   checkInInfo: string | null;
@@ -85,18 +89,23 @@ function GuestGuideSectionContent({ property, section }: { property: GuestProper
   const whatsApp = whatsappUrl(property.hostPhone, property.name, t.content.whatsappStaying);
   const restaurantRecommendations = property.recommendations.filter((item) => /restaurant|cafe|bar|food|dinner|bakery/i.test(item.category));
   const activityRecommendations = property.recommendations.filter((item) => !restaurantRecommendations.some((restaurant) => restaurant.id === item.id));
+  const themeStyle = guideThemeStyle(getGuideTheme(property.templateId), {
+    accentColor: property.accentColor,
+    designSerif: property.designSerif,
+    designRounded: property.designRounded
+  }) as React.CSSProperties;
 
   return (
-    <div style={{ "--accent": property.accentColor } as React.CSSProperties}>
+    <div style={themeStyle}>
       <DetailShell backHref={backHref} backLabel={t.back} poweredByLabel={t.poweredBy} eyebrow={meta.eyebrow} title={meta.title}>
         {section === "wifi" ? (
           <>
             <MiniCard title={t.content.network}>
-              <p className="font-semibold text-ink">{property.wifiName || t.content.askHost}</p>
+              <p className="font-semibold text-[var(--guide-text)]">{property.wifiName || t.content.askHost}</p>
             </MiniCard>
             <MiniCard title={t.content.password}>
               <div className="grid gap-3">
-                <p className="font-semibold text-ink">{property.wifiPassword || t.content.askHost}</p>
+                <p className="font-semibold text-[var(--guide-text)]">{property.wifiPassword || t.content.askHost}</p>
                 {property.wifiPassword ? (
                   <CopyButton value={property.wifiPassword} label={t.content.copyWifiPassword} copiedLabel={t.content.passwordCopied} />
                 ) : null}
@@ -111,13 +120,13 @@ function GuestGuideSectionContent({ property, section }: { property: GuestProper
             {property.hostEmail ? <p>{property.hostEmail}</p> : null}
             <div className="mt-4 grid gap-2">
               {whatsApp ? (
-                <a href={whatsApp} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-4 text-sm font-bold text-white">
+                <a href={whatsApp} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-button-bg)] px-4 text-sm font-bold text-[var(--guide-button-text)]">
                   <MessageCircle size={17} />
                   {t.content.whatsappHost}
                 </a>
               ) : null}
               {callUrl ? (
-                <a href={callUrl} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-ink ring-1 ring-ink/10">
+                <a href={callUrl} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-elevated-bg)] px-4 text-sm font-bold text-[var(--guide-text)] ring-1 ring-[var(--guide-card-border)]">
                   <Phone size={17} />
                   {t.content.callHost}
                 </a>
@@ -179,7 +188,7 @@ function GuestGuideSectionContent({ property, section }: { property: GuestProper
               <p>{t.content.reviewBlurb}</p>
               <div className="mt-4 grid gap-2">
                 {property.reviewLinks.map((link) => (
-                  <a key={link.id} href={link.url} className="rounded-full bg-[var(--accent)] px-4 py-3 text-center text-sm font-bold text-white">
+                  <a key={link.id} href={link.url} className="rounded-[var(--guide-button-radius)] bg-[var(--guide-button-bg)] px-4 py-3 text-center text-sm font-bold text-[var(--guide-button-text)]">
                     {link.platform.charAt(0) + link.platform.slice(1).toLowerCase()}
                   </a>
                 ))}
@@ -196,7 +205,7 @@ function GuestGuideSectionContent({ property, section }: { property: GuestProper
               <p className="whitespace-pre-line">{translationValue(property.translations, locale, "emergencyInfo", property.emergencyInfo || t.content.emergencyFallback)}</p>
             </MiniCard>
             {callUrl ? (
-              <a href={callUrl} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-ink ring-1 ring-ink/10">
+              <a href={callUrl} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-elevated-bg)] px-4 text-sm font-bold text-[var(--guide-text)] ring-1 ring-[var(--guide-card-border)]">
                 <Car size={17} />
                 {t.content.callHost}
               </a>
@@ -219,11 +228,11 @@ function RecommendationCard({
 }) {
   return (
     <MiniCard title={item.title}>
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)]">{translationValue(item.translations, locale, "category", item.category)}</p>
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--guide-accent)]">{translationValue(item.translations, locale, "category", item.category)}</p>
       <p className="mt-2">{translationValue(item.translations, locale, "description", item.description)}</p>
-      {item.address ? <p className="mt-3 font-semibold text-ink/70">{item.address}</p> : null}
+      {item.address ? <p className="mt-3 font-semibold text-[var(--guide-text)] opacity-70">{item.address}</p> : null}
       {item.url ? (
-        <a href={item.url} className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-[var(--accent)] ring-1 ring-ink/10">
+        <a href={item.url} className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-elevated-bg)] px-4 text-sm font-bold text-[var(--guide-accent)] ring-1 ring-[var(--guide-card-border)]">
           <MapPin size={16} />
           {openMapLabel}
         </a>

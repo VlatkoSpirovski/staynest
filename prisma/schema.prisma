@@ -116,6 +116,9 @@ model Property {
   logoUrl         String?
   coverImageUrl   String?
   accentColor     String           @default("#4a8a8f")
+  templateId      String           @default("classic")
+  designSerif     Boolean          @default(true)
+  designRounded   Boolean          @default(true)
   welcomeMessage  String           @db.Text
   wifiName        String?
   wifiPassword    String?

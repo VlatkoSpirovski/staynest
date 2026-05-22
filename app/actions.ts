@@ -3,13 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isIP } from "node:net";
-import { ReviewPlatform } from "@prisma/client";
+import { GuideSectionType, ReviewPlatform } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireReadyUser } from "@/lib/auth";
 import { uploadImage } from "@/lib/image-upload";
 import { buildTranslationMap, selectedTranslationLocales, validTranslationLocales } from "@/lib/saved-translations";
 import { createUniqueSecureSlug, hasSecureSlugSuffix } from "@/lib/secure-slug";
 import { normalizeSlug } from "@/lib/utils";
+import { curatedAccentForTheme, getGuideTheme, isGuideThemeId } from "@/themes";
 
 function stringValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -32,6 +33,18 @@ function checkedValue(formData: FormData, key: string) {
 
 function dashboardError(message: string): never {
   redirect(`/dashboard?error=${encodeURIComponent(message)}`);
+}
+
+function revalidatePublicGuide(slug: string) {
+  revalidatePath(`/stay/${slug}`);
+  revalidatePath(`/stay/${slug}/wifi`);
+  revalidatePath(`/stay/${slug}/arrival`);
+  revalidatePath(`/stay/${slug}/house`);
+  revalidatePath(`/stay/${slug}/restaurants`);
+  revalidatePath(`/stay/${slug}/activities`);
+  revalidatePath(`/stay/${slug}/reviews`);
+  revalidatePath(`/stay/${slug}/emergency`);
+  revalidatePath(`/stay/${slug}/contact`);
 }
 
 function openAiModel() {
@@ -101,42 +114,95 @@ function extractResponseText(data: unknown) {
     .trim();
 }
 
-function metaContent(html: string, attribute: "name" | "property", value: string) {
-  const tag = html.match(new RegExp(`<meta[^>]+${attribute}=["']${value}["'][^>]*>`, "i"))?.[0];
-  return tag?.match(/content=["']([^"']+)["']/i)?.[1] || "";
+function decodeHtml(value: string) {
+  return value
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function cleanPageText(html: string) {
+function metaContent(html: string, attribute: "name" | "property", value: string) {
+  const tag = html.match(new RegExp(`<meta[^>]+${attribute}=["']${value}["'][^>]*>`, "i"))?.[0];
+  return decodeHtml(tag?.match(/content=["']([^"']+)["']/i)?.[1] || "");
+}
+
+function allMetaContent(html: string) {
+  const wanted = [
+    ["property", "og:title"],
+    ["property", "og:description"],
+    ["property", "og:image"],
+    ["property", "og:site_name"],
+    ["property", "og:locale"],
+    ["name", "description"],
+    ["name", "twitter:title"],
+    ["name", "twitter:description"],
+    ["name", "twitter:image"],
+    ["name", "keywords"]
+  ] as const;
+
+  return wanted
+    .map(([attribute, value]) => {
+      const content = metaContent(html, attribute, value);
+      return content ? `${value}: ${content}` : "";
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
+function imageCandidates(html: string, pageUrl: string) {
+  const urls = [
+    ...[...html.matchAll(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["'][^>]*>/gi)].map((match) => match[1]),
+    ...[...html.matchAll(/<img[^>]+(?:src|data-src|data-original|data-lazy-src)=["']([^"']+)["'][^>]*>/gi)].map((match) => match[1])
+  ];
+
+  return Array.from(new Set(urls))
+    .map((src) => {
+      try {
+        return new URL(decodeHtml(src), pageUrl).toString();
+      } catch {
+        return "";
+      }
+    })
+    .filter((src) => /^https?:\/\//i.test(src))
+    .filter((src) => !/sprite|icon|logo|avatar|placeholder|blank|transparent/i.test(src))
+    .slice(0, 12)
+    .join("\n");
+}
+
+function cleanPageText(html: string, pageUrl: string) {
   const jsonLd = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
     .map((match) => match[1]?.trim())
     .filter(Boolean)
     .join("\n");
   const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "";
-  const description = metaContent(html, "name", "description") || metaContent(html, "property", "og:description");
-  const ogTitle = metaContent(html, "property", "og:title");
-  const ogImage = metaContent(html, "property", "og:image");
   const visibleText = html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/\s+/g, " ");
 
   return `
-Title: ${title}
-Open graph title: ${ogTitle}
-Description: ${description}
-Open graph image: ${ogImage}
+Page URL: ${pageUrl}
+Title: ${decodeHtml(title)}
+
+Metadata:
+${allMetaContent(html)}
+
+Image candidates:
+${imageCandidates(html, pageUrl)}
 
 JSON-LD:
 ${jsonLd}
 
 Visible listing text:
-${visibleText}
+${decodeHtml(visibleText)}
 `.slice(0, 28000);
 }
 
@@ -169,7 +235,8 @@ async function fetchListingText(url: string) {
     headers: {
       "user-agent":
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36",
-      accept: "text/html,application/xhtml+xml"
+      accept: "text/html,application/xhtml+xml",
+      "accept-language": "en-US,en;q=0.9"
     },
     cache: "no-store",
     signal: AbortSignal.timeout(12000)
@@ -184,7 +251,7 @@ async function fetchListingText(url: string) {
     throw new Error("That link did not return a readable property page.");
   }
 
-  return cleanPageText(await response.text());
+  return cleanPageText(await response.text(), url);
 }
 
 async function fetchReaderText(url: string) {
@@ -211,6 +278,7 @@ type ImportedListing = {
   checkOutInfo?: string;
   parkingInfo?: string;
   houseRules?: string;
+  facilities?: string;
   emergencyInfo?: string;
   hostContactName?: string;
   aiKnowledge?: string;
@@ -231,6 +299,7 @@ const listingImportSchema = {
     "checkOutInfo",
     "parkingInfo",
     "houseRules",
+    "facilities",
     "emergencyInfo",
     "hostContactName",
     "aiKnowledge"
@@ -243,6 +312,7 @@ const listingImportSchema = {
     checkOutInfo: nullableString,
     parkingInfo: nullableString,
     houseRules: nullableString,
+    facilities: nullableString,
     emergencyInfo: nullableString,
     hostContactName: nullableString,
     aiKnowledge: nullableString
@@ -261,6 +331,7 @@ function parsedImportedListing(text: string): ImportedListing {
     checkOutInfo: safeString(parsed.checkOutInfo, 1200),
     parkingInfo: safeString(parsed.parkingInfo, 1000),
     houseRules: safeString(parsed.houseRules, 1600),
+    facilities: safeString(parsed.facilities, 1600),
     emergencyInfo: safeString(parsed.emergencyInfo, 1000),
     hostContactName: safeString(parsed.hostContactName, 120),
     aiKnowledge: safeString(parsed.aiKnowledge, 2500)
@@ -268,7 +339,7 @@ function parsedImportedListing(text: string): ImportedListing {
 }
 
 function hasUsableImport(imported: ImportedListing) {
-  return Boolean(imported.name || imported.welcomeMessage || imported.houseRules || imported.parkingInfo || imported.coverImageUrl);
+  return Boolean(imported.name || imported.welcomeMessage || imported.houseRules || imported.parkingInfo || imported.facilities || imported.coverImageUrl);
 }
 
 function fallbackImportedListing(url: URL | null): ImportedListing {
@@ -278,6 +349,59 @@ function fallbackImportedListing(url: URL | null): ImportedListing {
     welcomeMessage: `Welcome to ${name}. This guide was started from the public listing. Please review the details below and add any private arrival information before sharing with guests.`,
     aiKnowledge: `Imported from ${url ? url.toString() : "pasted listing text"}. The source did not expose enough structured details, so the host should review and complete Wi-Fi, access, check-in, parking and house rules manually.`
   };
+}
+
+function joinKnowledge(parts: Array<string | null | undefined>) {
+  return parts
+    .map((part) => part?.trim())
+    .filter((part): part is string => Boolean(part))
+    .join("\n\n")
+    .slice(0, 5000);
+}
+
+async function upsertImportedGuideSection({
+  propertyId,
+  title,
+  content,
+  sortOrder,
+  translationLocales
+}: {
+  propertyId: string;
+  title: string;
+  content: string | null | undefined;
+  sortOrder: number;
+  translationLocales: ReturnType<typeof validTranslationLocales>;
+}) {
+  const cleanContent = content?.trim();
+  if (!cleanContent) return;
+
+  const translations = await buildTranslationMap({ content: cleanContent }, translationLocales);
+  const existing = await prisma.guideSection.findFirst({
+    where: { propertyId, title },
+    select: { id: true }
+  });
+
+  if (existing) {
+    await prisma.guideSection.update({
+      where: { id: existing.id },
+      data: {
+        content: cleanContent,
+        translations
+      }
+    });
+    return;
+  }
+
+  await prisma.guideSection.create({
+    data: {
+      propertyId,
+      type: GuideSectionType.CUSTOM,
+      title,
+      content: cleanContent,
+      translations,
+      sortOrder
+    }
+  });
 }
 
 export async function importListingFromUrl(formData: FormData) {
@@ -343,7 +467,7 @@ export async function importListingFromUrl(formData: FormData) {
     body: JSON.stringify({
       model: openAiModel(),
       instructions:
-        "Extract the best possible guest-guide draft from a rental listing source. Use direct facts from the source where present. If the source is thin or blocked but the URL clearly contains the property name, use that name and create a short neutral welcome draft. Write concise, polished, guest-facing English. Use null for missing values. Never invent access codes, Wi-Fi passwords, phone numbers, emails, emergency contacts, exact check-in instructions, or prices.",
+        "Extract the best possible StayNest guest-guide draft from a rental listing source. Use direct facts only. Write concise, polished, guest-facing English. Focus especially on property name, visible host name, public check-in/check-out windows or policies, parking availability/details, house rules/policies, and major facilities/amenities. Put amenities/facilities as short clean lines in facilities. If parking is mentioned inside amenities, also summarize it in parkingInfo. If check-in/out times are visible, include only public timing/policy, not private access instructions. Use null for missing values. Never invent access codes, Wi-Fi names/passwords, private phone numbers, emails, emergency contacts, exact lockbox instructions, calendar/prices, or unavailable facilities.",
       text: {
         format: {
           type: "json_schema",
@@ -352,11 +476,11 @@ export async function importListingFromUrl(formData: FormData) {
           schema: listingImportSchema
         }
       },
-      max_output_tokens: 1400,
+      max_output_tokens: 2200,
       input: [
         {
           role: "user",
-          content: `Extract a StayNest guide draft from this source. Prefer host-pasted text over scraped page text. If the page is blocked, still extract the property name from the URL when possible and explain missing private details in aiKnowledge.\n\nListing URL: ${url?.toString() || "Not provided; host pasted text manually."}\n\nSource content:\n${listingText}`
+          content: `Extract a StayNest guide draft from this source. Prefer host-pasted text over scraped page text. If the page is blocked, still extract the property name from the URL when possible and explain missing private details in aiKnowledge.\n\nReturn these fields:\n- name: property/listing name.\n- hostContactName: visible host/managed-by name only.\n- welcomeMessage: warm guest-facing intro from public listing facts.\n- coverImageUrl: best usable image URL from metadata/image candidates.\n- checkInInfo: public check-in time/window/policy if visible.\n- checkOutInfo: public checkout time/window/policy if visible.\n- parkingInfo: parking availability, type, reservation/cost notes if visible.\n- houseRules: visible public rules/policies: smoking, pets, parties, quiet hours, children, damage/deposit only if present.\n- facilities: major visible facilities/amenities, one per line or short grouped sentences.\n- emergencyInfo: only if public emergency/safety info is visible.\n- aiKnowledge: concise source summary and what still needs host review.\n\nListing URL: ${url?.toString() || "Not provided; host pasted text manually."}\n\nSource content:\n${listingText}`
         }
       ]
     })
@@ -387,6 +511,27 @@ export async function importListingFromUrl(formData: FormData) {
     : null;
 
   const name = imported.name?.trim() || existingProperty?.name || "Imported Property";
+  const translationLocales = validTranslationLocales(existingProperty?.translationLocales);
+  const aiKnowledge = joinKnowledge([
+    imported.aiKnowledge,
+    imported.facilities ? `Amenities and facilities visible on the listing:\n${imported.facilities}` : null,
+    url ? `Imported source: ${url.hostname} (${url.toString()})` : "Imported source: pasted listing text"
+  ]);
+  const translations = await buildTranslationMap(
+    {
+      welcomeMessage:
+        imported.welcomeMessage ||
+        existingProperty?.welcomeMessage ||
+        `Welcome to ${name}. This guide includes the most important details for your stay.`,
+      checkInInfo: imported.checkInInfo || existingProperty?.checkInInfo || null,
+      checkOutInfo: imported.checkOutInfo || existingProperty?.checkOutInfo || null,
+      parkingInfo: imported.parkingInfo || existingProperty?.parkingInfo || null,
+      houseRules: imported.houseRules || existingProperty?.houseRules || null,
+      emergencyInfo: imported.emergencyInfo || existingProperty?.emergencyInfo || null,
+      aiKnowledge: aiKnowledge || existingProperty?.aiKnowledge || null
+    },
+    translationLocales
+  );
   const data = {
     ownerId: user.id,
     name,
@@ -408,7 +553,9 @@ export async function importListingFromUrl(formData: FormData) {
     hostContactName: imported.hostContactName || existingProperty?.hostContactName || null,
     hostPhone: existingProperty?.hostPhone || null,
     hostEmail: existingProperty?.hostEmail || user.email,
-    aiKnowledge: imported.aiKnowledge || existingProperty?.aiKnowledge || `Imported from ${url ? `${url.hostname}: ${url.toString()}` : "pasted listing text"}`
+    aiKnowledge: aiKnowledge || existingProperty?.aiKnowledge || `Imported from ${url ? `${url.hostname}: ${url.toString()}` : "pasted listing text"}`,
+    translationLocales,
+    translations
   };
 
   const property = existingProperty
@@ -418,8 +565,16 @@ export async function importListingFromUrl(formData: FormData) {
       })
     : await prisma.property.create({ data });
 
+  await upsertImportedGuideSection({
+    propertyId: property.id,
+    title: "Amenities & facilities",
+    content: imported.facilities,
+    sortOrder: 5,
+    translationLocales
+  });
+
   revalidatePath("/dashboard");
-  revalidatePath(`/stay/${property.slug}`);
+  revalidatePublicGuide(property.slug);
   redirect("/dashboard?saved=property");
 }
 
@@ -524,6 +679,38 @@ export async function saveProperty(formData: FormData) {
   revalidatePath(`/stay/${property.slug}/activities`);
   revalidatePath(`/stay/${property.slug}/emergency`);
   redirect("/dashboard?saved=property");
+}
+
+export async function savePropertyDesign(formData: FormData) {
+  const user = await requireReadyUser();
+  const propertyId = stringValue(formData, "propertyId");
+
+  if (!propertyId) {
+    redirect("/dashboard?error=Create%20the%20property%20first,%20then%20choose%20a%20template.");
+  }
+
+  await ensureAccessibleProperty(propertyId, user);
+
+  const requestedTemplateId = stringValue(formData, "templateId");
+  const theme = getGuideTheme(isGuideThemeId(requestedTemplateId) ? requestedTemplateId : "classic");
+  const accentColor = curatedAccentForTheme(theme, stringValue(formData, "accentColor"));
+
+  const property = await prisma.property.update({
+    where: { id: propertyId },
+    data: {
+      templateId: theme.id,
+      accentColor,
+      designSerif: checkedValue(formData, "designSerif"),
+      designRounded: checkedValue(formData, "designRounded")
+    },
+    select: {
+      slug: true
+    }
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePublicGuide(property.slug);
+  redirect("/dashboard?saved=design");
 }
 
 export async function rotatePropertySlug(formData: FormData) {

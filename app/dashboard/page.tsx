@@ -1,6 +1,6 @@
 import QRCode from "qrcode";
 import { logoutOwner } from "@/app/auth-actions";
-import { deleteRecommendation, importListingFromUrl, saveProperty, saveRecommendation, saveReviewLinks } from "@/app/actions";
+import { deleteRecommendation, importListingFromUrl, saveProperty, savePropertyDesign, saveRecommendation, saveReviewLinks } from "@/app/actions";
 import DashboardClient from "@/components/dashboard-client";
 import { requireReadyUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -31,6 +31,7 @@ function savedMessage(saved?: string) {
   if (saved === "recommendation") return "Recommendation added to the guest guide.";
   if (saved === "recommendation-removed") return "Recommendation removed.";
   if (saved === "reviews") return "Review paths updated.";
+  if (saved === "design") return "Template updated successfully.";
   return null;
 }
 
@@ -61,6 +62,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       logoutAction={logoutOwner}
       importListingAction={importListingFromUrl}
       savePropertyAction={saveProperty}
+      savePropertyDesignAction={savePropertyDesign}
       saveRecommendationAction={saveRecommendation}
       deleteRecommendationAction={deleteRecommendation}
       saveReviewLinksAction={saveReviewLinks}
