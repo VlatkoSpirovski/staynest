@@ -383,7 +383,7 @@ export default function DashboardClient(props: DashboardClientProps) {
         </div>
       </header>
 
-      <div className="mx-auto max-w-5xl px-4 pb-52 pt-5 lg:pb-32 lg:px-8">
+      <div className="mx-auto max-w-5xl px-4 pb-32 pt-5 lg:pb-32 lg:px-8">
         {successMessage ? <div className="mb-4 rounded-[18px] border border-[#76875D]/18 bg-[#76875D]/10 px-4 py-3 text-sm font-bold text-[#5F704B] shadow-[0_16px_42px_rgba(17,24,39,0.06)]">{successMessage}</div> : null}
         {errorMessage ? <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div> : null}
 
@@ -701,17 +701,17 @@ function ModuleSheet({
   const defaultCategory = activeModule === "restaurants" ? "Restaurant" : "Activity";
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-[#0B1220]/64 backdrop-blur-md lg:items-center lg:justify-center lg:p-6">
+    <div className="dashboard-sheet-overlay fixed inset-0 z-50 flex flex-col justify-end bg-[#0B1220]/64 backdrop-blur-md lg:items-center lg:justify-center lg:p-6">
       <button type="button" aria-label="Close editor" className="absolute inset-0" onClick={onClose} />
-      <section className="relative max-h-[82vh] w-full overflow-y-auto rounded-t-[24px] border-t border-[#172234]/8 bg-white px-4 pb-5 pt-3 shadow-[0_-38px_110px_rgba(17,24,39,0.34)] lg:max-h-[86vh] lg:max-w-5xl lg:rounded-[24px] lg:border lg:px-6 lg:pb-6 lg:pt-5 lg:shadow-[0_38px_130px_rgba(17,24,39,0.34)]">
+      <section className="dashboard-sheet-panel relative h-[calc(100dvh-8px)] max-h-[calc(100dvh-8px)] w-full overflow-y-auto rounded-t-[22px] border-t border-[#172234]/8 bg-white px-4 pb-4 pt-2 shadow-[0_-38px_110px_rgba(17,24,39,0.34)] lg:h-auto lg:max-h-[86vh] lg:max-w-5xl lg:rounded-[24px] lg:border lg:px-6 lg:pb-6 lg:pt-5 lg:shadow-[0_38px_130px_rgba(17,24,39,0.34)]">
         <div className="mx-auto h-1.5 w-11 rounded-full bg-[#111827]/18 lg:hidden" />
-        <div className="mt-4 flex items-center justify-between gap-4 lg:mt-0 lg:border-b lg:border-[#172234]/8 lg:pb-5">
+        <div className="mt-3 flex items-center justify-between gap-3 lg:mt-0 lg:border-b lg:border-[#172234]/8 lg:pb-5">
           <div className="flex items-center gap-3">
-            <div className={`grid h-11 w-11 place-items-center rounded-[16px] ${info.accent}`}>
+            <div className={`grid h-10 w-10 place-items-center rounded-[15px] lg:h-11 lg:w-11 lg:rounded-[16px] ${info.accent}`}>
               <Icon size={19} />
             </div>
             <div>
-              <h2 className="text-xl font-black tracking-tight">{info.title}</h2>
+              <h2 className="text-lg font-black tracking-tight lg:text-xl">{info.title}</h2>
               <p className="text-xs font-bold text-[#111827]/48">{info.subtitle}</p>
             </div>
           </div>
@@ -740,36 +740,38 @@ function ModuleSheet({
                 ) : null}
 
                 {activeModule === "welcome" ? (
-                  <div className="border-t border-[#172234]/7 p-4 lg:p-5">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                      <div>
-                        <p className="text-sm font-black text-[#111827]">Guide languages</p>
-                        <p className="mt-1 text-xs font-semibold leading-5 text-[#111827]/52">StayNest translates guest content on save, so public pages open instantly.</p>
+                  <details className="border-t border-[#172234]/7 bg-[#F9FAFB]">
+                    <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-black text-[#111827] lg:px-5 [&::-webkit-details-marker]:hidden">
+                      <span>Guide languages</span>
+                      <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#5F9D99] shadow-[0_8px_22px_rgba(17,24,39,0.08)]">
+                        {Math.max(1, property.translationLocales.length)} selected
+                      </span>
+                    </summary>
+                    <div className="grid gap-2 border-t border-[#172234]/7 px-4 pb-4 pt-3 lg:px-5">
+                      <p className="text-xs font-semibold leading-5 text-[#111827]/52">English is always included. Selected languages are translated when you save.</p>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {guideLanguageOptions.map((language) => {
+                          const checked = language.code === "en" || property.translationLocales.includes(language.code);
+                          return (
+                            <label key={language.code} className={`flex min-h-10 items-center gap-2 rounded-[12px] border px-3 text-xs font-black ${
+                              checked ? "border-[#5F9D99]/30 bg-[#5F9D99]/10 text-[#111827]" : "border-[#172234]/8 bg-white text-[#111827]/68"
+                            }`}>
+                              <input
+                                type="checkbox"
+                                name="translationLocales"
+                                value={language.code}
+                                defaultChecked={checked}
+                                disabled={language.code === "en"}
+                                className="h-4 w-4 rounded border-[#172234]/20"
+                              />
+                              {language.label}
+                            </label>
+                          );
+                        })}
+                        <input type="hidden" name="translationLocales" value="en" />
                       </div>
-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#5F9D99]">English always included</p>
                     </div>
-                    <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {guideLanguageOptions.map((language) => {
-                        const checked = language.code === "en" || property.translationLocales.includes(language.code);
-                        return (
-                          <label key={language.code} className={`flex min-h-11 items-center gap-2 rounded-[14px] border px-3 text-sm font-black ${
-                            checked ? "border-[#5F9D99]/30 bg-[#5F9D99]/10 text-[#111827]" : "border-[#172234]/8 bg-[#F9FAFB] text-[#111827]/68"
-                          }`}>
-                            <input
-                              type="checkbox"
-                              name="translationLocales"
-                              value={language.code}
-                              defaultChecked={checked}
-                              disabled={language.code === "en"}
-                              className="h-4 w-4 rounded border-[#172234]/20"
-                            />
-                            {language.label}
-                          </label>
-                        );
-                      })}
-                      <input type="hidden" name="translationLocales" value="en" />
-                    </div>
-                  </div>
+                  </details>
                 ) : null}
 
                 {activeModule === "welcome" ? (

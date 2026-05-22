@@ -2,6 +2,8 @@ import { CheckCircle2, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GoogleMark } from "@/components/google-mark";
 import { InAppBrowserNotice } from "@/components/in-app-browser-notice";
+import { LoadingLink } from "@/components/loading-link";
+import { SubmitButton } from "@/components/submit-button";
 import { Field, inputClass, Panel } from "@/components/ui/panel";
 import { registerOwner } from "@/app/auth-actions";
 
@@ -53,15 +55,16 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
             <InAppBrowserNotice />
           </div>
 
-          <a
+          <LoadingLink
             href={`/auth/google?plan=${selectedPlan}`}
+            loadingText="Opening Google..."
             className="focus-ring inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80"
           >
             <span className="grid h-6 w-6 place-items-center rounded-full bg-white">
               <GoogleMark />
             </span>
             Continue with Google
-          </a>
+          </LoadingLink>
 
           <div className="my-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-wide text-ink/45">
             <div className="h-px flex-1 bg-ink/10" />
@@ -83,9 +86,9 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
             <Field label="Confirm password">
               <input name="confirmPassword" className={inputClass} type="password" autoComplete="new-password" required />
             </Field>
-            <Button type="submit" className="mt-2 min-h-12">
+            <SubmitButton pendingText="Creating account..." className="mt-2 min-h-12 rounded-[16px] font-black">
               Start free trial
-            </Button>
+            </SubmitButton>
           </form>
 
           <p className="mt-5 text-center text-sm text-ink/55">
