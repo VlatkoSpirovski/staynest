@@ -121,19 +121,19 @@ const moduleCopy: Record<
     accent: string;
   }
 > = {
+  welcome: {
+    title: "Welcome",
+    subtitle: "First impression",
+    preview: (property) => property.name || property.welcomeMessage || "Add property name and welcome note",
+    icon: Heart,
+    accent: "bg-[#F3F4F6] text-[#374151] ring-1 ring-[#172234]/10 shadow-[0_12px_26px_rgba(17,24,39,0.06)]"
+  },
   photos: {
     title: "Photos",
     subtitle: "Logo and cover",
     preview: (property) => (property.logoUrl && property.coverImageUrl ? "Brand visuals ready" : "Upload logo and property photo"),
     icon: ImageIcon,
     accent: "bg-[#EEF2F6] text-[#24364C] ring-1 ring-[#172234]/10 shadow-[0_12px_26px_rgba(17,24,39,0.06)]"
-  },
-  welcome: {
-    title: "Welcome",
-    subtitle: "First impression",
-    preview: (property) => property.welcomeMessage || "Add a warm arrival note",
-    icon: Heart,
-    accent: "bg-[#F3F4F6] text-[#374151] ring-1 ring-[#172234]/10 shadow-[0_12px_26px_rgba(17,24,39,0.06)]"
   },
   wifi: {
     title: "Wi-Fi",
@@ -286,14 +286,14 @@ export default function DashboardClient(props: DashboardClientProps) {
   const publicUrl = initialPublicUrl || (property.slug ? `https://staynest.app/stay/${property.slug}` : "");
   const qrCode = initialQrCode || "";
   const [activeTab, setActiveTab] = useState<TabId>("setup");
-  const [activeModule, setActiveModule] = useState<ModuleId>("wifi");
+  const [activeModule, setActiveModule] = useState<ModuleId>("welcome");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [propertyMenuOpen, setPropertyMenuOpen] = useState(false);
 
   const setupItems = useMemo(
     () => [
+      { id: "welcome" as ModuleId, label: "Welcome", done: Boolean(property.name && property.welcomeMessage) },
       { id: "photos" as ModuleId, label: "Photos", done: Boolean(property.logoUrl && property.coverImageUrl) },
-      { id: "welcome" as ModuleId, label: "Welcome", done: Boolean(property.welcomeMessage) },
       { id: "wifi" as ModuleId, label: "Wi-Fi", done: Boolean(property.wifiName && property.wifiPassword) },
       { id: "checkin" as ModuleId, label: "Check-in", done: Boolean(property.checkInInfo) },
       { id: "rules" as ModuleId, label: "Rules", done: Boolean(property.houseRules || property.parkingInfo) },
@@ -702,19 +702,8 @@ function ModuleSheet({
               <input type="hidden" name="accentColor" value={property.accentColor || "#5D9C9A"} />
 
               <div className="overflow-hidden rounded-[20px] border border-[#172234]/8 bg-white shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)] lg:shadow-[0_18px_58px_rgba(17,24,39,0.08),inset_0_1px_0_rgba(255,255,255,0.90)]">
-                {activeModule !== "photos" ? (
-                  <div className="border-b border-[#172234]/7 p-4 lg:p-5">
-                    <Field label="Property name">
-                      <input name="name" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.name} placeholder="Your property name" required />
-                    </Field>
-                  </div>
-                ) : null}
-
                 {activeModule === "photos" ? (
                   <div className="grid gap-3 p-4">
-                    <Field label="Property name">
-                      <input name="name" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.name} placeholder="Your property name" required />
-                    </Field>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <ImageUploadField label="Property logo" fileName="logoFile" urlName="logoUrl" removeName="removeLogo" currentUrl={property.logoUrl} />
                       <ImageUploadField label="Property photo" fileName="coverImageFile" urlName="coverImageUrl" removeName="removeCoverImage" currentUrl={property.coverImageUrl} />
@@ -723,10 +712,17 @@ function ModuleSheet({
                 ) : null}
 
                 {activeModule === "welcome" ? (
-                  <div className="p-4 lg:p-5">
+                  <div className="grid gap-0 divide-y divide-[#172234]/7 lg:grid-cols-[0.9fr_1.1fr] lg:divide-x lg:divide-y-0">
+                    <div className="p-4 lg:p-5">
+                      <Field label="Property name">
+                        <input name="name" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.name} placeholder="Your property name" required />
+                      </Field>
+                    </div>
+                    <div className="p-4 lg:p-5">
                     <Field label="Welcome note">
                       <textarea name="welcomeMessage" className={`${textareaClass} min-h-24 bg-[#F9FAFB] lg:min-h-44`} defaultValue={property.welcomeMessage} />
                     </Field>
+                    </div>
                   </div>
                 ) : null}
 
@@ -815,6 +811,7 @@ function ModuleSheet({
               </div>
 
               {activeModule !== "welcome" ? <input type="hidden" name="welcomeMessage" value={property.welcomeMessage || ""} /> : null}
+              {activeModule !== "welcome" ? <input type="hidden" name="name" value={property.name} /> : null}
               {activeModule !== "wifi" ? <input type="hidden" name="wifiName" value={property.wifiName || ""} /> : null}
               {activeModule !== "wifi" ? <input type="hidden" name="wifiPassword" value={property.wifiPassword || ""} /> : null}
               {activeModule !== "checkin" ? <input type="hidden" name="checkInInfo" value={property.checkInInfo || ""} /> : null}
