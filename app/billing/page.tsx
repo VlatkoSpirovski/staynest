@@ -10,6 +10,15 @@ const planCopy = {
   ai: { name: "Full AI", price: "€15/month" }
 };
 
+function paddleConfigError({ clientToken, priceId, environment }: { clientToken: string; priceId?: string; environment: string }) {
+  if (!clientToken || !priceId) return "Paddle checkout needs PADDLE_CLIENT_TOKEN and the selected plan price ID in Vercel.";
+  if (!priceId.startsWith("pri_")) return "The selected Paddle price ID must start with pri_.";
+  if (environment === "production" && clientToken.startsWith("test_")) return "PADDLE_ENV is production, but PADDLE_CLIENT_TOKEN is a sandbox token. Use a live_ client token.";
+  if (environment === "sandbox" && clientToken.startsWith("live_")) return "PADDLE_ENV is sandbox, but PADDLE_CLIENT_TOKEN is a live token. Use a test_ client token.";
+  if (!clientToken.startsWith("live_") && !clientToken.startsWith("test_")) return "PADDLE_CLIENT_TOKEN must be a client-side token, not an API key.";
+  return "";
+}
+
 type BillingPageProps = {
   searchParams?: {
     plan?: string;
@@ -28,8 +37,8 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   });
   const priceId = selectedPlan === "ai" ? process.env.PADDLE_AI_PRICE_ID : process.env.PADDLE_BASIC_PRICE_ID;
   const clientToken = process.env.PADDLE_CLIENT_TOKEN || "";
-  const paddleReady = Boolean(clientToken && priceId);
   const paddleEnvironment = process.env.PADDLE_ENV === "sandbox" ? "sandbox" : "production";
+  const paddleError = paddleConfigError({ clientToken, priceId, environment: paddleEnvironment });
   const successUrl = `${getAppUrl()}/billing/complete`;
 
   return (
@@ -70,7 +79,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           </p>
         </div>
 
-        {paddleReady && priceId ? (
+        {!paddleError && priceId ? (
           <PaddleCheckoutButton
             clientToken={clientToken}
             environment={paddleEnvironment}
@@ -82,7 +91,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           />
         ) : (
           <div className="mt-6 rounded-[8px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-            Paddle checkout needs PADDLE_CLIENT_TOKEN and the selected plan price ID in Vercel.
+            {paddleError}
           </div>
         )}
 
