@@ -72,6 +72,7 @@ interface Property {
   hostPhone: string | null;
   hostEmail: string | null;
   aiKnowledge: string | null;
+  translationLocales: string[];
   recommendations: Recommendation[];
   reviewLinks: ReviewLink[];
 }
@@ -110,6 +111,19 @@ const tabs: Array<{ id: TabId; label: string; icon: typeof Home }> = [
   { id: "setup", label: "Setup", icon: BadgeCheck },
   { id: "modules", label: "Modules", icon: BedDouble },
   { id: "settings", label: "Settings", icon: Settings }
+];
+
+const guideLanguageOptions = [
+  { code: "en", label: "English" },
+  { code: "mk", label: "Macedonian" },
+  { code: "de", label: "German" },
+  { code: "fr", label: "French" },
+  { code: "nl", label: "Dutch" },
+  { code: "sr", label: "Serbian" },
+  { code: "sq", label: "Albanian" },
+  { code: "tr", label: "Turkish" },
+  { code: "pl", label: "Polish" },
+  { code: "cs", label: "Czech" }
 ];
 
 const moduleCopy: Record<
@@ -275,6 +289,7 @@ export default function DashboardClient(props: DashboardClientProps) {
       hostPhone: null,
       hostEmail: null,
       aiKnowledge: null,
+      translationLocales: ["en"],
       recommendations: [],
       reviewLinks: []
     };
@@ -710,6 +725,9 @@ function ModuleSheet({
             <form action={savePropertyAction} className="space-y-4">
               <input type="hidden" name="propertyId" value={property.id} />
               <input type="hidden" name="accentColor" value={property.accentColor || "#5D9C9A"} />
+              {activeModule !== "welcome" ? property.translationLocales.map((locale) => (
+                <input key={locale} type="hidden" name="translationLocales" value={locale} />
+              )) : null}
 
               <div className="overflow-hidden rounded-[20px] border border-[#172234]/8 bg-white shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)] lg:shadow-[0_18px_58px_rgba(17,24,39,0.08),inset_0_1px_0_rgba(255,255,255,0.90)]">
                 {activeModule === "photos" ? (
@@ -717,6 +735,39 @@ function ModuleSheet({
                     <div className="grid gap-3 sm:grid-cols-2">
                       <ImageUploadField label="Property logo" fileName="logoFile" urlName="logoUrl" removeName="removeLogo" currentUrl={property.logoUrl} />
                       <ImageUploadField label="Property photo" fileName="coverImageFile" urlName="coverImageUrl" removeName="removeCoverImage" currentUrl={property.coverImageUrl} />
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeModule === "welcome" ? (
+                  <div className="border-t border-[#172234]/7 p-4 lg:p-5">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <p className="text-sm font-black text-[#111827]">Guide languages</p>
+                        <p className="mt-1 text-xs font-semibold leading-5 text-[#111827]/52">StayNest translates guest content on save, so public pages open instantly.</p>
+                      </div>
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#5F9D99]">English always included</p>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {guideLanguageOptions.map((language) => {
+                        const checked = language.code === "en" || property.translationLocales.includes(language.code);
+                        return (
+                          <label key={language.code} className={`flex min-h-11 items-center gap-2 rounded-[14px] border px-3 text-sm font-black ${
+                            checked ? "border-[#5F9D99]/30 bg-[#5F9D99]/10 text-[#111827]" : "border-[#172234]/8 bg-[#F9FAFB] text-[#111827]/68"
+                          }`}>
+                            <input
+                              type="checkbox"
+                              name="translationLocales"
+                              value={language.code}
+                              defaultChecked={checked}
+                              disabled={language.code === "en"}
+                              className="h-4 w-4 rounded border-[#172234]/20"
+                            />
+                            {language.label}
+                          </label>
+                        );
+                      })}
+                      <input type="hidden" name="translationLocales" value="en" />
                     </div>
                   </div>
                 ) : null}

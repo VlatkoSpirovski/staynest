@@ -2,14 +2,14 @@
 
 import { Car, MapPin, MessageCircle, Phone } from "lucide-react";
 import { CopyButton } from "@/components/copy-button";
-import { useGuestLanguage } from "@/components/guest-language";
-import { TranslatedText } from "@/components/translated-text";
+import { GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
 import { DetailShell, EmptyNote, MiniCard } from "@/app/stay/[slug]/guide-ui";
 
 type GuideSection = {
   id: string;
   title: string;
   content: string;
+  translations: unknown;
 };
 
 type Recommendation = {
@@ -19,6 +19,7 @@ type Recommendation = {
   description: string;
   address: string | null;
   url: string | null;
+  translations: unknown;
 };
 
 type ReviewLink = {
@@ -44,6 +45,8 @@ type GuestProperty = {
   guideSections: GuideSection[];
   recommendations: Recommendation[];
   reviewLinks: ReviewLink[];
+  translationLocales: string[];
+  translations: unknown;
 };
 
 function whatsappUrl(phone: string | null | undefined, propertyName: string, template: (property: string) => string) {
@@ -53,7 +56,24 @@ function whatsappUrl(phone: string | null | undefined, propertyName: string, tem
 }
 
 export function GuestGuideSection({ property, section }: { property: GuestProperty; section: string }) {
-  const { t } = useGuestLanguage();
+  return (
+    <GuestLanguageProvider availableLocales={property.translationLocales}>
+      <GuestGuideSectionContent property={property} section={section} />
+    </GuestLanguageProvider>
+  );
+}
+
+function translationValue(translations: unknown, locale: string, key: string, fallback: string | null | undefined) {
+  if (locale === "en") return fallback || "";
+  if (!translations || typeof translations !== "object") return fallback || "";
+  const localeMap = (translations as Record<string, unknown>)[locale];
+  if (!localeMap || typeof localeMap !== "object") return fallback || "";
+  const value = (localeMap as Record<string, unknown>)[key];
+  return typeof value === "string" && value.trim() ? value : fallback || "";
+}
+
+function GuestGuideSectionContent({ property, section }: { property: GuestProperty; section: string }) {
+  const { locale, t } = useGuestLanguage();
   const meta = t.sections[section as keyof typeof t.sections];
 
   if (!meta) {
@@ -109,10 +129,10 @@ export function GuestGuideSection({ property, section }: { property: GuestProper
         {section === "arrival" ? (
           <>
             <MiniCard title={t.content.checkIn}>
-              <p><TranslatedText slug={property.slug} text={property.checkInInfo} fallback={t.content.checkInFallback} /></p>
+              <p>{translationValue(property.translations, locale, "checkInInfo", property.checkInInfo || t.content.checkInFallback)}</p>
             </MiniCard>
             <MiniCard title={t.content.checkOut}>
-              <p><TranslatedText slug={property.slug} text={property.checkOutInfo} fallback={t.content.checkOutFallback} /></p>
+              <p>{translationValue(property.translations, locale, "checkOutInfo", property.checkOutInfo || t.content.checkOutFallback)}</p>
             </MiniCard>
           </>
         ) : null}
@@ -120,14 +140,14 @@ export function GuestGuideSection({ property, section }: { property: GuestProper
         {section === "house" ? (
           <>
             <MiniCard title={t.content.parking}>
-              <p><TranslatedText slug={property.slug} text={property.parkingInfo} fallback={t.content.parkingFallback} /></p>
+              <p>{translationValue(property.translations, locale, "parkingInfo", property.parkingInfo || t.content.parkingFallback)}</p>
             </MiniCard>
             <MiniCard title={t.content.houseRules}>
-              <p className="whitespace-pre-line"><TranslatedText slug={property.slug} text={property.houseRules} fallback={t.content.houseRulesFallback} /></p>
+              <p className="whitespace-pre-line">{translationValue(property.translations, locale, "houseRules", property.houseRules || t.content.houseRulesFallback)}</p>
             </MiniCard>
             {property.guideSections.map((item) => (
               <MiniCard key={item.id} title={item.title}>
-                <p className="whitespace-pre-line"><TranslatedText slug={property.slug} text={item.content} /></p>
+                <p className="whitespace-pre-line">{translationValue(item.translations, locale, "content", item.content)}</p>
               </MiniCard>
             ))}
           </>
@@ -136,7 +156,7 @@ export function GuestGuideSection({ property, section }: { property: GuestProper
         {section === "restaurants" ? (
           (restaurantRecommendations.length > 0 ? restaurantRecommendations : property.recommendations).length > 0 ? (
             (restaurantRecommendations.length > 0 ? restaurantRecommendations : property.recommendations).map((item) => (
-              <RecommendationCard key={item.id} item={item} slug={property.slug} openMapLabel={t.content.openMap} />
+              <RecommendationCard key={item.id} item={item} locale={locale} openMapLabel={t.content.openMap} />
             ))
           ) : (
             <EmptyNote>{t.content.noRestaurants}</EmptyNote>
@@ -146,7 +166,7 @@ export function GuestGuideSection({ property, section }: { property: GuestProper
         {section === "activities" ? (
           (activityRecommendations.length > 0 ? activityRecommendations : property.recommendations).length > 0 ? (
             (activityRecommendations.length > 0 ? activityRecommendations : property.recommendations).map((item) => (
-              <RecommendationCard key={item.id} item={item} slug={property.slug} openMapLabel={t.content.openMap} />
+              <RecommendationCard key={item.id} item={item} locale={locale} openMapLabel={t.content.openMap} />
             ))
           ) : (
             <EmptyNote>{t.content.noActivities}</EmptyNote>
@@ -173,7 +193,7 @@ export function GuestGuideSection({ property, section }: { property: GuestProper
         {section === "emergency" ? (
           <>
             <MiniCard title={t.content.emergencyContacts}>
-              <p className="whitespace-pre-line"><TranslatedText slug={property.slug} text={property.emergencyInfo} fallback={t.content.emergencyFallback} /></p>
+              <p className="whitespace-pre-line">{translationValue(property.translations, locale, "emergencyInfo", property.emergencyInfo || t.content.emergencyFallback)}</p>
             </MiniCard>
             {callUrl ? (
               <a href={callUrl} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-ink ring-1 ring-ink/10">
@@ -190,17 +210,17 @@ export function GuestGuideSection({ property, section }: { property: GuestProper
 
 function RecommendationCard({
   item,
-  slug,
+  locale,
   openMapLabel
 }: {
   item: Recommendation;
-  slug: string;
+  locale: string;
   openMapLabel: string;
 }) {
   return (
     <MiniCard title={item.title}>
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)]"><TranslatedText slug={slug} text={item.category} /></p>
-      <p className="mt-2"><TranslatedText slug={slug} text={item.description} /></p>
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)]">{translationValue(item.translations, locale, "category", item.category)}</p>
+      <p className="mt-2">{translationValue(item.translations, locale, "description", item.description)}</p>
       {item.address ? <p className="mt-3 font-semibold text-ink/70">{item.address}</p> : null}
       {item.url ? (
         <a href={item.url} className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-[var(--accent)] ring-1 ring-ink/10">

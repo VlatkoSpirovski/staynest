@@ -7,6 +7,7 @@ import { ReviewPlatform } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireReadyUser } from "@/lib/auth";
 import { uploadImage } from "@/lib/image-upload";
+import { buildTranslationMap, selectedTranslationLocales, validTranslationLocales } from "@/lib/saved-translations";
 import { createUniqueSecureSlug, hasSecureSlugSuffix } from "@/lib/secure-slug";
 import { normalizeSlug } from "@/lib/utils";
 
@@ -443,7 +444,7 @@ export async function saveProperty(formData: FormData) {
           id: propertyId,
           ...(user.role === "ADMIN" ? {} : { ownerId: user.id })
         },
-        select: { slug: true, logoUrl: true, coverImageUrl: true }
+        select: { slug: true, logoUrl: true, coverImageUrl: true, translationLocales: true }
       })
     : null;
 
@@ -471,6 +472,20 @@ export async function saveProperty(formData: FormData) {
     dashboardError(error instanceof Error ? error.message : "Image upload failed.");
   }
 
+  const translationLocales = selectedTranslationLocales(formData);
+  const translations = await buildTranslationMap(
+    {
+      welcomeMessage: stringValue(formData, "welcomeMessage"),
+      checkInInfo: optionalValue(formData, "checkInInfo"),
+      checkOutInfo: optionalValue(formData, "checkOutInfo"),
+      parkingInfo: optionalValue(formData, "parkingInfo"),
+      houseRules: optionalValue(formData, "houseRules"),
+      emergencyInfo: optionalValue(formData, "emergencyInfo"),
+      aiKnowledge: optionalValue(formData, "aiKnowledge")
+    },
+    translationLocales
+  );
+
   const data = {
     ownerId: user.id,
     name,
@@ -489,7 +504,9 @@ export async function saveProperty(formData: FormData) {
     hostContactName: optionalValue(formData, "hostContactName"),
     hostPhone: hostPhone || null,
     hostEmail: hostEmail || null,
-    aiKnowledge: optionalValue(formData, "aiKnowledge")
+    aiKnowledge: optionalValue(formData, "aiKnowledge"),
+    translationLocales,
+    translations
   };
 
   const property = propertyId
@@ -500,6 +517,12 @@ export async function saveProperty(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath(`/stay/${property.slug}`);
+  revalidatePath(`/stay/${property.slug}/wifi`);
+  revalidatePath(`/stay/${property.slug}/arrival`);
+  revalidatePath(`/stay/${property.slug}/house`);
+  revalidatePath(`/stay/${property.slug}/restaurants`);
+  revalidatePath(`/stay/${property.slug}/activities`);
+  revalidatePath(`/stay/${property.slug}/emergency`);
   redirect("/dashboard?saved=property");
 }
 
@@ -544,6 +567,11 @@ export async function saveRecommendation(formData: FormData) {
   }
 
   await ensureAccessibleProperty(propertyId, user);
+  const property = await prisma.property.findUnique({
+    where: { id: propertyId },
+    select: { slug: true, translationLocales: true }
+  });
+  const translationLocales = validTranslationLocales(property?.translationLocales);
   const title = stringValue(formData, "title");
   const category = stringValue(formData, "category");
   const description = stringValue(formData, "description");
@@ -553,6 +581,7 @@ export async function saveRecommendation(formData: FormData) {
   }
 
   if (recommendationId) {
+    const translations = await buildTranslationMap({ category, description }, translationLocales);
     await prisma.recommendation.updateMany({
       where: { id: recommendationId, propertyId },
       data: {
@@ -560,11 +589,13 @@ export async function saveRecommendation(formData: FormData) {
         category,
         description,
         address: optionalValue(formData, "address"),
-        url: optionalValue(formData, "url")
+        url: optionalValue(formData, "url"),
+        translations
       }
     });
   } else {
     const recommendationCount = await prisma.recommendation.count({ where: { propertyId } });
+    const translations = await buildTranslationMap({ category, description }, translationLocales);
     await prisma.recommendation.create({
       data: {
         propertyId,
@@ -573,12 +604,17 @@ export async function saveRecommendation(formData: FormData) {
         description,
         address: optionalValue(formData, "address"),
         url: optionalValue(formData, "url"),
+        translations,
         sortOrder: recommendationCount + 1
       }
     });
   }
 
   revalidatePath("/dashboard");
+  if (property?.slug) {
+    revalidatePath(`/stay/${property.slug}/restaurants`);
+    revalidatePath(`/stay/${property.slug}/activities`);
+  }
   redirect("/dashboard?saved=recommendation");
 }
 

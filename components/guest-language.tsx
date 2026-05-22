@@ -16,32 +16,39 @@ type GuestLanguageContextValue = {
   locale: GuestLocale;
   setLocale: (locale: GuestLocale) => void;
   t: GuestMessages;
+  availableLocales: GuestLocale[];
 };
 
 const GuestLanguageContext = createContext<GuestLanguageContextValue | null>(null);
 
-export function GuestLanguageProvider({ children }: { children: React.ReactNode }) {
+export function GuestLanguageProvider({ children, availableLocales }: { children: React.ReactNode; availableLocales?: string[] }) {
+  const enabledLocales = useMemo(() => {
+    const valid = (availableLocales || ["en"]).filter((locale): locale is GuestLocale => isGuestLocale(locale));
+    return Array.from(new Set<GuestLocale>(["en", ...valid]));
+  }, [availableLocales]);
   const [locale, setLocaleState] = useState<GuestLocale>(getDefaultGuestLocale());
 
   useEffect(() => {
     const stored = window.localStorage.getItem(GUEST_LOCALE_STORAGE_KEY);
     if (stored && isGuestLocale(stored)) {
-      setLocaleState(stored);
+      setLocaleState(enabledLocales.includes(stored) ? stored : "en");
     }
-  }, []);
+  }, [enabledLocales]);
 
   const setLocale = useCallback((next: GuestLocale) => {
-    setLocaleState(next);
-    window.localStorage.setItem(GUEST_LOCALE_STORAGE_KEY, next);
-  }, []);
+    const safeLocale = enabledLocales.includes(next) ? next : "en";
+    setLocaleState(safeLocale);
+    window.localStorage.setItem(GUEST_LOCALE_STORAGE_KEY, safeLocale);
+  }, [enabledLocales]);
 
   const value = useMemo(
     () => ({
       locale,
       setLocale,
-      t: getGuestMessages(locale)
+      t: getGuestMessages(locale),
+      availableLocales: enabledLocales
     }),
-    [locale, setLocale]
+    [enabledLocales, locale, setLocale]
   );
 
   return <GuestLanguageContext.Provider value={value}>{children}</GuestLanguageContext.Provider>;
@@ -56,7 +63,7 @@ export function useGuestLanguage() {
 }
 
 export function GuestLanguageMenu() {
-  const { locale, setLocale } = useGuestLanguage();
+  const { locale, setLocale, availableLocales } = useGuestLanguage();
   const [open, setOpen] = useState(false);
   const active = GUEST_LOCALES.find((item) => item.code === locale) ?? GUEST_LOCALES[0];
 
@@ -84,7 +91,7 @@ export function GuestLanguageMenu() {
             role="listbox"
             className="absolute right-0 top-[calc(100%+6px)] z-50 max-h-64 w-44 overflow-y-auto rounded-[14px] border border-ink/10 bg-white py-1 shadow-[0_18px_50px_rgba(31,41,51,0.18)]"
           >
-            {GUEST_LOCALES.map((item) => (
+            {GUEST_LOCALES.filter((item) => availableLocales.includes(item.code)).map((item) => (
               <li key={item.code}>
                 <button
                   type="button"

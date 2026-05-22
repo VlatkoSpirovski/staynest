@@ -1,7 +1,7 @@
 "use client";
 
 import { Home, KeyRound, Map, Phone, ShieldAlert, Star, Utensils, Wifi } from "lucide-react";
-import { GuestLanguageMenu, useGuestLanguage } from "@/components/guest-language";
+import { GuestLanguageMenu, GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
 import { GuestChat } from "@/components/guest-chat";
 import { MenuLink, PoweredByStayNest } from "@/app/stay/[slug]/guide-ui";
 
@@ -11,9 +11,18 @@ type GuestProperty = {
   logoUrl: string | null;
   coverImageUrl: string | null;
   accentColor: string;
+  translationLocales: string[];
 };
 
 export function GuestGuideHome({ property }: { property: GuestProperty }) {
+  return (
+    <GuestLanguageProvider availableLocales={property.translationLocales}>
+      <GuestGuideHomeContent property={property} />
+    </GuestLanguageProvider>
+  );
+}
+
+function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
   const { t } = useGuestLanguage();
   const baseHref = `/stay/${property.slug}`;
 

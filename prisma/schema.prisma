@@ -128,6 +128,8 @@ model Property {
   hostPhone       String?
   hostEmail       String?
   aiKnowledge     String?          @db.Text
+  translationLocales String[]      @default(["en"])
+  translations    Json?
   guideSections   GuideSection[]
   recommendations Recommendation[]
   reviewLinks     ReviewLink[]
@@ -142,6 +144,7 @@ model GuideSection {
   type       GuideSectionType
   title      String
   content    String           @db.Text
+  translations Json?
   sortOrder  Int              @default(0)
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
@@ -159,6 +162,7 @@ model Recommendation {
   address     String?
   url         String?
   imageUrl    String?
+  translations Json?
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
