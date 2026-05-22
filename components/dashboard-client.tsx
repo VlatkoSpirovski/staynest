@@ -8,6 +8,7 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  Download,
   ExternalLink,
   Heart,
   Home,
@@ -604,8 +605,18 @@ function SettingsScreen({
               <p className="text-xs font-bold text-white/48">Guest link</p>
               <p className="mt-1 break-all text-xs font-black leading-5">{publicUrl}</p>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-2 sm:grid-cols-3">
               <CopyButton value={publicUrl} label="Share link" copiedLabel="Copied" className="rounded-[16px] border border-[#172234]/10 bg-[#FFFFFF] text-[#111827] shadow-[0_14px_34px_rgba(17,24,39,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] hover:bg-white" />
+              {qrCode ? (
+                <a
+                  href={qrCode}
+                  download={`staynest-${property.slug}-qr.png`}
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[16px] border border-[#172234]/10 bg-[#FFFFFF] px-4 text-sm font-black text-[#111827] shadow-[0_14px_34px_rgba(17,24,39,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#B7DAD5]/60 focus:ring-offset-2 focus:ring-offset-[#111827]"
+                >
+                  <span>Download QR</span>
+                  <Download size={15} />
+                </a>
+              ) : null}
               <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[16px] bg-[#5F9D99] px-4 text-sm font-black text-white shadow-[0_18px_48px_rgba(95,157,153,0.30),inset_0_1px_0_rgba(255,255,255,0.16)] transition hover:-translate-y-0.5 hover:bg-[#558F8B] focus:outline-none focus:ring-2 focus:ring-[#B7DAD5]/60 focus:ring-offset-2 focus:ring-offset-[#111827]">
                 <span>Open preview</span>
                 <ExternalLink size={15} />

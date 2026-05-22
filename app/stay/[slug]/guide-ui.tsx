@@ -61,7 +61,7 @@ export function DetailShell({
   );
 }
 
-export function MiniCard({ title, children }: { title: string; children: React.ReactNode }) {
+export function MiniCard({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
   return (
     <article className="rounded-[18px] border border-ink/10 bg-[#fbf7ef] p-5 text-left shadow-[0_10px_28px_rgba(76,55,37,0.08)]">
       <h2 className="text-xl font-extrabold text-ink">{title}</h2>
