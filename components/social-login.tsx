@@ -1,4 +1,5 @@
-import { Apple, Chrome } from "lucide-react";
+import { Apple } from "lucide-react";
+import { GoogleMark } from "@/components/google-mark";
 
 export function SocialLogin() {
   return (
@@ -13,7 +14,7 @@ export function SocialLogin() {
           href="/auth/google"
           className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80"
         >
-          <Chrome size={16} />
+          <GoogleMark />
           Google
         </a>
         <a

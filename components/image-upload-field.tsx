@@ -30,7 +30,7 @@ export function ImageUploadField({
   const preview = useMemo(() => (removed ? "" : previewUrl), [previewUrl, removed]);
 
   return (
-    <div className="grid gap-3 rounded-[8px] border border-ink/10 bg-mist p-4">
+    <div className="grid gap-3 rounded-[8px] border border-ink/10 bg-mist p-3 sm:p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-ink">{label}</p>
@@ -39,14 +39,14 @@ export function ImageUploadField({
         <ImageIcon className="text-lagoon" size={20} />
       </div>
 
-      <div className="overflow-hidden rounded-[8px] border border-dashed border-ink/15 bg-white">
+      {preview || uploadsEnabled ? <div className="overflow-hidden rounded-[8px] border border-dashed border-ink/15 bg-white">
         {preview ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={preview} alt={`${label} preview`} className="h-40 w-full object-cover" />
+          <img src={preview} alt={`${label} preview`} className="h-32 w-full object-cover sm:h-40" />
         ) : (
-          <div className="grid h-40 place-items-center text-sm font-semibold text-ink/45">No image selected</div>
+          <div className="grid h-28 place-items-center text-sm font-semibold text-ink/45 sm:h-40">No image selected</div>
         )}
-      </div>
+      </div> : null}
 
       {error ? <div className="rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</div> : null}
 
@@ -82,7 +82,7 @@ export function ImageUploadField({
 
       <input name={urlName} className={inputClass} defaultValue={currentUrl || ""} placeholder="https://..." />
 
-      <label className="inline-flex items-center gap-2 text-sm font-semibold text-ink/60">
+      {currentUrl || preview ? <label className="inline-flex items-center gap-2 text-sm font-semibold text-ink/60">
         <input
           name={removeName}
           type="checkbox"
@@ -93,7 +93,7 @@ export function ImageUploadField({
         />
         <Trash2 size={15} />
         Remove current image
-      </label>
+      </label> : null}
     </div>
   );
 }

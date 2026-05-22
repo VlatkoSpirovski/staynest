@@ -8,6 +8,7 @@ import { createSession } from "@/lib/auth";
 import { getAppUrl } from "@/lib/utils";
 
 const oauthStateCookie = "staynest_oauth_state";
+const oauthPlanCookie = "staynest_oauth_plan";
 
 type OAuthProfile = {
   provider: OAuthProvider;
@@ -27,6 +28,29 @@ export function createOAuthState() {
     maxAge: 10 * 60
   });
   return state;
+}
+
+export function setOAuthPlan(plan: string | null) {
+  if (plan !== "basic" && plan !== "ai") {
+    cookies().delete(oauthPlanCookie);
+    return;
+  }
+
+  const selectedPlan = plan;
+  cookies().set(oauthPlanCookie, selectedPlan, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 10 * 60
+  });
+}
+
+function consumeOAuthPlan() {
+  const value = cookies().get(oauthPlanCookie)?.value;
+  const selectedPlan = value === "basic" || value === "ai" ? value : null;
+  cookies().delete(oauthPlanCookie);
+  return selectedPlan;
 }
 
 export function verifyOAuthState(state: string | null) {
@@ -168,6 +192,7 @@ export async function getAppleProfile(code: string, rawUser?: string | null): Pr
 }
 
 export async function signInWithOAuthProfile(profile: OAuthProfile) {
+  const selectedPlan = consumeOAuthPlan();
   const existingAccount = await prisma.oAuthAccount.findUnique({
     where: {
       provider_providerAccountId: {
@@ -182,7 +207,7 @@ export async function signInWithOAuthProfile(profile: OAuthProfile) {
 
   if (existingAccount) {
     await createSession(existingAccount.userId);
-    return existingAccount.user;
+    return { user: existingAccount.user, isNewUser: false, selectedPlan };
   }
 
   const user = await prisma.user.upsert({
@@ -201,6 +226,9 @@ export async function signInWithOAuthProfile(profile: OAuthProfile) {
       name: profile.name,
       email: profile.email,
       emailVerifiedAt: profile.emailVerified ? new Date() : null,
+      selectedPlan: selectedPlan ?? "basic",
+      trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      subscriptionStatus: "TRIALING",
       oauthAccounts: {
         create: {
           provider: profile.provider,
@@ -211,7 +239,7 @@ export async function signInWithOAuthProfile(profile: OAuthProfile) {
   });
 
   await createSession(user.id);
-  return user;
+  return { user, isNewUser: true, selectedPlan: selectedPlan ?? "basic" };
 }
 
 function createAppleClientSecret() {

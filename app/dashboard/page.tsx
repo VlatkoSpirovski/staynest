@@ -1,6 +1,7 @@
 import QRCode from "qrcode";
 import {
   BadgeCheck,
+  Bot,
   ExternalLink,
   Home,
   ImageIcon,
@@ -8,6 +9,7 @@ import {
   LinkIcon,
   LogOut,
   MapPin,
+  MessageCircle,
   MessageSquareText,
   Plus,
   QrCode,
@@ -16,7 +18,7 @@ import {
   Wifi
 } from "lucide-react";
 import { logoutOwner } from "@/app/auth-actions";
-import { deleteRecommendation, saveProperty, saveRecommendation, saveReviewLinks } from "@/app/actions";
+import { deleteRecommendation, importListingFromUrl, saveProperty, saveRecommendation, saveReviewLinks } from "@/app/actions";
 import { CollapsibleSection } from "@/components/collapsible-section";
 import { ConfirmSubmitButton } from "@/components/confirm-submit";
 import { CopyButton } from "@/components/copy-button";
@@ -65,23 +67,26 @@ function SectionHeader({
   icon: Icon,
   eyebrow,
   title,
-  text
+  text,
+  helper
 }: {
   icon: typeof Home;
   eyebrow: string;
   title: string;
   text: string;
+  helper?: string;
 }) {
   return (
-    <div className="mb-5 flex flex-col gap-3 border-b border-ink/10 pb-5 sm:flex-row sm:items-start sm:justify-between">
+    <div className="mb-4 border-b border-ink/10 pb-4 sm:mb-5 sm:pb-5">
       <div className="flex gap-3">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[8px] bg-ink text-white shadow-soft">
-          <Icon size={18} />
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[8px] bg-ink text-white shadow-soft sm:h-11 sm:w-11">
+          <Icon size={17} />
         </div>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-lagoon">{eyebrow}</p>
-          <h3 className="mt-1 text-xl font-bold">{title}</h3>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/60">{text}</p>
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-lagoon sm:text-xs sm:tracking-[0.18em]">{eyebrow}</p>
+          <h3 className="mt-1 text-lg font-bold leading-tight sm:text-xl">{title}</h3>
+          <p className="mt-1 hidden max-w-2xl text-sm leading-6 text-ink/60 sm:block">{text}</p>
+          {helper ? <p className="mt-1 text-sm leading-6 text-ink/58 sm:hidden">{helper}</p> : null}
         </div>
       </div>
     </div>
@@ -95,7 +100,7 @@ function SubPanel({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={`rounded-[8px] border border-ink/10 bg-white/75 p-4 shadow-[0_12px_38px_rgba(31,41,51,0.06)] ${className}`}>{children}</div>;
+  return <div className={`rounded-[8px] border border-ink/10 bg-white/75 p-3 shadow-[0_12px_38px_rgba(31,41,51,0.06)] sm:p-4 ${className}`}>{children}</div>;
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
@@ -105,22 +110,28 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const qrCode = publicUrl ? await QRCode.toDataURL(publicUrl, { margin: 1, width: 240, color: { dark: "#1f2933" } }) : "";
   const success = savedMessage(searchParams?.saved);
   const uploadsEnabled = isUploadConfigured();
+  const selectedPlan = user.selectedPlan === "ai" ? "ai" : "basic";
+  const planName = selectedPlan === "ai" ? "Full AI" : "Basic";
+  const planPrice = selectedPlan === "ai" ? "€15" : "€10";
+  const trialLabel = user.trialEndsAt
+    ? user.trialEndsAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+    : null;
 
   return (
     <main className="min-h-screen bg-mist text-ink">
       <header className="border-b border-ink/10 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-[8px] bg-ink text-white shadow-soft">
+            <div className="grid h-10 w-10 place-items-center rounded-[8px] bg-ink text-white shadow-soft sm:h-11 sm:w-11">
               <Home size={19} />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-lagoon">Host workspace</p>
               <h1 className="text-lg font-bold">StayNest Dashboard</h1>
-              <p className="text-sm text-ink/55">Signed in as {user.email}</p>
+              <p className="truncate text-sm text-ink/55">Signed in as {user.email}</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-[1fr_auto] gap-2 sm:flex sm:flex-wrap sm:items-center">
             {user.role === "ADMIN" ? (
               <Button href="/admin" variant="secondary">
                 Admin
@@ -139,31 +150,57 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-5 px-5 py-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="mx-auto grid max-w-7xl gap-4 px-3 py-4 sm:px-5 sm:py-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="grid gap-5">
           {success ? <div className="rounded-[8px] border border-olive/20 bg-olive/10 px-4 py-3 text-sm font-semibold text-olive">{success}</div> : null}
           {searchParams?.error ? <div className="rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{searchParams.error}</div> : null}
 
+          <Panel className="bg-ink p-4 text-white sm:p-5">
+            <div className="flex gap-3">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[8px] bg-white/10">
+                <Bot size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/50">Fast setup</p>
+                <h2 className="text-xl font-bold leading-tight">Import from Airbnb or Booking</h2>
+                <p className="mt-1 text-sm leading-6 text-white/65">Paste a link, or paste the listing text if the site blocks reading.</p>
+              </div>
+            </div>
+            <form action={importListingFromUrl} className="mt-4 grid gap-3">
+              <input type="hidden" name="propertyId" value={property?.id || ""} />
+              <input
+                name="listingUrl"
+                className="focus-ring min-h-12 w-full rounded-[8px] border border-white/10 bg-white px-3 text-sm text-ink placeholder:text-ink/35"
+                type="url"
+                placeholder="Airbnb or Booking URL"
+              />
+              <textarea
+                name="listingText"
+                className="focus-ring min-h-24 w-full rounded-[8px] border border-white/10 bg-white px-3 py-3 text-sm text-ink placeholder:text-ink/35"
+                placeholder="Optional: paste listing description/details if URL import is blocked"
+              />
+              <SubmitButton pendingText="Importing..." className="min-h-12 w-full bg-white text-ink hover:bg-white/90">
+                Import guide
+              </SubmitButton>
+            </form>
+          </Panel>
+
           <CollapsibleSection eyebrow="Property guide" title={property ? property.name : "Create your first property"} defaultOpen>
-            <form action={saveProperty} className="grid gap-5">
+            <form action={saveProperty} className="grid gap-3 pb-20 sm:gap-5 sm:pb-0">
               <input type="hidden" name="propertyId" value={property?.id || ""} />
 
               <SubPanel>
                 <SectionHeader
                   icon={BadgeCheck}
                   eyebrow="Essentials"
-                  title="Identity and public link"
-                  text="These fields shape the public guide name, URL and visual accent."
+                  title="Property name"
+                  text="Name the property. StayNest creates the secure guest guide link automatically."
+                  helper="The secure guest link is created after saving."
                 />
-                <div className="grid gap-4 md:grid-cols-[1fr_1fr_150px]">
+                <input type="hidden" name="accentColor" value={property?.accentColor || "#4a8a8f"} />
+                <div className="grid gap-4">
                   <Field label="Property name">
-                    <input name="name" className={inputClass} defaultValue={property?.name || "Example Stay"} required />
-                  </Field>
-                  <Field label="Public slug">
-                    <input name="slug" className={inputClass} defaultValue={property?.slug || "example-stay"} required pattern="[a-z0-9-]+" />
-                  </Field>
-                  <Field label="Accent color">
-                    <input name="accentColor" className={`${inputClass} p-1`} defaultValue={property?.accentColor || "#4a8a8f"} type="color" />
+                    <input name="name" className={inputClass} defaultValue={property?.name || ""} placeholder="Example: Ocean View Apartment" required />
                   </Field>
                 </div>
               </SubPanel>
@@ -171,9 +208,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <SubPanel>
                 <SectionHeader
                   icon={ImageIcon}
-                  eyebrow="Brand visuals"
-                  title="Logo and cover image"
+                  eyebrow="Photos"
+                  title="Logo and cover"
                   text="Use a crisp logo and a bright cover image. These are the first signals guests see."
+                  helper={uploadsEnabled ? "Upload from phone or laptop." : "Paste image URLs until uploads are configured."}
                 />
                 <div className="grid gap-4 md:grid-cols-2">
                   <ImageUploadField
@@ -198,9 +236,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <SubPanel>
                 <SectionHeader
                   icon={Wifi}
-                  eyebrow="Guest essentials"
-                  title="Welcome, Wi-Fi and arrival basics"
+                  eyebrow="Basics"
+                  title="Welcome and Wi-Fi"
                   text="Keep this part practical. It should answer the questions guests ask first."
+                  helper="Add the details guests ask for first."
                 />
                 <div className="grid gap-4">
                   <Field label="Welcome message">
@@ -220,9 +259,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <SubPanel>
                 <SectionHeader
                   icon={KeyRound}
-                  eyebrow="Stay instructions"
-                  title="Check-in, rules and contact details"
+                  eyebrow="Stay"
+                  title="Arrival and contact"
                   text="Separate operational details so guests can jump straight to what they need during the stay."
+                  helper="Check-in, checkout, rules and host contact."
                 />
                 <div className="grid gap-5">
                   <div className="grid gap-4 md:grid-cols-2">
@@ -258,10 +298,28 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 </div>
               </SubPanel>
 
-              <div className="flex justify-end rounded-[8px] border border-ink/10 bg-white p-3 shadow-[0_12px_34px_rgba(31,41,51,0.06)]">
+              <SubPanel>
+                <SectionHeader
+                  icon={MessageCircle}
+                  eyebrow="AI"
+                  title="Guest chat knowledge"
+                  text="Add extra answers the guest chat should know. The bot only uses this property's guide and notes."
+                  helper="Extra details the assistant should know."
+                />
+                <Field label="Assistant knowledge">
+                  <textarea
+                    name="aiKnowledge"
+                    className={textareaClass}
+                    defaultValue={property?.aiKnowledge || ""}
+                    placeholder="Example: Pool heating costs 20 EUR/day. The nearest supermarket is 4 minutes by car. Extra towels are in the hallway cabinet."
+                  />
+                </Field>
+              </SubPanel>
+
+              <div className="sticky bottom-3 z-20 flex justify-end rounded-[8px] border border-ink/10 bg-white/95 p-3 shadow-[0_18px_50px_rgba(31,41,51,0.18)] backdrop-blur sm:static sm:shadow-[0_12px_34px_rgba(31,41,51,0.06)]">
                 <SubmitButton pendingText="Saving property..." className="w-full sm:w-fit">
                   <Save size={17} />
-                  Save Property
+                  Save guide
                 </SubmitButton>
               </div>
             </form>
@@ -426,12 +484,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <div>
                 <p className="text-sm font-semibold text-lagoon">Plan</p>
                 <div>
-                  <span className="text-3xl font-bold">€15</span>
-                  <span className="text-sm text-ink/55"> / property / month</span>
+                  <span className="text-3xl font-bold">{planPrice}</span>
+                  <span className="text-sm text-ink/55"> / month</span>
                 </div>
               </div>
             </div>
-            <p className="mt-3 text-sm leading-6 text-ink/60">Stripe is intentionally left out for this MVP.</p>
+            <p className="mt-3 text-sm font-semibold text-ink/70">{planName}</p>
+            <p className="mt-1 text-sm leading-6 text-ink/60">
+              {trialLabel ? `Free trial active until ${trialLabel}.` : "Free trial active."} Connect PayPal before it ends.
+            </p>
+            <Button href={`/billing?plan=${selectedPlan}`} variant="secondary" className="mt-4 w-full">
+              Billing
+            </Button>
           </Panel>
         </aside>
       </div>

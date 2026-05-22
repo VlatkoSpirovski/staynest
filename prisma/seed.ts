@@ -61,7 +61,9 @@ async function main() {
       "Emergency number: 112. Nearest pharmacy: City Pharmacy, 8 minutes by car. For urgent property issues call your host.",
     hostContactName: "Example Host",
     hostPhone: "+389 70 000 000",
-    hostEmail: "example-host@staynest.site"
+    hostEmail: "example-host@staynest.site",
+    aiKnowledge:
+      "Pool towels are in the hallway cabinet. Extra blankets are in the bedroom wardrobe. The nearest supermarket is a short drive away. If guests need anything not listed, they should contact the host."
   };
 
   const property = await prisma.property.upsert({

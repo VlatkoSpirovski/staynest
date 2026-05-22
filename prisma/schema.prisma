@@ -42,6 +42,10 @@ model User {
   emailVerifiedAt    DateTime?
   role               UserRole                 @default(OWNER)
   mustChangePassword Boolean                  @default(false)
+  selectedPlan       String?
+  trialEndsAt        DateTime?
+  subscriptionStatus String?
+  paypalSubscriptionId String?
   properties         Property[]
   sessions           Session[]
   oauthAccounts      OAuthAccount[]
@@ -120,6 +124,7 @@ model Property {
   hostContactName String?
   hostPhone       String?
   hostEmail       String?
+  aiKnowledge     String?          @db.Text
   guideSections   GuideSection[]
   recommendations Recommendation[]
   reviewLinks     ReviewLink[]

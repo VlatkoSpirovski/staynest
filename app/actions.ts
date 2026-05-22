@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isIP } from "node:net";
 import { ReviewPlatform } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireReadyUser } from "@/lib/auth";
 import { uploadImage } from "@/lib/image-upload";
+import { createUniqueSecureSlug, hasSecureSlugSuffix } from "@/lib/secure-slug";
 import { normalizeSlug } from "@/lib/utils";
 
 function stringValue(formData: FormData, key: string) {
@@ -31,31 +33,290 @@ function dashboardError(message: string): never {
   redirect(`/dashboard?error=${encodeURIComponent(message)}`);
 }
 
+function isPrivateHostname(hostname: string) {
+  const host = hostname.toLowerCase();
+  if (host === "localhost" || host.endsWith(".localhost")) return true;
+
+  const ipVersion = isIP(host);
+  if (!ipVersion) return false;
+
+  if (ipVersion === 6) {
+    return host === "::1" || host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80:");
+  }
+
+  const parts = host.split(".").map(Number);
+  const [first, second] = parts;
+  return (
+    first === 10 ||
+    first === 127 ||
+    (first === 169 && second === 254) ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168)
+  );
+}
+
+function safeString(value: unknown, maxLength = 1600) {
+  return typeof value === "string" ? value.trim().slice(0, maxLength) : undefined;
+}
+
+function extractResponseText(data: unknown) {
+  if (!data || typeof data !== "object") return "";
+  if ("output_text" in data && typeof data.output_text === "string") return data.output_text;
+
+  const output = "output" in data ? data.output : null;
+  if (!Array.isArray(output)) return "";
+
+  return output
+    .flatMap((item) => {
+      if (!item || typeof item !== "object" || !("content" in item) || !Array.isArray(item.content)) return [];
+      return item.content.map((content: unknown) => {
+        if (!content || typeof content !== "object") return "";
+        if ("text" in content && typeof content.text === "string") return content.text;
+        return "";
+      });
+    })
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
+function cleanPageText(html: string) {
+  const jsonLd = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
+    .map((match) => match[1]?.trim())
+    .filter(Boolean)
+    .join("\n");
+  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "";
+  const description = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["'][^>]*>/i)?.[1] || "";
+  const ogImage = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["'][^>]*>/i)?.[1] || "";
+  const visibleText = html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return `
+Title: ${title}
+Description: ${description}
+Open graph image: ${ogImage}
+
+JSON-LD:
+${jsonLd}
+
+Visible listing text:
+${visibleText}
+`.slice(0, 28000);
+}
+
+async function fetchListingText(url: string) {
+  const response = await fetch(url, {
+    headers: {
+      "user-agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36",
+      accept: "text/html,application/xhtml+xml"
+    },
+    cache: "no-store",
+    signal: AbortSignal.timeout(12000)
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not read that listing URL. The site may be blocking automated access.");
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("text/html")) {
+    throw new Error("That link did not return a readable property page.");
+  }
+
+  return cleanPageText(await response.text());
+}
+
+type ImportedListing = {
+  name?: string;
+  welcomeMessage?: string;
+  coverImageUrl?: string;
+  checkInInfo?: string;
+  checkOutInfo?: string;
+  parkingInfo?: string;
+  houseRules?: string;
+  emergencyInfo?: string;
+  hostContactName?: string;
+  aiKnowledge?: string;
+};
+
+function parsedImportedListing(text: string): ImportedListing {
+  const json = text.match(/\{[\s\S]*\}/)?.[0] || text;
+  const parsed = JSON.parse(json) as ImportedListing;
+  if (!parsed || typeof parsed !== "object") return {};
+  return {
+    name: safeString(parsed.name, 120),
+    welcomeMessage: safeString(parsed.welcomeMessage, 1200),
+    coverImageUrl: safeString(parsed.coverImageUrl, 1000),
+    checkInInfo: safeString(parsed.checkInInfo, 1200),
+    checkOutInfo: safeString(parsed.checkOutInfo, 1200),
+    parkingInfo: safeString(parsed.parkingInfo, 1000),
+    houseRules: safeString(parsed.houseRules, 1600),
+    emergencyInfo: safeString(parsed.emergencyInfo, 1000),
+    hostContactName: safeString(parsed.hostContactName, 120),
+    aiKnowledge: safeString(parsed.aiKnowledge, 2500)
+  };
+}
+
+export async function importListingFromUrl(formData: FormData) {
+  const user = await requireReadyUser();
+  const listingUrl = stringValue(formData, "listingUrl");
+  const pastedText = stringValue(formData, "listingText").slice(0, 28000);
+  const propertyId = stringValue(formData, "propertyId");
+
+  if (!listingUrl && !pastedText) {
+    dashboardError("Paste a listing URL or the listing text first.");
+  }
+
+  let url: URL | null = null;
+  if (listingUrl) {
+    try {
+      url = new URL(listingUrl);
+    } catch {
+      dashboardError("Paste a valid listing URL.");
+    }
+
+    if (!["http:", "https:"].includes(url.protocol)) {
+      dashboardError("Listing URL must start with http or https.");
+    }
+
+    if (isPrivateHostname(url.hostname)) {
+      dashboardError("That listing URL is not allowed.");
+    }
+  }
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    dashboardError("AI import needs OPENAI_API_KEY configured.");
+  }
+
+  let listingText = pastedText ? `Host pasted listing text:\n${pastedText}` : "";
+  if (!listingText && url) {
+    try {
+      listingText = await fetchListingText(url.toString());
+    } catch (error) {
+      dashboardError(
+        `${error instanceof Error ? error.message : "Could not read that listing URL."} Open the listing, copy the visible description/details, and paste it into the text box.`
+      );
+    }
+  }
+
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL || "gpt-5.4-mini",
+      instructions:
+        "Extract rental guest-guide fields from a Booking/Airbnb listing. Return only strict JSON. Use null for missing values. Do not invent access codes, Wi-Fi passwords, phone numbers, emails, emergency contacts, or check-in instructions if not present.",
+      input: [
+        {
+          role: "user",
+          content: `Return JSON with keys: name, welcomeMessage, coverImageUrl, checkInInfo, checkOutInfo, parkingInfo, houseRules, emergencyInfo, hostContactName, aiKnowledge.\n\nListing URL: ${url?.toString() || "Not provided; host pasted text manually."}\n\nListing content:\n${listingText}`
+        }
+      ]
+    })
+  });
+
+  if (!response.ok) {
+    dashboardError("AI could not extract the listing right now.");
+  }
+
+  let imported: ImportedListing;
+  try {
+    imported = parsedImportedListing(extractResponseText(await response.json()));
+  } catch {
+    dashboardError("AI returned an unreadable import. Please try again.");
+  }
+
+  const existingProperty = propertyId
+    ? await prisma.property.findFirst({
+        where: {
+          id: propertyId,
+          ...(user.role === "ADMIN" ? {} : { ownerId: user.id })
+        }
+      })
+    : null;
+
+  const name = imported.name?.trim() || existingProperty?.name || "Imported Property";
+  const data = {
+    ownerId: user.id,
+    name,
+    slug: existingProperty?.slug || (await createUniqueSecureSlug(name)),
+    accentColor: existingProperty?.accentColor || "#4a8a8f",
+    logoUrl: existingProperty?.logoUrl || null,
+    coverImageUrl: imported.coverImageUrl || existingProperty?.coverImageUrl || null,
+    welcomeMessage:
+      imported.welcomeMessage ||
+      existingProperty?.welcomeMessage ||
+      `Welcome to ${name}. This guide includes the most important details for your stay.`,
+    wifiName: existingProperty?.wifiName || null,
+    wifiPassword: existingProperty?.wifiPassword || null,
+    checkInInfo: imported.checkInInfo || existingProperty?.checkInInfo || null,
+    checkOutInfo: imported.checkOutInfo || existingProperty?.checkOutInfo || null,
+    parkingInfo: imported.parkingInfo || existingProperty?.parkingInfo || null,
+    houseRules: imported.houseRules || existingProperty?.houseRules || null,
+    emergencyInfo: imported.emergencyInfo || existingProperty?.emergencyInfo || null,
+    hostContactName: imported.hostContactName || existingProperty?.hostContactName || null,
+    hostPhone: existingProperty?.hostPhone || null,
+    hostEmail: existingProperty?.hostEmail || user.email,
+    aiKnowledge: imported.aiKnowledge || existingProperty?.aiKnowledge || `Imported from ${url ? `${url.hostname}: ${url.toString()}` : "pasted listing text"}`
+  };
+
+  const property = existingProperty
+    ? await prisma.property.update({
+        where: { id: existingProperty.id },
+        data
+      })
+    : await prisma.property.create({ data });
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/stay/${property.slug}`);
+  redirect("/dashboard?saved=property");
+}
+
 export async function saveProperty(formData: FormData) {
   const user = await requireReadyUser();
   const propertyId = stringValue(formData, "propertyId");
   const name = stringValue(formData, "name");
-  const slug = normalizeSlug(stringValue(formData, "slug") || name);
+  const requestedSlug = normalizeSlug(stringValue(formData, "slug"));
   const accentColor = stringValue(formData, "accentColor") || "#4a8a8f";
   const wifiName = stringValue(formData, "wifiName");
   const wifiPassword = stringValue(formData, "wifiPassword");
   const hostPhone = stringValue(formData, "hostPhone");
   const hostEmail = stringValue(formData, "hostEmail");
 
-  if (!name || !slug || !wifiName || !wifiPassword || !hostPhone || !hostEmail) {
-    redirect("/dashboard?error=Fill%20in%20property%20name,%20slug,%20Wi-Fi,%20host%20phone%20and%20host%20email.");
+  if (!name || !wifiName || !wifiPassword || !hostPhone || !hostEmail) {
+    redirect("/dashboard?error=Fill%20in%20property%20name,%20Wi-Fi,%20host%20phone%20and%20host%20email.");
   }
 
-  const duplicateSlug = await prisma.property.findFirst({
-    where: {
-      slug,
-      ...(propertyId ? { id: { not: propertyId } } : {})
-    },
-    select: { id: true }
-  });
+  const currentProperty = propertyId
+    ? await prisma.property.findFirst({
+        where: {
+          id: propertyId,
+          ...(user.role === "ADMIN" ? {} : { ownerId: user.id })
+        },
+        select: { slug: true }
+      })
+    : null;
 
-  if (duplicateSlug) {
-    redirect("/dashboard?error=That%20public%20slug%20is%20already%20in%20use.");
+  const slug =
+    currentProperty && (!requestedSlug || requestedSlug === currentProperty.slug)
+      ? currentProperty.slug
+      : await createUniqueSecureSlug(requestedSlug || name, propertyId || undefined);
+
+  if (!hasSecureSlugSuffix(slug)) {
+    redirect("/dashboard?error=Public%20guide%20links%20must%20use%20a%20secure%20generated%20suffix.");
   }
 
   let logoUrl = optionalValue(formData, "logoUrl");
@@ -90,7 +351,8 @@ export async function saveProperty(formData: FormData) {
     emergencyInfo: optionalValue(formData, "emergencyInfo"),
     hostContactName: optionalValue(formData, "hostContactName"),
     hostPhone: hostPhone || null,
-    hostEmail: hostEmail || null
+    hostEmail: hostEmail || null,
+    aiKnowledge: optionalValue(formData, "aiKnowledge")
   };
 
   const property = propertyId
@@ -101,6 +363,38 @@ export async function saveProperty(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath(`/stay/${property.slug}`);
+  redirect("/dashboard?saved=property");
+}
+
+export async function rotatePropertySlug(formData: FormData) {
+  const user = await requireReadyUser();
+  const propertyId = stringValue(formData, "propertyId");
+
+  if (!propertyId) {
+    redirect("/dashboard");
+  }
+
+  const property = await prisma.property.findFirst({
+    where: {
+      id: propertyId,
+      ...(user.role === "ADMIN" ? {} : { ownerId: user.id })
+    },
+    select: { id: true, name: true, slug: true }
+  });
+
+  if (!property) {
+    redirect("/dashboard");
+  }
+
+  const slug = await createUniqueSecureSlug(property.name, property.id);
+  await prisma.property.update({
+    where: { id: property.id },
+    data: { slug }
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/stay/${property.slug}`);
+  revalidatePath(`/stay/${slug}`);
   redirect("/dashboard?saved=property");
 }
 

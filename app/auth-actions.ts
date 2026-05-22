@@ -23,6 +23,56 @@ function redirectWithError(path: string, message: string): never {
   redirect(`${path}${separator}error=${encodeURIComponent(message)}`);
 }
 
+function planValue(value: string) {
+  return value === "ai" ? "ai" : "basic";
+}
+
+function planRedirectPath(plan: string) {
+  return `/billing?plan=${encodeURIComponent(planValue(plan))}`;
+}
+
+export async function registerOwner(formData: FormData) {
+  const name = stringValue(formData, "name");
+  const email = normalizeEmail(stringValue(formData, "email"));
+  const password = stringValue(formData, "password");
+  const confirmPassword = stringValue(formData, "confirmPassword");
+  const plan = planValue(stringValue(formData, "plan"));
+  const registerPath = `/register?plan=${encodeURIComponent(plan)}`;
+
+  if (!name || !email || !password) {
+    redirectWithError(registerPath, "Please complete every required field.");
+  }
+
+  if (password !== confirmPassword) {
+    redirectWithError(registerPath, "Passwords do not match.");
+  }
+
+  const passwordErrors = validatePassword(password);
+  if (passwordErrors.length > 0) {
+    redirectWithError(registerPath, `Password must include ${passwordErrors.join(", ")}.`);
+  }
+
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+  if (existingUser) {
+    redirectWithError(registerPath, "An account with this email already exists. Please log in.");
+  }
+
+  const user = await prisma.user.create({
+    data: {
+      name,
+      email,
+      passwordHash: hashPassword(password),
+      emailVerifiedAt: new Date(),
+      selectedPlan: plan,
+      trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      subscriptionStatus: "TRIALING"
+    }
+  });
+
+  await createSession(user.id);
+  redirect(planRedirectPath(plan));
+}
+
 export async function loginOwner(formData: FormData) {
   const email = normalizeEmail(stringValue(formData, "email"));
   const password = stringValue(formData, "password");

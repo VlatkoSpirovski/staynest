@@ -6,6 +6,7 @@ import {
   deleteAdminProperty,
   deleteAdminRecommendation,
   deleteUser,
+  rotateAdminPropertySlug,
   saveAdminRecommendation,
   saveAdminReviewLinks,
   updateAdminProperty,
@@ -191,8 +192,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <Field label="Property name">
               <input name="name" className={inputClass} required />
             </Field>
-            <Field label="Slug">
-              <input name="slug" className={inputClass} placeholder="example-stay" />
+            <Field label="Secure slug">
+              <input name="slug" className={inputClass} placeholder="Leave empty to generate automatically" />
             </Field>
             <Field label="Accent color">
               <input name="accentColor" className={inputClass} type="color" defaultValue="#4a8a8f" />
@@ -236,6 +237,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <Field label="Host email">
               <input name="hostEmail" className={inputClass} type="email" />
             </Field>
+            <Field label="AI assistant knowledge">
+              <textarea name="aiKnowledge" className={textareaClass} />
+            </Field>
             <Button type="submit" className="md:col-span-2 md:w-fit">
               Create property
             </Button>
@@ -259,8 +263,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <Field label="Property name">
                   <input name="name" className={inputClass} defaultValue={property.name} required />
                 </Field>
-                <Field label="Slug">
-                  <input name="slug" className={inputClass} defaultValue={property.slug} required />
+                <Field label="Secure slug">
+                  <input name="slug" className={inputClass} defaultValue={property.slug} pattern="[a-z0-9-]+" />
                 </Field>
                 <Field label="Accent color">
                   <input name="accentColor" className={inputClass} type="color" defaultValue={property.accentColor} />
@@ -304,10 +308,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <Field label="Host email">
                   <input name="hostEmail" className={inputClass} type="email" defaultValue={property.hostEmail || ""} />
                 </Field>
+                <Field label="AI assistant knowledge">
+                  <textarea name="aiKnowledge" className={textareaClass} defaultValue={property.aiKnowledge || ""} />
+                </Field>
                 <div className="flex flex-wrap items-end gap-2">
                   <Button type="submit" variant="secondary">
                     Save property
                   </Button>
+                  <button
+                    type="submit"
+                    formAction={rotateAdminPropertySlug}
+                    className="focus-ring inline-flex min-h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80"
+                  >
+                    Regenerate secure link
+                  </button>
                   <Button href={`/stay/${property.slug}`} variant="ghost" className="gap-2">
                     <ExternalLink size={15} />
                     Public

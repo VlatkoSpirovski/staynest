@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 import { passwordRulesText, validatePassword } from "@/lib/password-policy";
+import { createUniqueSecureSlug, hasSecureSlugSuffix } from "@/lib/secure-slug";
 import { normalizeSlug } from "@/lib/utils";
 
 function stringValue(formData: FormData, key: string) {
@@ -113,7 +114,7 @@ export async function createAdminProperty(formData: FormData) {
   await requireAdminUser();
   const ownerId = stringValue(formData, "ownerId");
   const name = stringValue(formData, "name") || "Untitled Property";
-  const slug = normalizeSlug(stringValue(formData, "slug") || name);
+  const slug = await createUniqueSecureSlug(stringValue(formData, "slug") || name);
 
   if (!ownerId) {
     redirectWithAdminError("Assign an owner before creating a property.");
@@ -137,7 +138,8 @@ export async function createAdminProperty(formData: FormData) {
       emergencyInfo: optionalValue(formData, "emergencyInfo"),
       hostContactName: optionalValue(formData, "hostContactName"),
       hostPhone: optionalValue(formData, "hostPhone"),
-      hostEmail: optionalValue(formData, "hostEmail")
+      hostEmail: optionalValue(formData, "hostEmail"),
+      aiKnowledge: optionalValue(formData, "aiKnowledge")
     }
   });
 
@@ -150,9 +152,28 @@ export async function updateAdminProperty(formData: FormData) {
   const id = stringValue(formData, "id");
   const ownerId = stringValue(formData, "ownerId");
   const name = stringValue(formData, "name") || "Untitled Property";
+  const requestedSlug = normalizeSlug(stringValue(formData, "slug"));
 
   if (!id || !ownerId) {
     redirectWithAdminError("Choose a property and owner.");
+  }
+
+  const existingProperty = await prisma.property.findUnique({
+    where: { id },
+    select: { slug: true }
+  });
+
+  if (!existingProperty) {
+    redirectWithAdminError("Choose an existing property.");
+  }
+
+  const slug =
+    requestedSlug && requestedSlug !== existingProperty.slug
+      ? await createUniqueSecureSlug(requestedSlug, id)
+      : existingProperty.slug;
+
+  if (!hasSecureSlugSuffix(slug)) {
+    redirectWithAdminError("Public guide links must use a secure generated suffix. Regenerate the link before launch.");
   }
 
   const property = await prisma.property.update({
@@ -160,7 +181,7 @@ export async function updateAdminProperty(formData: FormData) {
     data: {
       ownerId,
       name,
-      slug: normalizeSlug(stringValue(formData, "slug") || name),
+      slug,
       accentColor: stringValue(formData, "accentColor") || "#4a8a8f",
       logoUrl: optionalValue(formData, "logoUrl"),
       coverImageUrl: optionalValue(formData, "coverImageUrl"),
@@ -174,12 +195,42 @@ export async function updateAdminProperty(formData: FormData) {
       emergencyInfo: optionalValue(formData, "emergencyInfo"),
       hostContactName: optionalValue(formData, "hostContactName"),
       hostPhone: optionalValue(formData, "hostPhone"),
-      hostEmail: optionalValue(formData, "hostEmail")
+      hostEmail: optionalValue(formData, "hostEmail"),
+      aiKnowledge: optionalValue(formData, "aiKnowledge")
     }
   });
 
   revalidatePath("/admin");
   revalidatePath(`/stay/${property.slug}`);
+  redirect("/admin");
+}
+
+export async function rotateAdminPropertySlug(formData: FormData) {
+  await requireAdminUser();
+  const id = stringValue(formData, "id");
+
+  if (!id) {
+    redirectWithAdminError("Choose a property.");
+  }
+
+  const property = await prisma.property.findUnique({
+    where: { id },
+    select: { id: true, name: true, slug: true }
+  });
+
+  if (!property) {
+    redirectWithAdminError("Choose an existing property.");
+  }
+
+  const slug = await createUniqueSecureSlug(property.name, property.id);
+  await prisma.property.update({
+    where: { id: property.id },
+    data: { slug }
+  });
+
+  revalidatePath("/admin");
+  revalidatePath(`/stay/${property.slug}`);
+  revalidatePath(`/stay/${slug}`);
   redirect("/admin");
 }
 

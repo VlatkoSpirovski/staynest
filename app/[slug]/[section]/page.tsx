@@ -2,6 +2,12 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+export const metadata = {
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 type PageProps = {
   params: {

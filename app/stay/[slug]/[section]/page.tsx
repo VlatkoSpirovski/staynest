@@ -5,6 +5,12 @@ import { DetailShell, EmptyNote, MiniCard } from "@/app/stay/[slug]/guide-ui";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+export const metadata = {
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 type PageProps = {
   params: {

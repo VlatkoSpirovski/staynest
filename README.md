@@ -147,6 +147,17 @@ CLOUDINARY_UPLOAD_FOLDER="staynest"
 
 Uploaded image URLs are stored in PostgreSQL and used automatically on the public guest guide.
 
+## Guest AI Assistant
+
+StayNest can show a property-specific guest chat on each public guide. Add these environment variables locally and in Vercel:
+
+```bash
+OPENAI_API_KEY=""
+OPENAI_MODEL="gpt-5.4-mini"
+```
+
+Hosts and admins can add extra AI assistant knowledge per property. The assistant uses the property guide fields, recommendations, review links and those extra notes. If `OPENAI_API_KEY` is empty, the chat asks guests to contact the host instead.
+
 ## Social Login
 
 Google and Apple login are disabled for the MVP. The app keeps disabled route stubs that redirect back to login with a clear message.

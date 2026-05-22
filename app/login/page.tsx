@@ -1,5 +1,6 @@
 import { Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { GoogleMark } from "@/components/google-mark";
 import { Field, inputClass, Panel } from "@/components/ui/panel";
 import { loginOwner } from "@/app/auth-actions";
 
@@ -34,6 +35,20 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
             Password reset. You can log in now.
           </div>
         ) : null}
+        <a
+          href="/auth/google"
+          className="focus-ring mb-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80"
+        >
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-white">
+            <GoogleMark />
+          </span>
+          Continue with Google
+        </a>
+        <div className="mb-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-wide text-ink/45">
+          <div className="h-px flex-1 bg-ink/10" />
+          Or use email
+          <div className="h-px flex-1 bg-ink/10" />
+        </div>
         <form action={loginOwner} className="grid gap-4">
           <input type="hidden" name="next" value={searchParams?.next || "/dashboard"} />
           <Field label="Email">
@@ -49,7 +64,12 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
         <Button href="/forgot-password" variant="ghost" className="mt-4 w-full">
           Forgot password?
         </Button>
-        <p className="mt-5 text-sm leading-6 text-ink/55">Hosts log in after StayNest creates their account and temporary password.</p>
+        <p className="mt-5 text-sm leading-6 text-ink/55">
+          New owner?{" "}
+          <a href="/register?plan=basic" className="font-semibold text-lagoon">
+            Start a 7-day free trial.
+          </a>
+        </p>
       </Panel>
     </main>
   );

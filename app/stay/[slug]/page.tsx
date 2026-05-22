@@ -1,9 +1,16 @@
 import { notFound } from "next/navigation";
 import { Home, KeyRound, Languages, Map, Phone, ShieldAlert, Star, Utensils, Wifi } from "lucide-react";
 import { MenuLink } from "@/app/stay/[slug]/guide-ui";
+import { GuestChat } from "@/components/guest-chat";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+export const metadata = {
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 type PageProps = {
   params: {
@@ -70,6 +77,7 @@ export default async function PublicGuidePage({ params }: PageProps) {
           <MenuLink href={`${baseHref}/reviews`} icon={<Star size={21} />} title="Reviews" subtitle="Share your stay" />
           <MenuLink href={`${baseHref}/emergency`} icon={<ShieldAlert size={21} />} title="Emergency" subtitle="Important contacts" />
         </section>
+        <GuestChat slug={property.slug} propertyName={property.name} />
       </div>
     </main>
   );
