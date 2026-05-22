@@ -433,8 +433,8 @@ export async function saveProperty(formData: FormData) {
   const hostPhone = stringValue(formData, "hostPhone");
   const hostEmail = stringValue(formData, "hostEmail");
 
-  if (!name || !wifiName || !wifiPassword || !hostPhone || !hostEmail) {
-    redirect("/dashboard?error=Fill%20in%20property%20name,%20Wi-Fi,%20host%20phone%20and%20host%20email.");
+  if (!name) {
+    redirect("/dashboard?error=Fill%20in%20the%20property%20name%20to%20start%20your%20guide.");
   }
 
   const currentProperty = propertyId
@@ -478,9 +478,9 @@ export async function saveProperty(formData: FormData) {
     accentColor,
     logoUrl,
     coverImageUrl,
-    welcomeMessage: stringValue(formData, "welcomeMessage") || "Welcome. We are happy to host you.",
-    wifiName,
-    wifiPassword,
+    welcomeMessage: stringValue(formData, "welcomeMessage"),
+    wifiName: wifiName || null,
+    wifiPassword: wifiPassword || null,
     checkInInfo: optionalValue(formData, "checkInInfo"),
     checkOutInfo: optionalValue(formData, "checkOutInfo"),
     parkingInfo: optionalValue(formData, "parkingInfo"),

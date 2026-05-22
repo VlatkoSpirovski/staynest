@@ -105,49 +105,6 @@ interface DashboardClientProps {
 type TabId = "setup" | "modules" | "settings";
 type ModuleId = "photos" | "welcome" | "wifi" | "checkin" | "rules" | "restaurants" | "activities" | "contact" | "emergency" | "ai" | "reviews";
 
-const villaCover = "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1400&q=85";
-const villaLogo = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=260&q=80";
-
-const demoRecommendations: Recommendation[] = [
-  {
-    id: "rec-1",
-    propertyId: "demo-property",
-    title: "Casa Antica",
-    category: "Dinner",
-    description: "A candlelit lakeside table for grilled trout, handmade pasta and a quiet first evening.",
-    address: "Old Harbor Promenade, Ohrid",
-    url: "https://maps.google.com/?q=Casa+Antica+Ohrid",
-    imageUrl: null,
-    sortOrder: 1
-  },
-  {
-    id: "rec-2",
-    propertyId: "demo-property",
-    title: "Villa Minami Wine Bar",
-    category: "Wine",
-    description: "Local Macedonian wines, soft jazz and the host-favorite cheese board after sunset.",
-    address: "Kaneo, Ohrid",
-    url: "https://maps.google.com/?q=Kaneo+Ohrid",
-    imageUrl: null,
-    sortOrder: 2
-  },
-  {
-    id: "rec-3",
-    propertyId: "demo-property",
-    title: "Saint Naum Boat Morning",
-    category: "Experience",
-    description: "A private wooden boat, clear water swim stop and slow coffee on the return.",
-    address: "Ohrid Marina",
-    url: "https://maps.google.com/?q=Ohrid+Marina",
-    imageUrl: null,
-    sortOrder: 3
-  }
-];
-
-const demoReviewLinks: ReviewLink[] = [
-  { id: "review-1", propertyId: "demo-property", platform: "AIRBNB", url: "https://www.airbnb.com/rooms/villa-asteria" }
-];
-
 const tabs: Array<{ id: TabId; label: string; icon: typeof Home }> = [
   { id: "setup", label: "Setup", icon: BadgeCheck },
   { id: "modules", label: "Modules", icon: BedDouble },
@@ -256,10 +213,6 @@ function getReviewValue(property: Property, platform: "GOOGLE" | "BOOKING" | "AI
   return property.reviewLinks.find((link) => link.platform === platform)?.url || "";
 }
 
-function displayPropertyName(name: string) {
-  return /^example stay$/i.test(name.trim()) ? "Villa Asteria" : name;
-}
-
 function shortText(value: string, fallback: string) {
   return value.length > 72 ? `${value.slice(0, 72).trim()}...` : value || fallback;
 }
@@ -301,58 +254,36 @@ export default function DashboardClient(props: DashboardClientProps) {
   } = props;
 
   const property = useMemo<Property>(() => {
-    const fallback: Property = {
-      id: "demo-property",
+    const blankProperty: Property = {
+      id: "",
       ownerId: user.id,
-      name: "Villa Asteria",
-      slug: "villa-asteria",
-      logoUrl: villaLogo,
-      coverImageUrl: villaCover,
+      name: "",
+      slug: "",
+      logoUrl: null,
+      coverImageUrl: null,
       accentColor: "#5D9C9A",
-      welcomeMessage:
-        "Welcome to Villa Asteria. The lake is just below the terrace, Wi-Fi is ready, and our favorite dinner spots are waiting inside this guide.",
-      wifiName: "VillaAsteria_Guest",
-      wifiPassword: "lakeview-2026",
-      checkInInfo:
-        "Check-in is from 3:00 PM. Use gate code 4826, follow the stone path, and open the brass lockbox beside the olive-green door.",
-      checkOutInfo: "Checkout is by 11:00 AM. Close terrace doors, turn off AC, and place keys back in the lockbox.",
-      parkingInfo: "One private parking space is reserved beside the cypress wall.",
-      houseRules: "Quiet hours begin at 10:00 PM. Smoking is welcome only on the terrace.",
+      welcomeMessage: "",
+      wifiName: null,
+      wifiPassword: null,
+      checkInInfo: null,
+      checkOutInfo: null,
+      parkingInfo: null,
+      houseRules: null,
       emergencyInfo: null,
-      hostContactName: "Elena Petrova",
-      hostPhone: "+389 70 226 888",
-      hostEmail: "elena@villaasteria.stay",
+      hostContactName: null,
+      hostPhone: null,
+      hostEmail: null,
       aiKnowledge: null,
-      recommendations: demoRecommendations,
-      reviewLinks: demoReviewLinks
+      recommendations: [],
+      reviewLinks: []
     };
 
-    if (!initialProperty) return fallback;
+    if (!initialProperty) return blankProperty;
 
-    return {
-      ...fallback,
-      ...initialProperty,
-      name: displayPropertyName(initialProperty.name || fallback.name),
-      logoUrl: initialProperty.logoUrl || fallback.logoUrl,
-      coverImageUrl: initialProperty.coverImageUrl || fallback.coverImageUrl,
-      welcomeMessage: initialProperty.welcomeMessage || fallback.welcomeMessage,
-      wifiName: initialProperty.wifiName || fallback.wifiName,
-      wifiPassword: initialProperty.wifiPassword || fallback.wifiPassword,
-      checkInInfo: initialProperty.checkInInfo || fallback.checkInInfo,
-      checkOutInfo: initialProperty.checkOutInfo || fallback.checkOutInfo,
-      parkingInfo: initialProperty.parkingInfo || fallback.parkingInfo,
-      houseRules: initialProperty.houseRules || fallback.houseRules,
-      emergencyInfo: initialProperty.emergencyInfo || fallback.emergencyInfo,
-      hostContactName: initialProperty.hostContactName || fallback.hostContactName,
-      hostPhone: initialProperty.hostPhone || fallback.hostPhone,
-      hostEmail: initialProperty.hostEmail || user.email || fallback.hostEmail,
-      aiKnowledge: initialProperty.aiKnowledge || fallback.aiKnowledge,
-      recommendations: initialProperty.recommendations.length ? initialProperty.recommendations : fallback.recommendations,
-      reviewLinks: initialProperty.reviewLinks.length ? initialProperty.reviewLinks : fallback.reviewLinks
-    };
-  }, [initialProperty, user.email, user.id]);
+    return initialProperty;
+  }, [initialProperty, user.id]);
 
-  const publicUrl = initialPublicUrl || `https://staynest.app/stay/${property.slug}`;
+  const publicUrl = initialPublicUrl || (property.slug ? `https://staynest.app/stay/${property.slug}` : "");
   const qrCode = initialQrCode || "";
   const [activeTab, setActiveTab] = useState<TabId>("setup");
   const [activeModule, setActiveModule] = useState<ModuleId>("wifi");
@@ -412,7 +343,13 @@ export default function DashboardClient(props: DashboardClientProps) {
               <div className="absolute right-4 top-16 z-50 w-64 rounded-[24px] border border-[#172234]/8 bg-[#FFFFFF] p-3 shadow-[0_30px_90px_rgba(17,24,39,0.18),inset_0_1px_0_rgba(255,255,255,0.9)]">
                 <p className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#111827]/40">Active guide</p>
                 <div className="flex items-center gap-3 rounded-[18px] bg-[#F9FAFB] p-3">
-                  <img src={property.logoUrl || villaLogo} alt="" className="h-11 w-11 rounded-[16px] object-cover" />
+                  {property.logoUrl ? (
+                    <img src={property.logoUrl} alt="" className="h-11 w-11 rounded-[16px] object-cover" />
+                  ) : (
+                    <div className="grid h-11 w-11 place-items-center rounded-[16px] bg-[#E8F4F3] text-[#5F9D99]">
+                      <Home size={18} />
+                    </div>
+                  )}
                   <div>
                     <p className="text-sm font-black">{property.name}</p>
                     <p className="text-xs font-semibold text-[#111827]/50">Ready for guests</p>
@@ -510,9 +447,13 @@ function SetupScreen({
     <div className="space-y-4">
       <section className="overflow-hidden rounded-[24px] border border-white/55 bg-[#111827] text-white shadow-[0_34px_110px_rgba(17,24,39,0.30),inset_0_1px_0_rgba(255,255,255,0.10)]">
         <div className="relative h-48">
-          <img src={property.coverImageUrl || villaCover} alt="" className="h-full w-full object-cover opacity-90 saturate-[0.96] contrast-[1.04]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,transparent_0%,rgba(17,24,39,0.30)_43%,rgba(17,24,39,0.82)_100%)]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#162033]/54 to-transparent" />
+          {property.coverImageUrl ? (
+            <img src={property.coverImageUrl} alt="" className="h-full w-full object-cover opacity-90 saturate-[0.96] contrast-[1.04]" />
+          ) : (
+            <div className="h-full w-full bg-[radial-gradient(circle_at_50%_0%,rgba(95,157,153,0.24),transparent_42%),linear-gradient(145deg,#111827_0%,#162033_100%)]" />
+          )}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,transparent_0%,rgba(17,24,39,0.24)_43%,rgba(17,24,39,0.78)_100%)]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#162033]/48 to-transparent" />
           <div className="absolute bottom-5 left-5 right-5">
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-white/66">Good afternoon</p>
             <h1 className="mt-2 max-w-xs text-3xl font-black leading-[1.04] tracking-tight">Your guest guide is almost ready</h1>
@@ -735,11 +676,11 @@ function ModuleSheet({
   const defaultCategory = activeModule === "restaurants" ? "Restaurant" : "Activity";
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-[#0B1220]/64 backdrop-blur-md">
-      <button type="button" aria-label="Close editor" className="flex-1" onClick={onClose} />
-      <section className="max-h-[82vh] overflow-y-auto rounded-t-[24px] border-t border-[#172234]/8 bg-white px-4 pb-5 pt-3 shadow-[0_-38px_110px_rgba(17,24,39,0.34)] lg:mx-auto lg:mb-6 lg:max-w-2xl lg:rounded-[24px] lg:border">
-        <div className="mx-auto h-1.5 w-11 rounded-full bg-[#111827]/18" />
-        <div className="mt-4 flex items-center justify-between gap-4">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-[#0B1220]/64 backdrop-blur-md lg:items-center lg:justify-center lg:p-6">
+      <button type="button" aria-label="Close editor" className="absolute inset-0" onClick={onClose} />
+      <section className="relative max-h-[82vh] w-full overflow-y-auto rounded-t-[24px] border-t border-[#172234]/8 bg-white px-4 pb-5 pt-3 shadow-[0_-38px_110px_rgba(17,24,39,0.34)] lg:max-h-[86vh] lg:max-w-5xl lg:rounded-[24px] lg:border lg:px-6 lg:pb-6 lg:pt-5 lg:shadow-[0_38px_130px_rgba(17,24,39,0.34)]">
+        <div className="mx-auto h-1.5 w-11 rounded-full bg-[#111827]/18 lg:hidden" />
+        <div className="mt-4 flex items-center justify-between gap-4 lg:mt-0 lg:border-b lg:border-[#172234]/8 lg:pb-5">
           <div className="flex items-center gap-3">
             <div className={`grid h-11 w-11 place-items-center rounded-[16px] ${info.accent}`}>
               <Icon size={19} />
@@ -754,90 +695,102 @@ function ModuleSheet({
           </button>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-4 lg:mt-5">
           {isPropertyModule ? (
             <form action={savePropertyAction} className="space-y-4">
               <input type="hidden" name="propertyId" value={property.id} />
-              <input type="hidden" name="name" value={property.name} />
               <input type="hidden" name="accentColor" value={property.accentColor || "#5D9C9A"} />
 
-              <div className="overflow-hidden rounded-[20px] border border-[#172234]/8 bg-white shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)]">
+              <div className="overflow-hidden rounded-[20px] border border-[#172234]/8 bg-white shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)] lg:shadow-[0_18px_58px_rgba(17,24,39,0.08),inset_0_1px_0_rgba(255,255,255,0.90)]">
+                {activeModule !== "photos" ? (
+                  <div className="border-b border-[#172234]/7 p-4 lg:p-5">
+                    <Field label="Property name">
+                      <input name="name" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.name} placeholder="Your property name" required />
+                    </Field>
+                  </div>
+                ) : null}
+
                 {activeModule === "photos" ? (
-                  <div className="grid gap-3 p-4 sm:grid-cols-2">
-                    <ImageUploadField label="Property logo" fileName="logoFile" urlName="logoUrl" removeName="removeLogo" currentUrl={property.logoUrl} />
-                    <ImageUploadField label="Property photo" fileName="coverImageFile" urlName="coverImageUrl" removeName="removeCoverImage" currentUrl={property.coverImageUrl} />
+                  <div className="grid gap-3 p-4">
+                    <Field label="Property name">
+                      <input name="name" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.name} placeholder="Your property name" required />
+                    </Field>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <ImageUploadField label="Property logo" fileName="logoFile" urlName="logoUrl" removeName="removeLogo" currentUrl={property.logoUrl} />
+                      <ImageUploadField label="Property photo" fileName="coverImageFile" urlName="coverImageUrl" removeName="removeCoverImage" currentUrl={property.coverImageUrl} />
+                    </div>
                   </div>
                 ) : null}
 
                 {activeModule === "welcome" ? (
-                  <div className="p-4">
+                  <div className="p-4 lg:p-5">
                     <Field label="Welcome note">
-                      <textarea name="welcomeMessage" className={`${textareaClass} min-h-24 bg-[#F9FAFB]`} defaultValue={property.welcomeMessage} />
+                      <textarea name="welcomeMessage" className={`${textareaClass} min-h-24 bg-[#F9FAFB] lg:min-h-44`} defaultValue={property.welcomeMessage} />
                     </Field>
                   </div>
                 ) : null}
 
                 {activeModule === "wifi" ? (
-                  <div className="grid gap-0 divide-y divide-[#172234]/7">
-                    <div className="p-4">
+                  <div className="grid gap-0 divide-y divide-[#172234]/7 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                    <div className="p-4 lg:p-5">
                       <Field label="Network">
-                        <input name="wifiName" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.wifiName || ""} required />
+                        <input name="wifiName" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.wifiName || ""} />
                       </Field>
                     </div>
-                    <div className="p-4">
+                    <div className="p-4 lg:p-5">
                       <Field label="Password">
-                        <input name="wifiPassword" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.wifiPassword || ""} required />
+                        <input name="wifiPassword" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.wifiPassword || ""} />
                       </Field>
                     </div>
                   </div>
                 ) : null}
 
                 {activeModule === "checkin" ? (
-                  <div className="grid gap-0 divide-y divide-[#172234]/7">
-                    <div className="p-4">
+                  <div className="grid gap-0 divide-y divide-[#172234]/7 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                    <div className="p-4 lg:p-5">
                       <Field label="Check-in">
-                        <textarea name="checkInInfo" className={`${textareaClass} min-h-24 bg-[#F9FAFB]`} defaultValue={property.checkInInfo || ""} />
+                        <textarea name="checkInInfo" className={`${textareaClass} min-h-24 bg-[#F9FAFB] lg:min-h-52`} defaultValue={property.checkInInfo || ""} />
                       </Field>
                     </div>
-                    <div className="p-4">
+                    <div className="p-4 lg:p-5">
                       <Field label="Checkout">
-                        <textarea name="checkOutInfo" className={`${textareaClass} min-h-20 bg-[#F9FAFB]`} defaultValue={property.checkOutInfo || ""} />
+                        <textarea name="checkOutInfo" className={`${textareaClass} min-h-20 bg-[#F9FAFB] lg:min-h-52`} defaultValue={property.checkOutInfo || ""} />
                       </Field>
                     </div>
                   </div>
                 ) : null}
 
                 {activeModule === "rules" ? (
-                  <div className="grid gap-0 divide-y divide-[#172234]/7">
-                    <div className="p-4">
+                  <div className="grid gap-0 divide-y divide-[#172234]/7 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                    <div className="p-4 lg:p-5">
                       <Field label="House rules">
-                        <textarea name="houseRules" className={`${textareaClass} min-h-24 bg-[#F9FAFB]`} defaultValue={property.houseRules || ""} />
+                        <textarea name="houseRules" className={`${textareaClass} min-h-24 bg-[#F9FAFB] lg:min-h-52`} defaultValue={property.houseRules || ""} />
                       </Field>
                     </div>
-                    <div className="p-4">
+                    <div className="p-4 lg:p-5">
                       <Field label="Parking">
-                        <textarea name="parkingInfo" className={`${textareaClass} min-h-20 bg-[#F9FAFB]`} defaultValue={property.parkingInfo || ""} />
+                        <textarea name="parkingInfo" className={`${textareaClass} min-h-20 bg-[#F9FAFB] lg:min-h-52`} defaultValue={property.parkingInfo || ""} />
                       </Field>
                     </div>
                   </div>
                 ) : null}
 
                 {activeModule === "contact" ? (
-                  <div className="grid gap-0 divide-y divide-[#172234]/7">
-                    <div className="p-4">
+                  <div className="grid gap-0 divide-y divide-[#172234]/7 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
+                    <div className="p-4 lg:p-5">
                       <Field label="Host name">
                         <input name="hostContactName" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.hostContactName || ""} />
                       </Field>
                     </div>
-                    <div className="grid gap-0 divide-y divide-[#172234]/7 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-                      <div className="p-4">
+                    <div className="grid gap-0 divide-y divide-[#172234]/7 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:col-span-2">
+                      <div className="p-4 lg:p-5">
                         <Field label="Phone">
-                          <input name="hostPhone" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.hostPhone || ""} required />
+                          <input name="hostPhone" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.hostPhone || ""} />
                         </Field>
                       </div>
-                      <div className="p-4">
+                      <div className="p-4 lg:p-5">
                         <Field label="Email">
-                          <input name="hostEmail" type="email" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.hostEmail || user.email} required />
+                          <input name="hostEmail" type="email" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.hostEmail || ""} />
                         </Field>
                       </div>
                     </div>
@@ -845,17 +798,17 @@ function ModuleSheet({
                 ) : null}
 
                 {activeModule === "emergency" ? (
-                  <div className="p-4">
+                  <div className="p-4 lg:p-5">
                     <Field label="Emergency contact and safety notes">
-                      <textarea name="emergencyInfo" className={`${textareaClass} min-h-24 bg-[#F9FAFB]`} defaultValue={property.emergencyInfo || ""} />
+                      <textarea name="emergencyInfo" className={`${textareaClass} min-h-24 bg-[#F9FAFB] lg:min-h-44`} defaultValue={property.emergencyInfo || ""} />
                     </Field>
                   </div>
                 ) : null}
 
                 {activeModule === "ai" ? (
-                  <div className="p-4">
+                  <div className="p-4 lg:p-5">
                     <Field label="AI guest chat knowledge">
-                      <textarea name="aiKnowledge" className={`${textareaClass} min-h-32 bg-[#F9FAFB]`} defaultValue={property.aiKnowledge || ""} />
+                      <textarea name="aiKnowledge" className={`${textareaClass} min-h-32 bg-[#F9FAFB] lg:min-h-52`} defaultValue={property.aiKnowledge || ""} />
                     </Field>
                   </div>
                 ) : null}
@@ -871,11 +824,11 @@ function ModuleSheet({
               {activeModule !== "emergency" ? <input type="hidden" name="emergencyInfo" value={property.emergencyInfo || ""} /> : null}
               {activeModule !== "contact" ? <input type="hidden" name="hostContactName" value={property.hostContactName || ""} /> : null}
               {activeModule !== "contact" ? <input type="hidden" name="hostPhone" value={property.hostPhone || ""} /> : null}
-              {activeModule !== "contact" ? <input type="hidden" name="hostEmail" value={property.hostEmail || user.email} /> : null}
+              {activeModule !== "contact" ? <input type="hidden" name="hostEmail" value={property.hostEmail || ""} /> : null}
               {activeModule !== "ai" ? <input type="hidden" name="aiKnowledge" value={property.aiKnowledge || ""} /> : null}
 
-              <div className="sticky bottom-2">
-                <SubmitButton pendingText="Saving..." className="luxury-btn-teal w-full">
+              <div className="sticky bottom-2 lg:static lg:flex lg:justify-end">
+                <SubmitButton pendingText="Saving..." className="luxury-btn-teal w-full lg:w-auto lg:px-8">
                   <Save size={16} />
                   Save changes
                 </SubmitButton>
