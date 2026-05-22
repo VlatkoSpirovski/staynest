@@ -2,6 +2,7 @@ import QRCode from "qrcode";
 import {
   BadgeCheck,
   Bot,
+  ShieldAlert,
   ExternalLink,
   Home,
   ImageIcon,
@@ -260,9 +261,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 <SectionHeader
                   icon={KeyRound}
                   eyebrow="Stay"
-                  title="Arrival and contact"
+                  title="Arrival and rules"
                   text="Separate operational details so guests can jump straight to what they need during the stay."
-                  helper="Check-in, checkout, rules and host contact."
+                  helper="Check-in, checkout, parking and rules."
                 />
                 <div className="grid gap-5">
                   <div className="grid gap-4 md:grid-cols-2">
@@ -281,9 +282,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                       <textarea name="houseRules" className={textareaClass} defaultValue={property?.houseRules || ""} />
                     </Field>
                   </div>
-                  <Field label="Emergency contacts">
-                    <textarea name="emergencyInfo" className={textareaClass} defaultValue={property?.emergencyInfo || ""} />
-                  </Field>
                   <div className="grid gap-4 md:grid-cols-3">
                     <Field label="Host contact name">
                       <input name="hostContactName" className={inputClass} defaultValue={property?.hostContactName || ""} />
@@ -296,6 +294,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     </Field>
                   </div>
                 </div>
+              </SubPanel>
+
+              <SubPanel>
+                <SectionHeader
+                  icon={ShieldAlert}
+                  eyebrow="Emergency"
+                  title="Important contacts"
+                  text="Add emergency numbers, pharmacy details, urgent property contacts or safety notes."
+                  helper="Important contacts and safety notes."
+                />
+                <Field label="Emergency contacts">
+                  <textarea name="emergencyInfo" className={textareaClass} defaultValue={property?.emergencyInfo || ""} />
+                </Field>
               </SubPanel>
 
               <SubPanel>
@@ -327,7 +338,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
           {property ? (
             <>
-              <CollapsibleSection eyebrow="Local guide" title="Recommendations" defaultOpen={false}>
+              <CollapsibleSection eyebrow="Restaurants & activities" title="Recommendations" defaultOpen>
                 <div className="grid gap-5">
                   <SubPanel>
                     <SectionHeader
@@ -440,10 +451,22 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </CollapsibleSection>
             </>
           ) : (
-            <Panel>
-              <h2 className="text-xl font-bold">No property yet</h2>
-              <p className="mt-2 text-sm leading-6 text-ink/60">Create and save your first property above. Your public guide link and QR code will appear immediately.</p>
-            </Panel>
+            <>
+              <Panel>
+                <h2 className="text-xl font-bold">No property yet</h2>
+                <p className="mt-2 text-sm leading-6 text-ink/60">Create and save your first property above. Your public guide link and QR code will appear immediately.</p>
+              </Panel>
+              <Panel>
+                <p className="text-sm font-semibold text-lagoon">Restaurants & activities</p>
+                <h2 className="mt-1 text-xl font-bold">Recommendations unlock after saving</h2>
+                <p className="mt-2 text-sm leading-6 text-ink/60">Save the property first, then add restaurants, beaches, activities, viewpoints and practical nearby places.</p>
+              </Panel>
+              <Panel>
+                <p className="text-sm font-semibold text-lagoon">Reviews</p>
+                <h2 className="mt-1 text-xl font-bold">Review links unlock after saving</h2>
+                <p className="mt-2 text-sm leading-6 text-ink/60">After the guide exists, add Google, Booking and Airbnb review links.</p>
+              </Panel>
+            </>
           )}
         </div>
 

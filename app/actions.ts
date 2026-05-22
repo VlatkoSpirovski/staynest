@@ -139,6 +139,30 @@ ${visibleText}
 `.slice(0, 28000);
 }
 
+function titleFromListingUrl(url: URL | null) {
+  if (!url) return "Imported Property";
+  const lastPathPart = url.pathname
+    .split("/")
+    .filter(Boolean)
+    .pop()
+    ?.replace(/\.(html?|php)$/i, "");
+  const source = lastPathPart || url.hostname.replace(/^www\./, "");
+  return source
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    .slice(0, 120);
+}
+
+function isThinOrBlockedText(text: string) {
+  const compactText = text.toLowerCase();
+  return (
+    text.replace(/\s+/g, " ").trim().length < 700 ||
+    /captcha|access denied|enable javascript|are you a robot|sign in to continue|cookie settings|unusual traffic/i.test(compactText)
+  );
+}
+
 async function fetchListingText(url: string) {
   const response = await fetch(url, {
     headers: {
@@ -160,6 +184,22 @@ async function fetchListingText(url: string) {
   }
 
   return cleanPageText(await response.text());
+}
+
+async function fetchReaderText(url: string) {
+  const response = await fetch(`https://r.jina.ai/${url}`, {
+    headers: {
+      accept: "text/plain"
+    },
+    cache: "no-store",
+    signal: AbortSignal.timeout(16000)
+  });
+
+  if (!response.ok) {
+    throw new Error("Reader import failed.");
+  }
+
+  return (await response.text()).replace(/\s+\n/g, "\n").trim().slice(0, 28000);
 }
 
 type ImportedListing = {
@@ -230,6 +270,15 @@ function hasUsableImport(imported: ImportedListing) {
   return Boolean(imported.name || imported.welcomeMessage || imported.houseRules || imported.parkingInfo || imported.coverImageUrl);
 }
 
+function fallbackImportedListing(url: URL | null): ImportedListing {
+  const name = titleFromListingUrl(url);
+  return {
+    name,
+    welcomeMessage: `Welcome to ${name}. This guide was started from the public listing. Please review the details below and add any private arrival information before sharing with guests.`,
+    aiKnowledge: `Imported from ${url ? url.toString() : "pasted listing text"}. The source did not expose enough structured details, so the host should review and complete Wi-Fi, access, check-in, parking and house rules manually.`
+  };
+}
+
 export async function importListingFromUrl(formData: FormData) {
   const user = await requireReadyUser();
   const listingUrl = stringValue(formData, "listingUrl");
@@ -264,13 +313,24 @@ export async function importListingFromUrl(formData: FormData) {
 
   let listingText = pastedText ? `Host pasted listing text:\n${pastedText}` : "";
   if (!listingText && url) {
+    const sourceParts: string[] = [];
     try {
-      listingText = await fetchListingText(url.toString());
+      sourceParts.push(`Direct page read:\n${await fetchListingText(url.toString())}`);
     } catch (error) {
-      dashboardError(
-        `${error instanceof Error ? error.message : "Could not read that listing URL."} Open the listing, copy the visible description/details, and paste it into the text box.`
-      );
+      sourceParts.push(`Direct page read failed: ${error instanceof Error ? error.message : "Could not read the listing URL."}`);
     }
+
+    try {
+      sourceParts.push(`Clean reader read:\n${await fetchReaderText(url.toString())}`);
+    } catch {
+      sourceParts.push("Clean reader read failed.");
+    }
+
+    listingText = sourceParts.join("\n\n").slice(0, 28000);
+  }
+
+  if (url && isThinOrBlockedText(listingText)) {
+    listingText = `${listingText}\n\nURL-derived fallback name: ${titleFromListingUrl(url)}\nSource URL: ${url.toString()}`;
   }
 
   const response = await fetch("https://api.openai.com/v1/responses", {
@@ -282,7 +342,7 @@ export async function importListingFromUrl(formData: FormData) {
     body: JSON.stringify({
       model: openAiModel(),
       instructions:
-        "Extract guest-guide fields from a rental listing. Return only data that is clearly present in the source. Write concise, guest-facing English. Use null for missing values. Do not invent access codes, Wi-Fi passwords, phone numbers, emails, emergency contacts, exact check-in instructions, or prices. If the page is a cookie/login/search/error page, return null for unknown fields.",
+        "Extract the best possible guest-guide draft from a rental listing source. Use direct facts from the source where present. If the source is thin or blocked but the URL clearly contains the property name, use that name and create a short neutral welcome draft. Write concise, polished, guest-facing English. Use null for missing values. Never invent access codes, Wi-Fi passwords, phone numbers, emails, emergency contacts, exact check-in instructions, or prices.",
       text: {
         format: {
           type: "json_schema",
@@ -295,7 +355,7 @@ export async function importListingFromUrl(formData: FormData) {
       input: [
         {
           role: "user",
-          content: `Extract a StayNest guide draft from this source. Prefer host-pasted text over scraped page text. Keep fields short and practical.\n\nListing URL: ${url?.toString() || "Not provided; host pasted text manually."}\n\nSource content:\n${listingText}`
+          content: `Extract a StayNest guide draft from this source. Prefer host-pasted text over scraped page text. If the page is blocked, still extract the property name from the URL when possible and explain missing private details in aiKnowledge.\n\nListing URL: ${url?.toString() || "Not provided; host pasted text manually."}\n\nSource content:\n${listingText}`
         }
       ]
     })
@@ -313,7 +373,7 @@ export async function importListingFromUrl(formData: FormData) {
   }
 
   if (!hasUsableImport(imported)) {
-    dashboardError("AI could not find enough property details. Paste the listing description/details into the text box and try again.");
+    imported = fallbackImportedListing(url);
   }
 
   const existingProperty = propertyId
