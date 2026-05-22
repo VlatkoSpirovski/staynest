@@ -33,6 +33,26 @@ function dashboardError(message: string): never {
   redirect(`/dashboard?error=${encodeURIComponent(message)}`);
 }
 
+function openAiModel() {
+  const model = process.env.OPENAI_MODEL?.trim();
+  return model && model !== "gpt-5.4-mini" ? model : "gpt-5-mini";
+}
+
+async function openAiErrorMessage(response: Response) {
+  const body = (await response.json().catch(() => null)) as { error?: { message?: string; code?: string; type?: string } } | null;
+  const message = body?.error?.message || `${response.status} ${response.statusText}`;
+  if (/billing|quota|credit|insufficient/i.test(message)) {
+    return "OpenAI billing or credits are not active for this API key.";
+  }
+  if (/model/i.test(message)) {
+    return `OpenAI model error: ${message}`;
+  }
+  if (/api key|authentication|invalid/i.test(message)) {
+    return "OpenAI API key is invalid or not active.";
+  }
+  return `OpenAI error: ${message}`;
+}
+
 function isPrivateHostname(hostname: string) {
   const host = hostname.toLowerCase();
   if (host === "localhost" || host.endsWith(".localhost")) return true;
@@ -80,14 +100,20 @@ function extractResponseText(data: unknown) {
     .trim();
 }
 
+function metaContent(html: string, attribute: "name" | "property", value: string) {
+  const tag = html.match(new RegExp(`<meta[^>]+${attribute}=["']${value}["'][^>]*>`, "i"))?.[0];
+  return tag?.match(/content=["']([^"']+)["']/i)?.[1] || "";
+}
+
 function cleanPageText(html: string) {
   const jsonLd = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
     .map((match) => match[1]?.trim())
     .filter(Boolean)
     .join("\n");
   const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "";
-  const description = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["'][^>]*>/i)?.[1] || "";
-  const ogImage = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["'][^>]*>/i)?.[1] || "";
+  const description = metaContent(html, "name", "description") || metaContent(html, "property", "og:description");
+  const ogTitle = metaContent(html, "property", "og:title");
+  const ogImage = metaContent(html, "property", "og:image");
   const visibleText = html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
@@ -101,6 +127,7 @@ function cleanPageText(html: string) {
 
   return `
 Title: ${title}
+Open graph title: ${ogTitle}
 Description: ${description}
 Open graph image: ${ogImage}
 
@@ -148,6 +175,39 @@ type ImportedListing = {
   aiKnowledge?: string;
 };
 
+const nullableString = {
+  anyOf: [{ type: "string" }, { type: "null" }]
+};
+
+const listingImportSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "name",
+    "welcomeMessage",
+    "coverImageUrl",
+    "checkInInfo",
+    "checkOutInfo",
+    "parkingInfo",
+    "houseRules",
+    "emergencyInfo",
+    "hostContactName",
+    "aiKnowledge"
+  ],
+  properties: {
+    name: nullableString,
+    welcomeMessage: nullableString,
+    coverImageUrl: nullableString,
+    checkInInfo: nullableString,
+    checkOutInfo: nullableString,
+    parkingInfo: nullableString,
+    houseRules: nullableString,
+    emergencyInfo: nullableString,
+    hostContactName: nullableString,
+    aiKnowledge: nullableString
+  }
+};
+
 function parsedImportedListing(text: string): ImportedListing {
   const json = text.match(/\{[\s\S]*\}/)?.[0] || text;
   const parsed = JSON.parse(json) as ImportedListing;
@@ -164,6 +224,10 @@ function parsedImportedListing(text: string): ImportedListing {
     hostContactName: safeString(parsed.hostContactName, 120),
     aiKnowledge: safeString(parsed.aiKnowledge, 2500)
   };
+}
+
+function hasUsableImport(imported: ImportedListing) {
+  return Boolean(imported.name || imported.welcomeMessage || imported.houseRules || imported.parkingInfo || imported.coverImageUrl);
 }
 
 export async function importListingFromUrl(formData: FormData) {
@@ -216,20 +280,29 @@ export async function importListingFromUrl(formData: FormData) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-5.4-mini",
+      model: openAiModel(),
       instructions:
-        "Extract rental guest-guide fields from a Booking/Airbnb listing. Return only strict JSON. Use null for missing values. Do not invent access codes, Wi-Fi passwords, phone numbers, emails, emergency contacts, or check-in instructions if not present.",
+        "Extract guest-guide fields from a rental listing. Return only data that is clearly present in the source. Write concise, guest-facing English. Use null for missing values. Do not invent access codes, Wi-Fi passwords, phone numbers, emails, emergency contacts, exact check-in instructions, or prices. If the page is a cookie/login/search/error page, return null for unknown fields.",
+      text: {
+        format: {
+          type: "json_schema",
+          name: "staynest_listing_import",
+          strict: true,
+          schema: listingImportSchema
+        }
+      },
+      max_output_tokens: 1400,
       input: [
         {
           role: "user",
-          content: `Return JSON with keys: name, welcomeMessage, coverImageUrl, checkInInfo, checkOutInfo, parkingInfo, houseRules, emergencyInfo, hostContactName, aiKnowledge.\n\nListing URL: ${url?.toString() || "Not provided; host pasted text manually."}\n\nListing content:\n${listingText}`
+          content: `Extract a StayNest guide draft from this source. Prefer host-pasted text over scraped page text. Keep fields short and practical.\n\nListing URL: ${url?.toString() || "Not provided; host pasted text manually."}\n\nSource content:\n${listingText}`
         }
       ]
     })
   });
 
   if (!response.ok) {
-    dashboardError("AI could not extract the listing right now.");
+    dashboardError(await openAiErrorMessage(response));
   }
 
   let imported: ImportedListing;
@@ -237,6 +310,10 @@ export async function importListingFromUrl(formData: FormData) {
     imported = parsedImportedListing(extractResponseText(await response.json()));
   } catch {
     dashboardError("AI returned an unreadable import. Please try again.");
+  }
+
+  if (!hasUsableImport(imported)) {
+    dashboardError("AI could not find enough property details. Paste the listing description/details into the text box and try again.");
   }
 
   const existingProperty = propertyId

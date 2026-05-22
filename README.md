@@ -153,7 +153,7 @@ StayNest can show a property-specific guest chat on each public guide. Add these
 
 ```bash
 OPENAI_API_KEY=""
-OPENAI_MODEL="gpt-5.4-mini"
+OPENAI_MODEL="gpt-5-mini"
 ```
 
 Hosts and admins can add extra AI assistant knowledge per property. The assistant uses the property guide fields, recommendations, review links and those extra notes. If `OPENAI_API_KEY` is empty, the chat asks guests to contact the host instead.

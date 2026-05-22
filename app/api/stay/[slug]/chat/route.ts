@@ -13,6 +13,11 @@ function textValue(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function openAiModel() {
+  const model = process.env.OPENAI_MODEL?.trim();
+  return model && model !== "gpt-5.4-mini" ? model : "gpt-5-mini";
+}
+
 function buildPropertyContext(property: NonNullable<Awaited<ReturnType<typeof getPropertyForChat>>>) {
   const recommendations = property.recommendations
     .map((item) => `${item.title} (${item.category}): ${item.description}${item.address ? ` Address: ${item.address}.` : ""}${item.url ? ` Link: ${item.url}.` : ""}`)
@@ -107,7 +112,7 @@ export async function POST(request: Request, { params }: RouteContext) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-5.4-mini",
+      model: openAiModel(),
       instructions:
         "You are StayNest's guest assistant. Answer only from the provided property context. Be concise, warm, and practical. If the answer is missing, say you do not have that detail and tell the guest to contact the host. Never invent codes, prices, policies, addresses, or emergency instructions.",
       input: [
