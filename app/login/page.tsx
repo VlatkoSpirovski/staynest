@@ -1,6 +1,7 @@
 import { Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GoogleMark } from "@/components/google-mark";
+import { InAppBrowserNotice } from "@/components/in-app-browser-notice";
 import { Field, inputClass, Panel } from "@/components/ui/panel";
 import { loginOwner } from "@/app/auth-actions";
 
@@ -35,6 +36,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
             Password reset. You can log in now.
           </div>
         ) : null}
+        <InAppBrowserNotice />
         <a
           href="/auth/google"
           className="focus-ring mb-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80"

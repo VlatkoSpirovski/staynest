@@ -1,6 +1,7 @@
 import { CheckCircle2, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GoogleMark } from "@/components/google-mark";
+import { InAppBrowserNotice } from "@/components/in-app-browser-notice";
 import { Field, inputClass, Panel } from "@/components/ui/panel";
 import { registerOwner } from "@/app/auth-actions";
 
@@ -48,9 +49,13 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
             </div>
           ) : null}
 
+          <div className="mt-5">
+            <InAppBrowserNotice />
+          </div>
+
           <a
             href={`/auth/google?plan=${selectedPlan}`}
-            className="focus-ring mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80"
+            className="focus-ring inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80"
           >
             <span className="grid h-6 w-6 place-items-center rounded-full bg-white">
               <GoogleMark />
