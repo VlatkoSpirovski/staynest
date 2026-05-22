@@ -367,7 +367,7 @@ export default function DashboardClient(props: DashboardClientProps) {
         </div>
       </header>
 
-      <div className="mx-auto max-w-5xl px-4 pb-28 pt-5 lg:px-8">
+      <div className="mx-auto max-w-5xl px-4 pb-52 pt-5 lg:pb-32 lg:px-8">
         {successMessage ? <div className="mb-4 rounded-[18px] border border-[#76875D]/18 bg-[#76875D]/10 px-4 py-3 text-sm font-bold text-[#5F704B] shadow-[0_16px_42px_rgba(17,24,39,0.06)]">{successMessage}</div> : null}
         {errorMessage ? <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div> : null}
 
@@ -407,8 +407,8 @@ export default function DashboardClient(props: DashboardClientProps) {
         />
       ) : null}
 
-      <nav className="fixed bottom-4 left-4 right-4 z-40 rounded-[24px] border border-[#172234]/8 bg-white/95 px-3 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_24px_82px_rgba(17,24,39,0.14)] backdrop-blur-2xl">
-        <div className="mx-auto grid max-w-md grid-cols-3 gap-1">
+      <nav className="dashboard-tab-nav">
+        <div className="dashboard-tab-grid">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -417,11 +417,10 @@ export default function DashboardClient(props: DashboardClientProps) {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-[18px] text-[10px] font-black transition focus:outline-none focus:ring-2 focus:ring-[#5F9D99]/25 focus:ring-offset-2 focus:ring-offset-white ${
-                  active ? "bg-[#111827] text-white shadow-[0_16px_40px_rgba(17,24,39,0.28),inset_0_1px_0_rgba(255,255,255,0.12)]" : "text-[#111827]/48 hover:bg-[#F9FAFB]"
-                }`}
+                aria-current={active ? "page" : undefined}
+                className={`dashboard-tab-button ${active ? "dashboard-tab-button-active" : ""}`}
               >
-                <Icon size={19} />
+                <Icon size={active ? 26 : 24} strokeWidth={active ? 2.8 : 2.5} />
                 {tab.label}
               </button>
             );
