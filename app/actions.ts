@@ -443,7 +443,7 @@ export async function saveProperty(formData: FormData) {
           id: propertyId,
           ...(user.role === "ADMIN" ? {} : { ownerId: user.id })
         },
-        select: { slug: true }
+        select: { slug: true, logoUrl: true, coverImageUrl: true }
       })
     : null;
 
@@ -456,8 +456,8 @@ export async function saveProperty(formData: FormData) {
     redirect("/dashboard?error=Public%20guide%20links%20must%20use%20a%20secure%20generated%20suffix.");
   }
 
-  let logoUrl = optionalValue(formData, "logoUrl");
-  let coverImageUrl = optionalValue(formData, "coverImageUrl");
+  let logoUrl = optionalValue(formData, "logoUrl") || currentProperty?.logoUrl || null;
+  let coverImageUrl = optionalValue(formData, "coverImageUrl") || currentProperty?.coverImageUrl || null;
 
   if (checkedValue(formData, "removeLogo")) logoUrl = null;
   if (checkedValue(formData, "removeCoverImage")) coverImageUrl = null;

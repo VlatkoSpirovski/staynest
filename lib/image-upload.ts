@@ -29,7 +29,7 @@ export async function uploadImage(file: File, folder = "staynest") {
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
   if (!cloudName || !apiKey || !apiSecret) {
-    throw new Error("Image upload is not configured. Paste an image URL for now, or add Cloudinary env variables.");
+    return fileToDataUrl(file);
   }
 
   const timestamp = Math.floor(Date.now() / 1000).toString();
@@ -57,6 +57,11 @@ export async function uploadImage(file: File, folder = "staynest") {
   }
 
   return result.secure_url;
+}
+
+async function fileToDataUrl(file: File) {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return `data:${file.type};base64,${buffer.toString("base64")}`;
 }
 
 function signCloudinaryParams(params: Record<string, string>, apiSecret: string) {

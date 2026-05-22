@@ -28,7 +28,6 @@ import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass, Panel, textareaClass } from "@/components/ui/panel";
 import { requireReadyUser } from "@/lib/auth";
-import { isUploadConfigured } from "@/lib/image-upload";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/utils";
 
@@ -110,7 +109,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const publicUrl = property ? `${getAppUrl()}/stay/${property.slug}` : "";
   const qrCode = publicUrl ? await QRCode.toDataURL(publicUrl, { margin: 1, width: 240, color: { dark: "#1f2933" } }) : "";
   const success = savedMessage(searchParams?.saved);
-  const uploadsEnabled = isUploadConfigured();
   const selectedPlan = user.selectedPlan === "ai" ? "ai" : "basic";
   const planName = selectedPlan === "ai" ? "Full AI" : "Basic";
   const planPrice = selectedPlan === "ai" ? "€15" : "€10";
@@ -212,7 +210,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   eyebrow="Photos"
                   title="Logo and cover"
                   text="Use a crisp logo and a bright cover image. These are the first signals guests see."
-                  helper={uploadsEnabled ? "Upload from phone or laptop." : "Paste image URLs until uploads are configured."}
+                  helper="Upload from phone or laptop, or paste an image URL."
                 />
                 <div className="grid gap-4 md:grid-cols-2">
                   <ImageUploadField
@@ -221,7 +219,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     urlName="logoUrl"
                     removeName="removeLogo"
                     currentUrl={property?.logoUrl}
-                    uploadsEnabled={uploadsEnabled}
                   />
                   <ImageUploadField
                     label="Cover image"
@@ -229,7 +226,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     urlName="coverImageUrl"
                     removeName="removeCoverImage"
                     currentUrl={property?.coverImageUrl}
-                    uploadsEnabled={uploadsEnabled}
                   />
                 </div>
               </SubPanel>
