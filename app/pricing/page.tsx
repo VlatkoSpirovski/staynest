@@ -1,4 +1,5 @@
 import { CheckCircle2 } from "lucide-react";
+import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { getAppUrl } from "@/lib/utils";
 
@@ -68,6 +69,7 @@ export default function PricingPage() {
         <div className="mt-8 rounded-[8px] border border-ink/10 bg-white p-5 text-sm leading-7 text-ink/65">
           Prices are shown in EUR and billed monthly. StayNest is a digital SaaS product for rental owners and hosts.
         </div>
+        <AppLegalLinks className="mt-8" />
       </section>
     </main>
   );

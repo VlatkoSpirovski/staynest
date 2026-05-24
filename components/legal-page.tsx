@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { AppLegalLinks } from "@/components/app-legal-links";
 
 export function LegalPage({
   eyebrow,
@@ -25,6 +26,7 @@ export function LegalPage({
           <h1 className="mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">{title}</h1>
           <div className="legal-copy mt-7 grid gap-5 text-sm leading-7 text-ink/68">{children}</div>
         </article>
+        <AppLegalLinks className="mt-8" />
       </div>
     </main>
   );

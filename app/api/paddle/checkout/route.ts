@@ -3,6 +3,7 @@ import { requireReadyUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const preferredRegion = "fra1";
 
 type CheckoutRequest = {
   plan?: string;

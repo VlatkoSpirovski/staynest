@@ -15,6 +15,7 @@ import {
   Wifi
 } from "lucide-react";
 
+import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { getAppUrl } from "@/lib/utils";
 
@@ -430,6 +431,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      <AppLegalLinks className="mx-auto max-w-7xl px-5 pb-10 text-[#172033]/50 lg:px-8" />
     </main>
   );
 }

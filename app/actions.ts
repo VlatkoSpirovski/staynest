@@ -1,13 +1,13 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { isIP } from "node:net";
 import { GuideSectionType, ReviewPlatform } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireReadyUser } from "@/lib/auth";
 import { uploadImage } from "@/lib/image-upload";
-import { buildTranslationMap, selectedTranslationLocales, validTranslationLocales } from "@/lib/saved-translations";
+import { publicGuideCacheTag } from "@/lib/public-guide-cache";
 import { createUniqueSecureSlug, hasSecureSlugSuffix } from "@/lib/secure-slug";
 import { normalizeSlug } from "@/lib/utils";
 import { curatedAccentForTheme, getGuideTheme, isGuideThemeId } from "@/themes";
@@ -36,15 +36,36 @@ function dashboardError(message: string): never {
 }
 
 function revalidatePublicGuide(slug: string) {
-  revalidatePath(`/stay/${slug}`);
-  revalidatePath(`/stay/${slug}/wifi`);
-  revalidatePath(`/stay/${slug}/arrival`);
-  revalidatePath(`/stay/${slug}/house`);
-  revalidatePath(`/stay/${slug}/restaurants`);
-  revalidatePath(`/stay/${slug}/activities`);
-  revalidatePath(`/stay/${slug}/reviews`);
-  revalidatePath(`/stay/${slug}/emergency`);
-  revalidatePath(`/stay/${slug}/contact`);
+  revalidateTag(publicGuideCacheTag(slug));
+}
+
+const dashboardPropertyFieldsSelect = {
+  id: true,
+  ownerId: true,
+  name: true,
+  slug: true,
+  logoUrl: true,
+  coverImageUrl: true,
+  accentColor: true,
+  templateId: true,
+  designSerif: true,
+  designRounded: true,
+  welcomeMessage: true,
+  wifiName: true,
+  wifiPassword: true,
+  checkInInfo: true,
+  checkOutInfo: true,
+  parkingInfo: true,
+  houseRules: true,
+  emergencyInfo: true,
+  hostContactName: true,
+  hostPhone: true,
+  hostEmail: true,
+  aiKnowledge: true
+} as const;
+
+function inlineActionError(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
 }
 
 function openAiModel() {
@@ -363,19 +384,16 @@ async function upsertImportedGuideSection({
   propertyId,
   title,
   content,
-  sortOrder,
-  translationLocales
+  sortOrder
 }: {
   propertyId: string;
   title: string;
   content: string | null | undefined;
   sortOrder: number;
-  translationLocales: ReturnType<typeof validTranslationLocales>;
 }) {
   const cleanContent = content?.trim();
   if (!cleanContent) return;
 
-  const translations = await buildTranslationMap({ content: cleanContent }, translationLocales);
   const existing = await prisma.guideSection.findFirst({
     where: { propertyId, title },
     select: { id: true }
@@ -385,8 +403,7 @@ async function upsertImportedGuideSection({
     await prisma.guideSection.update({
       where: { id: existing.id },
       data: {
-        content: cleanContent,
-        translations
+        content: cleanContent
       }
     });
     return;
@@ -398,7 +415,6 @@ async function upsertImportedGuideSection({
       type: GuideSectionType.CUSTOM,
       title,
       content: cleanContent,
-      translations,
       sortOrder
     }
   });
@@ -511,27 +527,11 @@ export async function importListingFromUrl(formData: FormData) {
     : null;
 
   const name = imported.name?.trim() || existingProperty?.name || "Imported Property";
-  const translationLocales = validTranslationLocales(existingProperty?.translationLocales);
   const aiKnowledge = joinKnowledge([
     imported.aiKnowledge,
     imported.facilities ? `Amenities and facilities visible on the listing:\n${imported.facilities}` : null,
     url ? `Imported source: ${url.hostname} (${url.toString()})` : "Imported source: pasted listing text"
   ]);
-  const translations = await buildTranslationMap(
-    {
-      welcomeMessage:
-        imported.welcomeMessage ||
-        existingProperty?.welcomeMessage ||
-        `Welcome to ${name}. This guide includes the most important details for your stay.`,
-      checkInInfo: imported.checkInInfo || existingProperty?.checkInInfo || null,
-      checkOutInfo: imported.checkOutInfo || existingProperty?.checkOutInfo || null,
-      parkingInfo: imported.parkingInfo || existingProperty?.parkingInfo || null,
-      houseRules: imported.houseRules || existingProperty?.houseRules || null,
-      emergencyInfo: imported.emergencyInfo || existingProperty?.emergencyInfo || null,
-      aiKnowledge: aiKnowledge || existingProperty?.aiKnowledge || null
-    },
-    translationLocales
-  );
   const data = {
     ownerId: user.id,
     name,
@@ -554,23 +554,32 @@ export async function importListingFromUrl(formData: FormData) {
     hostPhone: existingProperty?.hostPhone || null,
     hostEmail: existingProperty?.hostEmail || user.email,
     aiKnowledge: aiKnowledge || existingProperty?.aiKnowledge || `Imported from ${url ? `${url.hostname}: ${url.toString()}` : "pasted listing text"}`,
-    translationLocales,
-    translations
+    translationLocales: ["en"],
+    translations: {}
   };
 
   const property = existingProperty
     ? await prisma.property.update({
         where: { id: existingProperty.id },
-        data
+        data,
+        select: {
+          id: true,
+          slug: true
+        }
       })
-    : await prisma.property.create({ data });
+    : await prisma.property.create({
+        data,
+        select: {
+          id: true,
+          slug: true
+        }
+      });
 
   await upsertImportedGuideSection({
     propertyId: property.id,
     title: "Amenities & facilities",
     content: imported.facilities,
-    sortOrder: 5,
-    translationLocales
+    sortOrder: 5
   });
 
   revalidatePath("/dashboard");
@@ -599,7 +608,7 @@ export async function saveProperty(formData: FormData) {
           id: propertyId,
           ...(user.role === "ADMIN" ? {} : { ownerId: user.id })
         },
-        select: { slug: true, logoUrl: true, coverImageUrl: true, translationLocales: true }
+        select: { slug: true, logoUrl: true, coverImageUrl: true }
       })
     : null;
 
@@ -627,20 +636,6 @@ export async function saveProperty(formData: FormData) {
     dashboardError(error instanceof Error ? error.message : "Image upload failed.");
   }
 
-  const translationLocales = selectedTranslationLocales(formData);
-  const translations = await buildTranslationMap(
-    {
-      welcomeMessage: stringValue(formData, "welcomeMessage"),
-      checkInInfo: optionalValue(formData, "checkInInfo"),
-      checkOutInfo: optionalValue(formData, "checkOutInfo"),
-      parkingInfo: optionalValue(formData, "parkingInfo"),
-      houseRules: optionalValue(formData, "houseRules"),
-      emergencyInfo: optionalValue(formData, "emergencyInfo"),
-      aiKnowledge: optionalValue(formData, "aiKnowledge")
-    },
-    translationLocales
-  );
-
   const data = {
     ownerId: user.id,
     name,
@@ -660,25 +655,121 @@ export async function saveProperty(formData: FormData) {
     hostPhone: hostPhone || null,
     hostEmail: hostEmail || null,
     aiKnowledge: optionalValue(formData, "aiKnowledge"),
-    translationLocales,
-    translations
+    translationLocales: ["en"],
+    translations: {}
   };
 
   const property = propertyId
     ? await updateAccessibleProperty(propertyId, user, data)
     : await prisma.property.create({
-        data
+        data,
+        select: {
+          slug: true
+        }
       });
 
   revalidatePath("/dashboard");
-  revalidatePath(`/stay/${property.slug}`);
-  revalidatePath(`/stay/${property.slug}/wifi`);
-  revalidatePath(`/stay/${property.slug}/arrival`);
-  revalidatePath(`/stay/${property.slug}/house`);
-  revalidatePath(`/stay/${property.slug}/restaurants`);
-  revalidatePath(`/stay/${property.slug}/activities`);
-  revalidatePath(`/stay/${property.slug}/emergency`);
+  revalidatePublicGuide(property.slug);
   redirect("/dashboard?saved=property");
+}
+
+export async function savePropertyInline(formData: FormData) {
+  try {
+    const user = await requireReadyUser();
+    const propertyId = stringValue(formData, "propertyId");
+    const name = stringValue(formData, "name");
+    const requestedSlug = normalizeSlug(stringValue(formData, "slug"));
+    const accentColor = stringValue(formData, "accentColor") || "#4a8a8f";
+    const wifiName = stringValue(formData, "wifiName");
+    const wifiPassword = stringValue(formData, "wifiPassword");
+    const hostPhone = stringValue(formData, "hostPhone");
+    const hostEmail = stringValue(formData, "hostEmail");
+
+    if (!name) {
+      throw new Error("Fill in the property name to start your guide.");
+    }
+
+    const currentProperty = propertyId
+      ? await prisma.property.findFirst({
+          where: {
+            id: propertyId,
+            ...(user.role === "ADMIN" ? {} : { ownerId: user.id })
+          },
+          select: { slug: true, logoUrl: true, coverImageUrl: true }
+        })
+      : null;
+
+    if (propertyId && !currentProperty) {
+      throw new Error("Property access expired. Refresh and try again.");
+    }
+
+    let slug =
+      currentProperty && (!requestedSlug || requestedSlug === currentProperty.slug)
+        ? currentProperty.slug
+        : await createUniqueSecureSlug(requestedSlug || name, propertyId || undefined);
+
+    if (!hasSecureSlugSuffix(slug)) {
+      slug = await createUniqueSecureSlug(name, propertyId || undefined);
+    }
+
+    let logoUrl = optionalValue(formData, "logoUrl") || currentProperty?.logoUrl || null;
+    let coverImageUrl = optionalValue(formData, "coverImageUrl") || currentProperty?.coverImageUrl || null;
+
+    if (checkedValue(formData, "removeLogo")) logoUrl = null;
+    if (checkedValue(formData, "removeCoverImage")) coverImageUrl = null;
+
+    const logoFile = fileValue(formData, "logoFile");
+    const coverFile = fileValue(formData, "coverImageFile");
+    if (logoFile) logoUrl = await uploadImage(logoFile, "staynest/properties/logos");
+    if (coverFile) coverImageUrl = await uploadImage(coverFile, "staynest/properties/covers");
+
+    const data = {
+      ownerId: user.id,
+      name,
+      slug,
+      accentColor,
+      logoUrl,
+      coverImageUrl,
+      welcomeMessage: stringValue(formData, "welcomeMessage"),
+      wifiName: wifiName || null,
+      wifiPassword: wifiPassword || null,
+      checkInInfo: optionalValue(formData, "checkInInfo"),
+      checkOutInfo: optionalValue(formData, "checkOutInfo"),
+      parkingInfo: optionalValue(formData, "parkingInfo"),
+      houseRules: optionalValue(formData, "houseRules"),
+      emergencyInfo: optionalValue(formData, "emergencyInfo"),
+      hostContactName: optionalValue(formData, "hostContactName"),
+      hostPhone: hostPhone || null,
+      hostEmail: hostEmail || null,
+      aiKnowledge: optionalValue(formData, "aiKnowledge"),
+      translationLocales: ["en"],
+      translations: {}
+    };
+
+    const property = propertyId
+      ? await prisma.property.update({
+          where: { id: propertyId },
+          data,
+          select: dashboardPropertyFieldsSelect
+        })
+      : await prisma.property.create({
+          data,
+          select: dashboardPropertyFieldsSelect
+        });
+
+    revalidatePublicGuide(property.slug);
+
+    return {
+      ok: true,
+      data: { property },
+      message: "Guest experience saved."
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: inlineActionError(error, "Could not save the guest guide.")
+    };
+  }
 }
 
 export async function savePropertyDesign(formData: FormData) {
@@ -713,6 +804,53 @@ export async function savePropertyDesign(formData: FormData) {
   redirect("/dashboard?saved=design");
 }
 
+export async function savePropertyDesignInline(formData: FormData) {
+  try {
+    const user = await requireReadyUser();
+    const propertyId = stringValue(formData, "propertyId");
+
+    if (!propertyId) {
+      throw new Error("Create the property first, then choose a template.");
+    }
+
+    await ensureAccessibleProperty(propertyId, user);
+
+    const requestedTemplateId = stringValue(formData, "templateId");
+    const theme = getGuideTheme(isGuideThemeId(requestedTemplateId) ? requestedTemplateId : "classic");
+    const accentColor = curatedAccentForTheme(theme, stringValue(formData, "accentColor"));
+
+    const property = await prisma.property.update({
+      where: { id: propertyId },
+      data: {
+        templateId: theme.id,
+        accentColor,
+        designSerif: checkedValue(formData, "designSerif"),
+        designRounded: checkedValue(formData, "designRounded")
+      },
+      select: {
+        slug: true,
+        templateId: true,
+        accentColor: true,
+        designSerif: true,
+        designRounded: true
+      }
+    });
+
+    revalidatePublicGuide(property.slug);
+
+    return {
+      ok: true,
+      data: { property },
+      message: "Template updated successfully."
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: inlineActionError(error, "Could not update the template.")
+    };
+  }
+}
+
 export async function rotatePropertySlug(formData: FormData) {
   const user = await requireReadyUser();
   const propertyId = stringValue(formData, "propertyId");
@@ -740,8 +878,8 @@ export async function rotatePropertySlug(formData: FormData) {
   });
 
   revalidatePath("/dashboard");
-  revalidatePath(`/stay/${property.slug}`);
-  revalidatePath(`/stay/${slug}`);
+  revalidatePublicGuide(property.slug);
+  revalidatePublicGuide(slug);
   redirect("/dashboard?saved=property");
 }
 
@@ -753,12 +891,16 @@ export async function saveRecommendation(formData: FormData) {
     redirect("/dashboard");
   }
 
-  await ensureAccessibleProperty(propertyId, user);
-  const property = await prisma.property.findUnique({
-    where: { id: propertyId },
-    select: { slug: true, translationLocales: true }
+  const property = await prisma.property.findFirst({
+    where: {
+      id: propertyId,
+      ...(user.role === "ADMIN" ? {} : { ownerId: user.id })
+    },
+    select: { slug: true }
   });
-  const translationLocales = validTranslationLocales(property?.translationLocales);
+  if (!property) {
+    redirect("/dashboard");
+  }
   const title = stringValue(formData, "title");
   const category = stringValue(formData, "category");
   const description = stringValue(formData, "description");
@@ -768,7 +910,6 @@ export async function saveRecommendation(formData: FormData) {
   }
 
   if (recommendationId) {
-    const translations = await buildTranslationMap({ category, description }, translationLocales);
     await prisma.recommendation.updateMany({
       where: { id: recommendationId, propertyId },
       data: {
@@ -776,13 +917,11 @@ export async function saveRecommendation(formData: FormData) {
         category,
         description,
         address: optionalValue(formData, "address"),
-        url: optionalValue(formData, "url"),
-        translations
+        url: optionalValue(formData, "url")
       }
     });
   } else {
     const recommendationCount = await prisma.recommendation.count({ where: { propertyId } });
-    const translations = await buildTranslationMap({ category, description }, translationLocales);
     await prisma.recommendation.create({
       data: {
         propertyId,
@@ -791,23 +930,122 @@ export async function saveRecommendation(formData: FormData) {
         description,
         address: optionalValue(formData, "address"),
         url: optionalValue(formData, "url"),
-        translations,
         sortOrder: recommendationCount + 1
       }
     });
   }
 
   revalidatePath("/dashboard");
-  if (property?.slug) {
-    revalidatePath(`/stay/${property.slug}/restaurants`);
-    revalidatePath(`/stay/${property.slug}/activities`);
-  }
+  if (property?.slug) revalidatePublicGuide(property.slug);
   redirect("/dashboard?saved=recommendation");
+}
+
+export async function saveRecommendationInline(formData: FormData) {
+  try {
+    const user = await requireReadyUser();
+    const propertyId = stringValue(formData, "propertyId");
+    const recommendationId = stringValue(formData, "recommendationId");
+    if (!propertyId) {
+      throw new Error("Create the property before adding local tips.");
+    }
+
+    const property = await prisma.property.findFirst({
+      where: {
+        id: propertyId,
+        ...(user.role === "ADMIN" ? {} : { ownerId: user.id })
+      },
+      select: { slug: true }
+    });
+    if (!property) {
+      throw new Error("Property access expired. Refresh and try again.");
+    }
+
+    const title = stringValue(formData, "title");
+    const category = stringValue(formData, "category");
+    const description = stringValue(formData, "description");
+
+    if (!title || !category || !description) {
+      throw new Error("Fill in recommendation title, category and description.");
+    }
+
+    const recommendationSelect = {
+      id: true,
+      propertyId: true,
+      title: true,
+      category: true,
+      description: true,
+      address: true,
+      url: true,
+      imageUrl: true,
+      sortOrder: true
+    } as const;
+
+    const recommendation = recommendationId
+      ? await (async () => {
+          const existingRecommendation = await prisma.recommendation.findFirst({
+            where: { id: recommendationId, propertyId },
+            select: { id: true }
+          });
+          if (!existingRecommendation) {
+            throw new Error("Recommendation access expired. Refresh and try again.");
+          }
+
+          return prisma.recommendation.update({
+            where: { id: recommendationId },
+            data: {
+              title,
+              category,
+              description,
+              address: optionalValue(formData, "address"),
+              url: optionalValue(formData, "url")
+            },
+            select: recommendationSelect
+          });
+        })()
+      : await prisma.recommendation.create({
+          data: {
+            propertyId,
+            title,
+            category,
+            description,
+            address: optionalValue(formData, "address"),
+            url: optionalValue(formData, "url"),
+            sortOrder: (await prisma.recommendation.count({ where: { propertyId } })) + 1
+          },
+          select: recommendationSelect
+        });
+
+    revalidatePublicGuide(property.slug);
+
+    return {
+      ok: true,
+      data: { recommendation },
+      message: "Recommendation saved."
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: inlineActionError(error, "Could not save the recommendation.")
+    };
+  }
 }
 
 export async function deleteRecommendation(formData: FormData) {
   const user = await requireReadyUser();
   const id = stringValue(formData, "id");
+  const recommendation = id
+    ? await prisma.recommendation.findFirst({
+        where: {
+          id,
+          property: user.role === "ADMIN" ? undefined : { ownerId: user.id }
+        },
+        select: {
+          property: {
+            select: { slug: true }
+          }
+        }
+      })
+    : null;
   if (id) {
     await prisma.recommendation.deleteMany({
       where: {
@@ -818,7 +1056,50 @@ export async function deleteRecommendation(formData: FormData) {
   }
 
   revalidatePath("/dashboard");
+  if (recommendation?.property.slug) revalidatePublicGuide(recommendation.property.slug);
   redirect("/dashboard?saved=recommendation-removed");
+}
+
+export async function deleteRecommendationInline(formData: FormData) {
+  try {
+    const user = await requireReadyUser();
+    const id = stringValue(formData, "id");
+    if (!id) {
+      throw new Error("Missing recommendation.");
+    }
+
+    const recommendation = await prisma.recommendation.findFirst({
+      where: {
+        id,
+        property: user.role === "ADMIN" ? undefined : { ownerId: user.id }
+      },
+      select: {
+        property: {
+          select: { slug: true }
+        }
+      }
+    });
+
+    await prisma.recommendation.deleteMany({
+      where: {
+        id,
+        property: user.role === "ADMIN" ? undefined : { ownerId: user.id }
+      }
+    });
+
+    if (recommendation?.property.slug) revalidatePublicGuide(recommendation.property.slug);
+
+    return {
+      ok: true,
+      data: { id },
+      message: "Recommendation removed."
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: inlineActionError(error, "Could not remove the recommendation.")
+    };
+  }
 }
 
 export async function saveReviewLinks(formData: FormData) {
@@ -828,7 +1109,7 @@ export async function saveReviewLinks(formData: FormData) {
     redirect("/dashboard");
   }
 
-  await ensureAccessibleProperty(propertyId, user);
+  const property = await ensureAccessibleProperty(propertyId, user);
   const platforms = [ReviewPlatform.GOOGLE, ReviewPlatform.BOOKING, ReviewPlatform.AIRBNB];
 
   await Promise.all(
@@ -857,7 +1138,69 @@ export async function saveReviewLinks(formData: FormData) {
   );
 
   revalidatePath("/dashboard");
+  revalidatePublicGuide(property.slug);
   redirect("/dashboard?saved=reviews");
+}
+
+export async function saveReviewLinksInline(formData: FormData) {
+  try {
+    const user = await requireReadyUser();
+    const propertyId = stringValue(formData, "propertyId");
+    if (!propertyId) {
+      throw new Error("Create the property before adding review links.");
+    }
+
+    const property = await ensureAccessibleProperty(propertyId, user);
+    const platforms = [ReviewPlatform.GOOGLE, ReviewPlatform.BOOKING, ReviewPlatform.AIRBNB];
+
+    await Promise.all(
+      platforms.map(async (platform) => {
+        const url = optionalValue(formData, platform.toLowerCase());
+        if (!url) {
+          await prisma.reviewLink.deleteMany({ where: { propertyId, platform } });
+          return;
+        }
+
+        await prisma.reviewLink.upsert({
+          where: {
+            propertyId_platform: {
+              propertyId,
+              platform
+            }
+          },
+          update: { url },
+          create: {
+            propertyId,
+            platform,
+            url
+          }
+        });
+      })
+    );
+
+    const reviewLinks = await prisma.reviewLink.findMany({
+      where: { propertyId },
+      select: {
+        id: true,
+        propertyId: true,
+        platform: true,
+        url: true
+      }
+    });
+
+    revalidatePublicGuide(property.slug);
+
+    return {
+      ok: true,
+      data: { reviewLinks },
+      message: "Review path saved."
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: inlineActionError(error, "Could not save review links.")
+    };
+  }
 }
 
 type ActionUser = Awaited<ReturnType<typeof requireReadyUser>>;
@@ -869,19 +1212,25 @@ async function ensureAccessibleProperty(propertyId: string, user: ActionUser) {
       ...(user.role === "ADMIN" ? {} : { ownerId: user.id })
     },
     select: {
-      id: true
+      id: true,
+      slug: true
     }
   });
 
   if (!property) {
     redirect("/dashboard");
   }
+
+  return property;
 }
 
 async function updateAccessibleProperty(propertyId: string, user: ActionUser, data: Parameters<typeof prisma.property.update>[0]["data"]) {
   await ensureAccessibleProperty(propertyId, user);
   return prisma.property.update({
     where: { id: propertyId },
-    data
+    data,
+    select: {
+      slug: true
+    }
   });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState, useTransition } from "react";
 import {
   BadgeCheck,
   BedDouble,
@@ -15,6 +15,7 @@ import {
   ImageIcon,
   KeyRound,
   Link2,
+  Loader2,
   LogOut,
   MapPin,
   Phone,
@@ -25,12 +26,12 @@ import {
   Settings,
   ShieldAlert,
   Star,
+  Trash2,
   Utensils,
   WandSparkles,
   Wifi
 } from "lucide-react";
 
-import { ConfirmSubmitButton } from "@/components/confirm-submit";
 import { CopyButton } from "@/components/copy-button";
 import { ImageUploadField } from "@/components/image-upload-field";
 import { SubmitButton } from "@/components/submit-button";
@@ -79,7 +80,6 @@ interface Property {
   hostPhone: string | null;
   hostEmail: string | null;
   aiKnowledge: string | null;
-  translationLocales: string[];
   recommendations: Recommendation[];
   reviewLinks: ReviewLink[];
 }
@@ -105,11 +105,11 @@ interface DashboardClientProps {
   trialLabel: string | null;
   logoutAction: any;
   importListingAction: any;
-  savePropertyAction: any;
-  savePropertyDesignAction: any;
-  saveRecommendationAction: any;
-  deleteRecommendationAction: any;
-  saveReviewLinksAction: any;
+  savePropertyInlineAction: any;
+  savePropertyDesignInlineAction: any;
+  saveRecommendationInlineAction: any;
+  deleteRecommendationInlineAction: any;
+  saveReviewLinksInlineAction: any;
 }
 
 type TabId = "setup" | "modules" | "design" | "settings";
@@ -120,19 +120,6 @@ const tabs: Array<{ id: TabId; label: string; icon: typeof Home }> = [
   { id: "modules", label: "Modules", icon: BedDouble },
   { id: "design", label: "Design", icon: Palette },
   { id: "settings", label: "Settings", icon: Settings }
-];
-
-const guideLanguageOptions = [
-  { code: "en", label: "English" },
-  { code: "mk", label: "Macedonian" },
-  { code: "de", label: "German" },
-  { code: "fr", label: "French" },
-  { code: "nl", label: "Dutch" },
-  { code: "sr", label: "Serbian" },
-  { code: "sq", label: "Albanian" },
-  { code: "tr", label: "Turkish" },
-  { code: "pl", label: "Polish" },
-  { code: "cs", label: "Czech" }
 ];
 
 const moduleCopy: Record<
@@ -241,6 +228,131 @@ function shortText(value: string, fallback: string) {
   return value.length > 72 ? `${value.slice(0, 72).trim()}...` : value || fallback;
 }
 
+function createBlankProperty(ownerId: string): Property {
+  return {
+    id: "",
+    ownerId,
+    name: "",
+    slug: "",
+    logoUrl: null,
+    coverImageUrl: null,
+    accentColor: "#5D9C9A",
+    templateId: "classic",
+    designSerif: true,
+    designRounded: true,
+    welcomeMessage: "",
+    wifiName: null,
+    wifiPassword: null,
+    checkInInfo: null,
+    checkOutInfo: null,
+    parkingInfo: null,
+    houseRules: null,
+    emergencyInfo: null,
+    hostContactName: null,
+    hostPhone: null,
+    hostEmail: null,
+    aiKnowledge: null,
+    recommendations: [],
+    reviewLinks: []
+  };
+}
+
+function formString(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function formOptional(formData: FormData, key: string) {
+  const value = formString(formData, key);
+  return value || null;
+}
+
+function checkedFormValue(formData: FormData, key: string) {
+  return formData.get(key) === "1";
+}
+
+function previewFileUrl(formData: FormData, key: string) {
+  const value = formData.get(key);
+  if (typeof File === "undefined" || !(value instanceof File) || value.size === 0) return "";
+  return URL.createObjectURL(value);
+}
+
+function optimisticPropertyFromForm(formData: FormData, current: Property, ownerId: string): Property {
+  const logoPreview = previewFileUrl(formData, "logoFile");
+  const coverPreview = previewFileUrl(formData, "coverImageFile");
+  const logoUrl = checkedFormValue(formData, "removeLogo")
+    ? null
+    : logoPreview || formOptional(formData, "logoUrl") || current.logoUrl;
+  const coverImageUrl = checkedFormValue(formData, "removeCoverImage")
+    ? null
+    : coverPreview || formOptional(formData, "coverImageUrl") || current.coverImageUrl;
+
+  return {
+    ...current,
+    id: formString(formData, "propertyId") || current.id,
+    ownerId: current.ownerId || ownerId,
+    name: formString(formData, "name") || current.name,
+    accentColor: formString(formData, "accentColor") || current.accentColor,
+    logoUrl,
+    coverImageUrl,
+    welcomeMessage: formString(formData, "welcomeMessage"),
+    wifiName: formOptional(formData, "wifiName"),
+    wifiPassword: formOptional(formData, "wifiPassword"),
+    checkInInfo: formOptional(formData, "checkInInfo"),
+    checkOutInfo: formOptional(formData, "checkOutInfo"),
+    parkingInfo: formOptional(formData, "parkingInfo"),
+    houseRules: formOptional(formData, "houseRules"),
+    emergencyInfo: formOptional(formData, "emergencyInfo"),
+    hostContactName: formOptional(formData, "hostContactName"),
+    hostPhone: formOptional(formData, "hostPhone"),
+    hostEmail: formOptional(formData, "hostEmail"),
+    aiKnowledge: formOptional(formData, "aiKnowledge")
+  };
+}
+
+function optimisticReviewLinksFromForm(formData: FormData, current: Property): ReviewLink[] {
+  const platforms: Array<ReviewLink["platform"]> = ["GOOGLE", "BOOKING", "AIRBNB"];
+  const retained = current.reviewLinks.filter((link) => !platforms.includes(link.platform));
+  const next = platforms.flatMap((platform) => {
+    const url = formOptional(formData, platform.toLowerCase());
+    return url
+      ? [{
+          id: current.reviewLinks.find((link) => link.platform === platform)?.id || `optimistic-${platform.toLowerCase()}`,
+          propertyId: current.id,
+          platform,
+          url
+        }]
+      : [];
+  });
+  return [...retained, ...next];
+}
+
+function optimisticRecommendationFromForm(formData: FormData, current: Property, fallbackCategory: string): Recommendation {
+  const existingId = formString(formData, "recommendationId");
+  const existing = current.recommendations.find((item) => item.id === existingId);
+
+  return {
+    id: existingId || `optimistic-${Date.now()}`,
+    propertyId: current.id,
+    title: formString(formData, "title"),
+    category: formString(formData, "category") || fallbackCategory,
+    description: formString(formData, "description"),
+    address: formOptional(formData, "address"),
+    url: formOptional(formData, "url"),
+    imageUrl: existing?.imageUrl || null,
+    sortOrder: existing?.sortOrder || current.recommendations.length + 1
+  };
+}
+
+function mergePropertyFields(current: Property, next: Partial<Property>): Property {
+  return {
+    ...current,
+    ...next,
+    recommendations: current.recommendations,
+    reviewLinks: current.reviewLinks
+  };
+}
+
 function StayNestLogoMark() {
   return (
     <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-[18px] bg-[#F8F3EA] shadow-[0_16px_38px_rgba(17,24,39,0.14),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-[#172234]/8">
@@ -259,6 +371,34 @@ function StayNestHeaderTitle() {
   );
 }
 
+function InlineSaveButton({
+  children,
+  saving,
+  savingText,
+  className,
+  form,
+  disabled = false
+}: {
+  children: React.ReactNode;
+  saving: boolean;
+  savingText: string;
+  className?: string;
+  form?: string;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="submit"
+      form={form}
+      disabled={saving || disabled}
+      className={`focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${className || ""}`}
+    >
+      {saving ? <Loader2 className="animate-spin" size={16} /> : null}
+      {saving ? savingText : children}
+    </button>
+  );
+}
+
 export default function DashboardClient(props: DashboardClientProps) {
   const {
     property: initialProperty,
@@ -272,49 +412,40 @@ export default function DashboardClient(props: DashboardClientProps) {
     selectedPlan,
     logoutAction,
     importListingAction,
-    savePropertyAction,
-    savePropertyDesignAction,
-    saveRecommendationAction,
-    deleteRecommendationAction,
-    saveReviewLinksAction
+    savePropertyInlineAction,
+    savePropertyDesignInlineAction,
+    saveRecommendationInlineAction,
+    deleteRecommendationInlineAction,
+    saveReviewLinksInlineAction
   } = props;
 
-  const property = useMemo<Property>(() => {
-    const blankProperty: Property = {
-      id: "",
-      ownerId: user.id,
-      name: "",
-      slug: "",
-      logoUrl: null,
-      coverImageUrl: null,
-      accentColor: "#5D9C9A",
-      templateId: "classic",
-      designSerif: true,
-      designRounded: true,
-      welcomeMessage: "",
-      wifiName: null,
-      wifiPassword: null,
-      checkInInfo: null,
-      checkOutInfo: null,
-      parkingInfo: null,
-      houseRules: null,
-      emergencyInfo: null,
-      hostContactName: null,
-      hostPhone: null,
-      hostEmail: null,
-      aiKnowledge: null,
-      translationLocales: ["en"],
-      recommendations: [],
-      reviewLinks: []
-    };
+  const blankProperty = useMemo(() => createBlankProperty(user.id), [user.id]);
+  const [property, setProperty] = useState<Property>(() => initialProperty || blankProperty);
+  const [savingKey, setSavingKey] = useState("");
+  const [, startSaveTransition] = useTransition();
+  const [notice, setNotice] = useState<{ type: "success" | "error" | "saving"; text: string } | null>(() => {
+    if (errorMessage) return { type: "error", text: errorMessage };
+    if (successMessage) return { type: "success", text: successMessage };
+    return null;
+  });
 
-    if (!initialProperty) return blankProperty;
+  useEffect(() => {
+    setProperty(initialProperty || blankProperty);
+  }, [initialProperty, blankProperty]);
 
-    return initialProperty;
-  }, [initialProperty, user.id]);
+  useEffect(() => {
+    if (errorMessage) setNotice({ type: "error", text: errorMessage });
+    else if (successMessage) setNotice({ type: "success", text: successMessage });
+  }, [errorMessage, successMessage]);
 
-  const publicUrl = initialPublicUrl || (property.slug ? `https://staynest.app/stay/${property.slug}` : "");
-  const qrCode = initialQrCode || "";
+  const siteBaseUrl = useMemo(() => {
+    if (initialPublicUrl && initialProperty?.slug) {
+      return initialPublicUrl.replace(new RegExp(`/stay/${initialProperty.slug}$`), "");
+    }
+    return "https://staynest.site";
+  }, [initialProperty?.slug, initialPublicUrl]);
+  const publicUrl = property.slug ? `${siteBaseUrl}/stay/${property.slug}` : "";
+  const qrCode = publicUrl ? `/api/qr?text=${encodeURIComponent(publicUrl)}` : initialQrCode || "";
   const [activeTab, setActiveTab] = useState<TabId>("setup");
   const [activeModule, setActiveModule] = useState<ModuleId>("welcome");
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -345,6 +476,147 @@ export default function DashboardClient(props: DashboardClientProps) {
     setActiveModule(id);
     setSheetOpen(true);
   };
+
+  function finishInlineSave({
+    key,
+    previousProperty,
+    message,
+    action
+  }: {
+    key: string;
+    previousProperty: Property;
+    message: string;
+    action: () => Promise<{ ok?: boolean; data?: any; message?: string; error?: string }>;
+  }) {
+    setSavingKey(key);
+    setNotice({ type: "saving", text: "Saving..." });
+    startSaveTransition(async () => {
+      try {
+        const result = await action();
+        if (!result?.ok) {
+          throw new Error(result?.error || "Save failed. Please try again.");
+        }
+        setNotice({ type: "success", text: result.message || message });
+      } catch (error) {
+        setProperty(previousProperty);
+        setNotice({ type: "error", text: error instanceof Error ? error.message : "Save failed. Please try again." });
+      } finally {
+        setSavingKey("");
+      }
+    });
+  }
+
+  function handlePropertySave(formData: FormData) {
+    const previousProperty = property;
+    const optimisticProperty = optimisticPropertyFromForm(formData, property, user.id);
+    setProperty(optimisticProperty);
+    setSheetOpen(false);
+
+    finishInlineSave({
+      key: "property",
+      previousProperty,
+      message: "Guest experience saved.",
+      action: async () => {
+        const result = await savePropertyInlineAction(formData);
+        if (result?.ok && result.data?.property) {
+          setProperty((current) => mergePropertyFields(current, result.data.property));
+        }
+        return result;
+      }
+    });
+  }
+
+  function handleDesignSave(formData: FormData) {
+    const previousProperty = property;
+    setProperty((current) => ({
+      ...current,
+      templateId: formString(formData, "templateId") || current.templateId,
+      accentColor: formString(formData, "accentColor") || current.accentColor,
+      designSerif: checkedFormValue(formData, "designSerif"),
+      designRounded: checkedFormValue(formData, "designRounded")
+    }));
+
+    finishInlineSave({
+      key: "design",
+      previousProperty,
+      message: "Template updated successfully.",
+      action: async () => {
+        const result = await savePropertyDesignInlineAction(formData);
+        if (result?.ok && result.data?.property) {
+          setProperty((current) => ({ ...current, ...result.data.property }));
+        }
+        return result;
+      }
+    });
+  }
+
+  function handleRecommendationSave(formData: FormData, fallbackCategory: string) {
+    const previousProperty = property;
+    const optimisticRecommendation = optimisticRecommendationFromForm(formData, property, fallbackCategory);
+    const existingId = formString(formData, "recommendationId");
+    setProperty((current) => ({
+      ...current,
+      recommendations: existingId
+        ? current.recommendations.map((item) => (item.id === existingId ? optimisticRecommendation : item))
+        : [...current.recommendations, optimisticRecommendation]
+    }));
+
+    finishInlineSave({
+      key: `recommendation:${existingId || "new"}`,
+      previousProperty,
+      message: "Recommendation saved.",
+      action: async () => {
+        const result = await saveRecommendationInlineAction(formData);
+        if (result?.ok && result.data?.recommendation) {
+          setProperty((current) => ({
+            ...current,
+            recommendations: existingId
+              ? current.recommendations.map((item) => (item.id === existingId ? result.data.recommendation : item))
+              : current.recommendations.map((item) => (item.id === optimisticRecommendation.id ? result.data.recommendation : item))
+          }));
+        }
+        return result;
+      }
+    });
+  }
+
+  function handleRecommendationDelete(formData: FormData) {
+    const previousProperty = property;
+    const id = formString(formData, "id");
+    setProperty((current) => ({
+      ...current,
+      recommendations: current.recommendations.filter((item) => item.id !== id)
+    }));
+
+    finishInlineSave({
+      key: `delete:${id}`,
+      previousProperty,
+      message: "Recommendation removed.",
+      action: () => deleteRecommendationInlineAction(formData)
+    });
+  }
+
+  function handleReviewLinksSave(formData: FormData) {
+    const previousProperty = property;
+    setProperty((current) => ({
+      ...current,
+      reviewLinks: optimisticReviewLinksFromForm(formData, current)
+    }));
+    setSheetOpen(false);
+
+    finishInlineSave({
+      key: "reviews",
+      previousProperty,
+      message: "Review path saved.",
+      action: async () => {
+        const result = await saveReviewLinksInlineAction(formData);
+        if (result?.ok && result.data?.reviewLinks) {
+          setProperty((current) => ({ ...current, reviewLinks: result.data.reviewLinks }));
+        }
+        return result;
+      }
+    });
+  }
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -398,8 +670,22 @@ export default function DashboardClient(props: DashboardClientProps) {
       </header>
 
       <div className="mx-auto max-w-5xl px-4 pb-32 pt-5 lg:pb-32 lg:px-8">
-        {successMessage ? <div className="mb-4 rounded-[18px] border border-[#76875D]/18 bg-[#76875D]/10 px-4 py-3 text-sm font-bold text-[#5F704B] shadow-[0_16px_42px_rgba(17,24,39,0.06)]">{successMessage}</div> : null}
-        {errorMessage ? <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div> : null}
+        {notice ? (
+          <div
+            className={`mb-4 rounded-[18px] px-4 py-3 text-sm font-bold shadow-[0_16px_42px_rgba(17,24,39,0.06)] ${
+              notice.type === "error"
+                ? "border border-red-200 bg-red-50 text-red-700"
+                : notice.type === "saving"
+                  ? "border border-[#172234]/8 bg-[#F9FAFB] text-[#111827]/70"
+                  : "border border-[#76875D]/18 bg-[#76875D]/10 text-[#5F704B]"
+            }`}
+          >
+            <span className="inline-flex items-center gap-2">
+              {notice.type === "saving" ? <Loader2 className="animate-spin" size={15} /> : null}
+              {notice.text}
+            </span>
+          </div>
+        ) : null}
 
         {activeTab === "setup" ? (
           <SetupScreen
@@ -423,7 +709,8 @@ export default function DashboardClient(props: DashboardClientProps) {
         {activeTab === "design" ? (
           <DesignScreen
             property={property}
-            savePropertyDesignAction={savePropertyDesignAction}
+            onSaveDesign={handleDesignSave}
+            saving={savingKey === "design"}
           />
         ) : null}
 
@@ -437,11 +724,11 @@ export default function DashboardClient(props: DashboardClientProps) {
           property={property}
           activeModule={activeModule}
           onClose={() => setSheetOpen(false)}
-          user={user}
-          savePropertyAction={savePropertyAction}
-          saveRecommendationAction={saveRecommendationAction}
-          deleteRecommendationAction={deleteRecommendationAction}
-          saveReviewLinksAction={saveReviewLinksAction}
+          onSaveProperty={handlePropertySave}
+          onSaveRecommendation={handleRecommendationSave}
+          onDeleteRecommendation={handleRecommendationDelete}
+          onSaveReviewLinks={handleReviewLinksSave}
+          savingKey={savingKey}
         />
       ) : null}
 
@@ -680,10 +967,12 @@ function ModulesScreen({
 
 function DesignScreen({
   property,
-  savePropertyDesignAction
+  onSaveDesign,
+  saving
 }: {
   property: Property;
-  savePropertyDesignAction: any;
+  onSaveDesign: (formData: FormData) => void;
+  saving: boolean;
 }) {
   const [selectedThemeId, setSelectedThemeId] = useState<GuideThemeId>(getGuideTheme(property.templateId).id);
   const selectedTheme = useMemo(() => getGuideTheme(selectedThemeId), [selectedThemeId]);
@@ -744,7 +1033,13 @@ function DesignScreen({
           </div>
         </div>
 
-        <form action={savePropertyDesignAction} className="flex flex-col items-stretch gap-3 px-1 sm:flex-row sm:items-center sm:justify-end">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSaveDesign(new FormData(event.currentTarget));
+          }}
+          className="flex flex-col items-stretch gap-3 px-1 sm:flex-row sm:items-center sm:justify-end"
+        >
           <input type="hidden" name="propertyId" value={property.id} />
           <input type="hidden" name="templateId" value={selectedThemeId} />
           <input type="hidden" name="accentColor" value={accentColor} />
@@ -754,9 +1049,9 @@ function DesignScreen({
           {!canSave ? (
             <p className="rounded-[16px] border border-[#F59E0B]/20 bg-[#FFFBEB] px-4 py-3 text-sm font-bold text-[#92400E]">Create the property first, then apply a template.</p>
           ) : null}
-          <SubmitButton pendingText="Applying..." disabled={!canSave} className="min-h-12 rounded-[16px] bg-[#111827] px-8 text-white shadow-[0_18px_48px_rgba(17,24,39,0.24),inset_0_1px_0_rgba(255,255,255,0.12)] disabled:opacity-50">
+          <InlineSaveButton saving={saving} savingText="Applying..." disabled={!canSave} className="min-h-12 rounded-[16px] bg-[#111827] px-8 text-white shadow-[0_18px_48px_rgba(17,24,39,0.24),inset_0_1px_0_rgba(255,255,255,0.12)] disabled:opacity-50">
             Apply Template
-          </SubmitButton>
+          </InlineSaveButton>
         </form>
       </section>
     </div>
@@ -1132,20 +1427,20 @@ function ModuleSheet({
   property,
   activeModule,
   onClose,
-  user,
-  savePropertyAction,
-  saveRecommendationAction,
-  deleteRecommendationAction,
-  saveReviewLinksAction
+  onSaveProperty,
+  onSaveRecommendation,
+  onDeleteRecommendation,
+  onSaveReviewLinks,
+  savingKey
 }: {
   property: Property;
   activeModule: ModuleId;
   onClose: () => void;
-  user: User;
-  savePropertyAction: any;
-  saveRecommendationAction: any;
-  deleteRecommendationAction: any;
-  saveReviewLinksAction: any;
+  onSaveProperty: (formData: FormData) => void;
+  onSaveRecommendation: (formData: FormData, fallbackCategory: string) => void;
+  onDeleteRecommendation: (formData: FormData) => void;
+  onSaveReviewLinks: (formData: FormData) => void;
+  savingKey: string;
 }) {
   const info = moduleCopy[activeModule];
   const Icon = info.icon;
@@ -1175,12 +1470,15 @@ function ModuleSheet({
 
         <div className="mt-4 lg:mt-5">
           {isPropertyModule ? (
-            <form action={savePropertyAction} className="space-y-4">
+            <form
+              onSubmit={(event: FormEvent<HTMLFormElement>) => {
+                event.preventDefault();
+                onSaveProperty(new FormData(event.currentTarget));
+              }}
+              className="space-y-4"
+            >
               <input type="hidden" name="propertyId" value={property.id} />
               <input type="hidden" name="accentColor" value={property.accentColor || "#5D9C9A"} />
-              {activeModule !== "welcome" ? property.translationLocales.map((locale) => (
-                <input key={locale} type="hidden" name="translationLocales" value={locale} />
-              )) : null}
 
               <div className="overflow-hidden rounded-[20px] border border-[#172234]/8 bg-white shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)] lg:shadow-[0_18px_58px_rgba(17,24,39,0.08),inset_0_1px_0_rgba(255,255,255,0.90)]">
                 {activeModule === "photos" ? (
@@ -1190,41 +1488,6 @@ function ModuleSheet({
                       <ImageUploadField label="Property photo" fileName="coverImageFile" urlName="coverImageUrl" removeName="removeCoverImage" currentUrl={property.coverImageUrl} />
                     </div>
                   </div>
-                ) : null}
-
-                {activeModule === "welcome" ? (
-                  <details className="border-t border-[#172234]/7 bg-[#F9FAFB]">
-                    <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-black text-[#111827] lg:px-5 [&::-webkit-details-marker]:hidden">
-                      <span>Guide languages</span>
-                      <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#5F9D99] shadow-[0_8px_22px_rgba(17,24,39,0.08)]">
-                        {Math.max(1, property.translationLocales.length)} selected
-                      </span>
-                    </summary>
-                    <div className="grid gap-2 border-t border-[#172234]/7 px-4 pb-4 pt-3 lg:px-5">
-                      <p className="text-xs font-semibold leading-5 text-[#111827]/52">English is always included. Selected languages are translated when you save.</p>
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                        {guideLanguageOptions.map((language) => {
-                          const checked = language.code === "en" || property.translationLocales.includes(language.code);
-                          return (
-                            <label key={language.code} className={`flex min-h-10 items-center gap-2 rounded-[12px] border px-3 text-xs font-black ${
-                              checked ? "border-[#5F9D99]/30 bg-[#5F9D99]/10 text-[#111827]" : "border-[#172234]/8 bg-white text-[#111827]/68"
-                            }`}>
-                              <input
-                                type="checkbox"
-                                name="translationLocales"
-                                value={language.code}
-                                defaultChecked={checked}
-                                disabled={language.code === "en"}
-                                className="h-4 w-4 rounded border-[#172234]/20"
-                              />
-                              {language.label}
-                            </label>
-                          );
-                        })}
-                        <input type="hidden" name="translationLocales" value="en" />
-                      </div>
-                    </div>
-                  </details>
                 ) : null}
 
                 {activeModule === "welcome" ? (
@@ -1341,28 +1604,42 @@ function ModuleSheet({
               {activeModule !== "ai" ? <input type="hidden" name="aiKnowledge" value={property.aiKnowledge || ""} /> : null}
 
               <div className="sticky bottom-2 lg:static lg:flex lg:justify-end">
-                <SubmitButton pendingText="Saving..." className="luxury-btn-teal w-full lg:w-auto lg:px-8">
+                <InlineSaveButton saving={savingKey === "property"} savingText="Saving..." className="luxury-btn-teal w-full lg:w-auto lg:px-8">
                   <Save size={16} />
                   Save changes
-                </SubmitButton>
+                </InlineSaveButton>
               </div>
             </form>
           ) : activeModule === "reviews" ? (
-            <form action={saveReviewLinksAction} className="space-y-4 rounded-[20px] border border-[#172234]/8 bg-white p-4 shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)]">
+            <form
+              onSubmit={(event: FormEvent<HTMLFormElement>) => {
+                event.preventDefault();
+                onSaveReviewLinks(new FormData(event.currentTarget));
+              }}
+              className="space-y-4 rounded-[20px] border border-[#172234]/8 bg-white p-4 shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)]"
+            >
               <input type="hidden" name="propertyId" value={property.id} />
               <input type="hidden" name="booking" value="" />
               <input type="hidden" name="airbnb" value="" />
               <Field label="Google review link">
                 <input name="google" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={getReviewValue(property, "GOOGLE")} placeholder="https://g.page/r/..." />
               </Field>
-              <SubmitButton pendingText="Saving..." className="min-h-12 w-full rounded-[16px] bg-[#111827] text-white shadow-[0_18px_50px_rgba(17,24,39,0.26),inset_0_1px_0_rgba(255,255,255,0.12)]">
+              <InlineSaveButton saving={savingKey === "reviews"} savingText="Saving..." className="min-h-12 w-full rounded-[16px] bg-[#111827] text-white shadow-[0_18px_50px_rgba(17,24,39,0.26),inset_0_1px_0_rgba(255,255,255,0.12)]">
                 <Save size={16} />
                 Save Google link
-              </SubmitButton>
+              </InlineSaveButton>
             </form>
           ) : (
             <div className="space-y-4">
-              <form action={saveRecommendationAction} className="rounded-[20px] border border-[#172234]/8 bg-white p-4 shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)]">
+              <form
+                onSubmit={(event: FormEvent<HTMLFormElement>) => {
+                  event.preventDefault();
+                  const form = event.currentTarget;
+                  onSaveRecommendation(new FormData(form), defaultCategory);
+                  form.reset();
+                }}
+                className="rounded-[20px] border border-[#172234]/8 bg-white p-4 shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)]"
+              >
                 <input type="hidden" name="propertyId" value={property.id} />
                 <input type="hidden" name="category" value={defaultCategory} />
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -1376,16 +1653,23 @@ function ModuleSheet({
                 <Field label="Why guests love it">
                   <textarea name="description" className={`${textareaClass} mt-2 min-h-24 bg-[#F9FAFB]`} placeholder="A candlelit terrace, handmade pasta and a perfect first evening." required />
                 </Field>
-                <SubmitButton pendingText="Adding..." className="mt-4 min-h-12 w-full rounded-[16px] bg-[#111827] text-white shadow-[0_18px_50px_rgba(17,24,39,0.26),inset_0_1px_0_rgba(255,255,255,0.12)]">
+                <InlineSaveButton saving={savingKey === "recommendation:new"} savingText="Adding..." className="mt-4 min-h-12 w-full rounded-[16px] bg-[#111827] text-white shadow-[0_18px_50px_rgba(17,24,39,0.26),inset_0_1px_0_rgba(255,255,255,0.12)]">
                   <Plus size={16} />
                   Add {activeModule === "restaurants" ? "restaurant" : "activity"}
-                </SubmitButton>
+                </InlineSaveButton>
               </form>
 
               <div className="grid gap-2">
                 {visibleRecommendations.map((item) => (
                   <article key={item.id} className="rounded-[18px] border border-[#172234]/8 bg-white p-3 shadow-[0_14px_38px_rgba(17,24,39,0.075),inset_0_1px_0_rgba(255,255,255,0.84)]">
-                    <form id={`recommendation-${item.id}`} action={saveRecommendationAction} className="grid gap-2">
+                    <form
+                      id={`recommendation-${item.id}`}
+                      onSubmit={(event: FormEvent<HTMLFormElement>) => {
+                        event.preventDefault();
+                        onSaveRecommendation(new FormData(event.currentTarget), defaultCategory);
+                      }}
+                      className="grid gap-2"
+                    >
                       <input type="hidden" name="propertyId" value={property.id} />
                       <input type="hidden" name="recommendationId" value={item.id} />
                       <input type="hidden" name="category" value={item.category || defaultCategory} />
@@ -1394,12 +1678,27 @@ function ModuleSheet({
                       <input name="url" className={`${inputClass} min-h-10 bg-[#F9FAFB] text-xs font-semibold`} defaultValue={item.url || ""} placeholder="Link only" />
                     </form>
                     <div className="mt-2 flex items-center justify-between gap-2">
-                      <SubmitButton form={`recommendation-${item.id}`} pendingText="Saving..." className="min-h-10 rounded-[14px] bg-[#111827] px-4 text-xs text-white">
+                      <InlineSaveButton form={`recommendation-${item.id}`} saving={savingKey === `recommendation:${item.id}`} savingText="Saving..." className="min-h-10 rounded-[14px] bg-[#111827] px-4 text-xs text-white">
                         Save
-                      </SubmitButton>
-                      <form action={deleteRecommendationAction}>
+                      </InlineSaveButton>
+                      <form
+                        onSubmit={(event: FormEvent<HTMLFormElement>) => {
+                          event.preventDefault();
+                          if (window.confirm(`Remove ${item.title}?`)) {
+                            onDeleteRecommendation(new FormData(event.currentTarget));
+                          }
+                        }}
+                      >
                         <input type="hidden" name="id" value={item.id} />
-                        <ConfirmSubmitButton message={`Remove ${item.title}?`} />
+                        <button
+                          type="submit"
+                          aria-label={`Remove ${item.title}`}
+                          title={`Remove ${item.title}`}
+                          disabled={savingKey === `delete:${item.id}`}
+                          className="grid h-10 w-10 place-items-center rounded-[14px] text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {savingKey === `delete:${item.id}` ? <Loader2 className="animate-spin" size={15} /> : <Trash2 size={15} />}
+                        </button>
                       </form>
                     </div>
                   </article>

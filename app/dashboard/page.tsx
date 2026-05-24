@@ -1,12 +1,19 @@
-import QRCode from "qrcode";
 import { logoutOwner } from "@/app/auth-actions";
-import { deleteRecommendation, importListingFromUrl, saveProperty, savePropertyDesign, saveRecommendation, saveReviewLinks } from "@/app/actions";
+import {
+  deleteRecommendationInline,
+  importListingFromUrl,
+  savePropertyDesignInline,
+  savePropertyInline,
+  saveRecommendationInline,
+  saveReviewLinksInline
+} from "@/app/actions";
 import DashboardClient from "@/components/dashboard-client";
 import { requireReadyUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+export const preferredRegion = "fra1";
 
 type DashboardPageProps = {
   searchParams?: {
@@ -19,9 +26,51 @@ async function getDashboardProperty(ownerId: string) {
   return prisma.property.findFirst({
     where: { ownerId },
     orderBy: { updatedAt: "desc" },
-    include: {
-      recommendations: { orderBy: { sortOrder: "asc" } },
-      reviewLinks: true
+    select: {
+      id: true,
+      ownerId: true,
+      name: true,
+      slug: true,
+      logoUrl: true,
+      coverImageUrl: true,
+      accentColor: true,
+      templateId: true,
+      designSerif: true,
+      designRounded: true,
+      welcomeMessage: true,
+      wifiName: true,
+      wifiPassword: true,
+      checkInInfo: true,
+      checkOutInfo: true,
+      parkingInfo: true,
+      houseRules: true,
+      emergencyInfo: true,
+      hostContactName: true,
+      hostPhone: true,
+      hostEmail: true,
+      aiKnowledge: true,
+      recommendations: {
+        orderBy: { sortOrder: "asc" },
+        select: {
+          id: true,
+          propertyId: true,
+          title: true,
+          category: true,
+          description: true,
+          address: true,
+          url: true,
+          imageUrl: true,
+          sortOrder: true
+        }
+      },
+      reviewLinks: {
+        select: {
+          id: true,
+          propertyId: true,
+          platform: true,
+          url: true
+        }
+      }
     }
   });
 }
@@ -39,7 +88,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const user = await requireReadyUser();
   const property = await getDashboardProperty(user.id);
   const publicUrl = property ? `${getSiteUrl()}/stay/${property.slug}` : "";
-  const qrCode = publicUrl ? await QRCode.toDataURL(publicUrl, { margin: 1, width: 260, color: { dark: "#111827" } }) : "";
+  const qrCode = publicUrl ? `/api/qr?text=${encodeURIComponent(publicUrl)}` : "";
   const selectedPlan = user.selectedPlan === "ai" ? "ai" : "basic";
   const planName = selectedPlan === "ai" ? "Premium AI Concierge" : "Essential Guest Guide";
   const planPrice = selectedPlan === "ai" ? "€15" : "€10";
@@ -61,11 +110,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       trialLabel={trialLabel}
       logoutAction={logoutOwner}
       importListingAction={importListingFromUrl}
-      savePropertyAction={saveProperty}
-      savePropertyDesignAction={savePropertyDesign}
-      saveRecommendationAction={saveRecommendation}
-      deleteRecommendationAction={deleteRecommendation}
-      saveReviewLinksAction={saveReviewLinks}
+      savePropertyInlineAction={savePropertyInline}
+      savePropertyDesignInlineAction={savePropertyDesignInline}
+      saveRecommendationInlineAction={saveRecommendationInline}
+      deleteRecommendationInlineAction={deleteRecommendationInline}
+      saveReviewLinksInlineAction={saveReviewLinksInline}
     />
   );
 }

@@ -47,10 +47,11 @@ export function middleware(request: NextRequest) {
       if (host !== "app.staynest.site" && host !== "admin.staynest.site") {
         return NextResponse.redirect(subdomainUrl(request, "app.staynest.site"));
       }
-    } else if (
-      host === "app.staynest.site" &&
-      (pathname === "/" || pathname.startsWith("/stay/") || pathname === "/pricing" || pathname === "/privacy" || pathname === "/terms" || pathname === "/refund")
-    ) {
+    } else if (host === "app.staynest.site" && pathname === "/") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    } else if (host === "app.staynest.site" && pathname.startsWith("/stay/")) {
       return NextResponse.redirect(subdomainUrl(request, "staynest.site"));
     }
   }
@@ -79,6 +80,7 @@ export const config = {
     "/billing/:path*",
     "/change-password",
     "/check-email",
+    "/contact",
     "/dashboard/:path*",
     "/forgot-password",
     "/login",

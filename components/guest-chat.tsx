@@ -10,12 +10,12 @@ type ChatMessage = {
   text: string;
 };
 
-export function GuestChat({ slug, propertyName }: { slug: string; propertyName: string }) {
-  const { locale, t } = useGuestLanguage();
+export function GuestChat({ slug, propertyName, initialOpen = false }: { slug: string; propertyName: string; initialOpen?: boolean }) {
+  const { t } = useGuestLanguage();
   const botLabel = useMemo(() => t.chat.propertyBot(propertyName.trim() || "house"), [propertyName, t]);
   const askLabel = propertyName.trim() ? t.chat.askProperty(propertyName.trim()) : t.chat.askYourHost;
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isPending, startTransition] = useTransition();
@@ -43,7 +43,7 @@ export function GuestChat({ slug, propertyName }: { slug: string; propertyName: 
         const response = await fetch(`/api/stay/${slug}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: trimmed, locale })
+          body: JSON.stringify({ message: trimmed })
         });
         const data = (await response.json()) as { answer?: string };
         setMessages((current) => [

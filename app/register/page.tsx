@@ -1,4 +1,5 @@
 import { CheckCircle2, Home } from "lucide-react";
+import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { GoogleMark } from "@/components/google-mark";
 import { InAppBrowserNotice } from "@/components/in-app-browser-notice";
@@ -97,6 +98,7 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
               Log in
             </a>
           </p>
+          <AppLegalLinks className="mt-6 border-t border-ink/10 pt-5" />
         </Panel>
 
         <Panel className="order-1 bg-ink text-white lg:order-2">

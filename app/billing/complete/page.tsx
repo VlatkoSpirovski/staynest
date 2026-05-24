@@ -1,4 +1,5 @@
 import { CheckCircle2 } from "lucide-react";
+import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
 
@@ -16,6 +17,7 @@ export default function BillingCompletePage() {
         <Button href="/dashboard" className="mt-6 w-full">
           Open dashboard
         </Button>
+        <AppLegalLinks className="mt-6 border-t border-ink/10 pt-5" />
       </Panel>
     </main>
   );

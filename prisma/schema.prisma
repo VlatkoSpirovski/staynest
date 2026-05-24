@@ -138,6 +138,8 @@ model Property {
   reviewLinks     ReviewLink[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+
+  @@index([ownerId, updatedAt])
 }
 
 model GuideSection {

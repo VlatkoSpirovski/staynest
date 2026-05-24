@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { GuestGuideSection } from "@/components/guest-guide-section";
-import { prisma } from "@/lib/prisma";
+import { getCachedPublicGuideSection } from "@/lib/public-guide-cache";
 
-export const dynamic = "force-dynamic";
+export const preferredRegion = "fra1";
 export const metadata = {
   robots: {
     index: false,
@@ -24,14 +24,7 @@ export default async function GuideSectionPage({ params }: PageProps) {
     notFound();
   }
 
-  const property = await prisma.property.findUnique({
-    where: { slug: params.slug },
-    include: {
-      guideSections: { orderBy: { sortOrder: "asc" } },
-      recommendations: { orderBy: { sortOrder: "asc" } },
-      reviewLinks: true
-    }
-  });
+  const property = await getCachedPublicGuideSection(params.slug);
 
   if (!property) {
     notFound();

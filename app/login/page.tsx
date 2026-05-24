@@ -1,4 +1,5 @@
 import { Home } from "lucide-react";
+import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { GoogleMark } from "@/components/google-mark";
 import { InAppBrowserNotice } from "@/components/in-app-browser-notice";
@@ -75,6 +76,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
             Start a 7-day free trial.
           </a>
         </p>
+        <AppLegalLinks className="mt-6 border-t border-ink/10 pt-5" />
       </Panel>
     </main>
   );

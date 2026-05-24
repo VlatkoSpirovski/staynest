@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { GuestGuideHome } from "@/components/guest-guide-home";
-import { prisma } from "@/lib/prisma";
+import { getCachedPublicGuideHome } from "@/lib/public-guide-cache";
 
-export const dynamic = "force-dynamic";
+export const preferredRegion = "fra1";
 export const metadata = {
   robots: {
     index: false,
@@ -17,20 +17,7 @@ type PageProps = {
 };
 
 export default async function PublicGuidePage({ params }: PageProps) {
-  const property = await prisma.property.findUnique({
-    where: { slug: params.slug },
-    select: {
-      slug: true,
-      name: true,
-      logoUrl: true,
-      coverImageUrl: true,
-      accentColor: true,
-      templateId: true,
-      designSerif: true,
-      designRounded: true,
-      translationLocales: true
-    }
-  });
+  const property = await getCachedPublicGuideHome(params.slug);
 
   if (!property) {
     notFound();

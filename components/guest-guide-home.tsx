@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { Home, KeyRound, Map, Phone, ShieldAlert, Star, Utensils, Wifi } from "lucide-react";
-import { GuestLanguageMenu, GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
-import { GuestChat } from "@/components/guest-chat";
+import { GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
+import { GuestChatLauncher } from "@/components/guest-chat-launcher";
 import { MenuLink, PoweredByStayNest } from "@/app/stay/[slug]/guide-ui";
 import { getGuideTheme, guideThemeStyle } from "@/themes";
 
@@ -15,12 +16,11 @@ type GuestProperty = {
   templateId: string;
   designSerif: boolean;
   designRounded: boolean;
-  translationLocales: string[];
 };
 
 export function GuestGuideHome({ property }: { property: GuestProperty }) {
   return (
-    <GuestLanguageProvider availableLocales={property.translationLocales}>
+    <GuestLanguageProvider>
       <GuestGuideHomeContent property={property} />
     </GuestLanguageProvider>
   );
@@ -56,10 +56,12 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
           : "grid grid-cols-2 gap-[var(--guide-menu-gap)] px-[var(--guide-menu-padding)] py-5";
 
   function LogoMark({ soft = false }: { soft?: boolean }) {
+    const canOptimizeLogo = property.logoUrl && !property.logoUrl.startsWith("data:");
     return (
       <div className={`${soft ? "h-14 w-14 rounded-[20px]" : "h-16 w-16 rounded-[22px]"} grid shrink-0 place-items-center overflow-hidden border border-[var(--guide-card-border)] bg-[var(--guide-elevated-bg)] p-1.5 text-sm font-black text-[var(--guide-text)] shadow-[0_18px_42px_rgba(0,0,0,0.14)]`}>
-        {property.logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
+        {canOptimizeLogo ? (
+          <Image src={property.logoUrl || ""} alt={`${property.name} logo`} width={64} height={64} className="h-full w-full rounded-[inherit] object-cover" sizes="64px" />
+        ) : property.logoUrl ? (
           <img src={property.logoUrl} alt={`${property.name} logo`} className="h-full w-full rounded-[inherit] object-cover" />
         ) : (
           <Home size={soft ? 22 : 25} />
@@ -69,9 +71,14 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
   }
 
   function HeroImage({ className = "" }: { className?: string }) {
+    const canOptimizeCover = property.coverImageUrl && !property.coverImageUrl.startsWith("data:");
     return (
       <div className={`relative overflow-hidden ${className}`} style={{ background: "var(--guide-hero-fallback)" }}>
-        {property.coverImageUrl ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${property.coverImageUrl})` }} /> : null}
+        {canOptimizeCover ? (
+          <Image src={property.coverImageUrl || ""} alt="" fill priority className="object-cover" sizes="430px" />
+        ) : property.coverImageUrl ? (
+          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${property.coverImageUrl})` }} />
+        ) : null}
         <div className="absolute inset-0" style={{ background: "var(--guide-hero-overlay)" }} />
       </div>
     );
@@ -107,7 +114,6 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
                 <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--guide-muted)]">{t.yourStaySimplified}</p>
               </div>
             </div>
-            <GuestLanguageMenu />
           </header>
 
           <section className="px-5 pb-4 pt-6">
@@ -124,7 +130,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
 
           <MenuGrid />
           <Footer />
-          <GuestChat slug={property.slug} propertyName={property.name} />
+          <GuestChatLauncher slug={property.slug} propertyName={property.name} />
         </div>
       </main>
     );
@@ -136,7 +142,6 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
         <div className="mx-auto min-h-screen max-w-[430px] bg-[var(--guide-shell-bg)] px-4 py-4 shadow-[var(--guide-shell-shadow)]" style={{ fontFamily: "var(--guide-body-font)" }}>
           <header className="mb-4 flex items-center justify-between gap-3 px-1">
             <LogoMark soft />
-            <GuestLanguageMenu />
           </header>
 
           <section className="relative overflow-hidden rounded-[var(--guide-hero-radius)] text-[var(--guide-hero-text)] shadow-[0_24px_70px_rgba(64,99,112,0.18)]">
@@ -150,7 +155,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
 
           <MenuGrid />
           <Footer />
-          <GuestChat slug={property.slug} propertyName={property.name} />
+          <GuestChatLauncher slug={property.slug} propertyName={property.name} />
         </div>
       </main>
     );
@@ -160,14 +165,12 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
     return (
       <main className="min-h-screen bg-[var(--guide-app-bg)] text-[var(--guide-text)]" style={themeStyle}>
         <div className="mx-auto min-h-screen max-w-[430px] bg-[var(--guide-shell-bg)] shadow-[var(--guide-shell-shadow)]" style={{ fontFamily: "var(--guide-body-font)" }}>
-          <section className="relative min-h-[var(--guide-hero-height)] overflow-hidden text-[var(--guide-hero-text)]" style={{ background: "var(--guide-hero-fallback)" }}>
-            {property.coverImageUrl ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${property.coverImageUrl})` }} /> : null}
-            <div className="absolute inset-0" style={{ background: "var(--guide-hero-overlay)" }} />
+          <section className="relative min-h-[var(--guide-hero-height)] overflow-hidden text-[var(--guide-hero-text)]">
+            <HeroImage className="absolute inset-0" />
             <div className="absolute inset-x-10 top-10 h-px bg-[linear-gradient(90deg,transparent,var(--guide-accent),transparent)] opacity-70" />
             <div className="relative flex min-h-[var(--guide-hero-height)] flex-col justify-between px-5 py-6">
               <div className="flex items-start justify-between gap-3">
                 <LogoMark />
-                <GuestLanguageMenu />
               </div>
               <div className="pb-3">
                 <p className="text-[11px] font-black uppercase tracking-[0.34em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
@@ -179,7 +182,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
 
           <MenuGrid />
           <Footer />
-          <GuestChat slug={property.slug} propertyName={property.name} />
+          <GuestChatLauncher slug={property.slug} propertyName={property.name} />
         </div>
       </main>
     );
@@ -188,9 +191,8 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
   return (
     <main className="min-h-screen bg-[var(--guide-app-bg)] text-[var(--guide-text)]" style={themeStyle}>
       <div className="mx-auto min-h-screen max-w-[430px] bg-[var(--guide-shell-bg)] shadow-[var(--guide-shell-shadow)]" style={{ fontFamily: "var(--guide-body-font)" }}>
-        <section className="relative min-h-[430px] overflow-hidden text-white" style={{ background: "var(--guide-hero-fallback)" }}>
-          {property.coverImageUrl ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${property.coverImageUrl})` }} /> : null}
-          <div className="absolute inset-0" style={{ background: "var(--guide-hero-overlay)" }} />
+        <section className="relative min-h-[430px] overflow-hidden text-white">
+          <HeroImage className="absolute inset-0" />
           <div className="relative flex min-h-[430px] flex-col justify-between px-5 py-6">
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
@@ -200,7 +202,6 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
                   <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.32em] text-white/80">{t.yourStaySimplified}</p>
                 </div>
               </div>
-              <GuestLanguageMenu />
             </div>
 
             <div className="pb-3">
@@ -215,7 +216,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
 
         <Footer />
 
-        <GuestChat slug={property.slug} propertyName={property.name} />
+        <GuestChatLauncher slug={property.slug} propertyName={property.name} />
       </div>
     </main>
   );

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { GUEST_LOCALES, type GuestLocale, getGuestMessages, isGuestLocale } from "@/lib/guest-i18n";
-import { prisma } from "@/lib/prisma";
+import { getGuestMessages } from "@/lib/guest-i18n";
+import { getCachedPublicGuideChatContext } from "@/lib/public-guide-cache";
 
 export const dynamic = "force-dynamic";
+export const preferredRegion = "fra1";
 
 type RouteContext = {
   params: {
@@ -14,16 +15,12 @@ function textValue(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function localeName(locale: GuestLocale) {
-  return GUEST_LOCALES.find((item) => item.code === locale)?.label || "English";
-}
-
 function openAiModel() {
   const model = process.env.OPENAI_MODEL?.trim();
   return model && model !== "gpt-5.4-mini" ? model : "gpt-5-mini";
 }
 
-function buildPropertyContext(property: NonNullable<Awaited<ReturnType<typeof getPropertyForChat>>>) {
+function buildPropertyContext(property: NonNullable<Awaited<ReturnType<typeof getCachedPublicGuideChatContext>>>) {
   const recommendations = property.recommendations
     .map((item) => `${item.title} (${item.category}): ${item.description}${item.address ? ` Address: ${item.address}.` : ""}${item.url ? ` Link: ${item.url}.` : ""}`)
     .join("\n");
@@ -57,17 +54,6 @@ ${reviews || "None"}
 `.trim();
 }
 
-async function getPropertyForChat(slug: string) {
-  return prisma.property.findUnique({
-    where: { slug },
-    include: {
-      guideSections: { orderBy: { sortOrder: "asc" } },
-      recommendations: { orderBy: { sortOrder: "asc" } },
-      reviewLinks: true
-    }
-  });
-}
-
 function extractResponseText(data: unknown) {
   if (!data || typeof data !== "object") return "";
   if ("output_text" in data && typeof data.output_text === "string") return data.output_text;
@@ -90,17 +76,15 @@ function extractResponseText(data: unknown) {
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
-  const body = (await request.json().catch(() => null)) as { message?: unknown; locale?: unknown } | null;
+  const body = (await request.json().catch(() => null)) as { message?: unknown } | null;
   const message = textValue(body?.message).slice(0, 600);
-  const requestedLocale = textValue(body?.locale);
-  const locale = isGuestLocale(requestedLocale) ? requestedLocale : "en";
-  const t = getGuestMessages(locale);
+  const t = getGuestMessages();
 
   if (!message) {
     return NextResponse.json({ answer: t.chat.askAnything }, { status: 400 });
   }
 
-  const property = await getPropertyForChat(params.slug);
+  const property = await getCachedPublicGuideChatContext(params.slug);
   if (!property) {
     return NextResponse.json({ answer: t.chat.errorAnswer }, { status: 404 });
   }
@@ -122,7 +106,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     body: JSON.stringify({
       model: openAiModel(),
       instructions:
-        `You are StayNest's guest assistant. Answer only from the provided property context. Reply in ${localeName(locale)}. Be concise, warm, and practical. If the answer is missing, say you do not have that detail and tell the guest to contact the host. Never invent codes, prices, policies, addresses, or emergency instructions.`,
+        "You are StayNest's guest assistant. Answer only from the provided property context. Reply in English. Be concise, warm, and practical. If the answer is missing, say you do not have that detail and tell the guest to contact the host. Never invent codes, prices, policies, addresses, or emergency instructions.",
       input: [
         {
           role: "user",

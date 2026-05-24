@@ -4,6 +4,8 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const preferredRegion = "fra1";
+
 export const metadata: Metadata = {
   title: "StayNest",
   description: "Digital guest guides for villas, apartments and rentals."

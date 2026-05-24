@@ -1,4 +1,5 @@
 import { CreditCard, ShieldCheck } from "lucide-react";
+import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { PaddleCheckoutButton } from "@/components/paddle-checkout-button";
 import { Panel } from "@/components/ui/panel";
@@ -9,6 +10,8 @@ const planCopy = {
   basic: { name: "Basic", price: "€10/month" },
   ai: { name: "Full AI", price: "€15/month" }
 };
+
+export const preferredRegion = "fra1";
 
 function paddleConfigError({ clientToken, priceId, environment }: { clientToken: string; priceId?: string; environment: string }) {
   if (!clientToken || !priceId) return "Paddle checkout needs PADDLE_CLIENT_TOKEN and the selected plan price ID in Vercel.";
@@ -95,6 +98,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         <Button href="/dashboard" variant="secondary" className="mt-3 w-full">
           Go to dashboard
         </Button>
+        <AppLegalLinks className="mt-6 border-t border-ink/10 pt-5" />
       </Panel>
     </main>
   );
