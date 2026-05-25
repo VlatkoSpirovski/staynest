@@ -33,9 +33,8 @@ import {
 } from "lucide-react";
 
 import { CopyButton } from "@/components/copy-button";
-import { GeoapifyPlacePicker } from "@/components/geoapify-place-picker";
 import { ImageUploadField } from "@/components/image-upload-field";
-import { createManualPlaceDraft, draftFromGeoapifyPlace, PlaceRecommendationForm, type PlaceRecommendationDraft } from "@/components/place-recommendation-form";
+import { createManualPlaceDraft, PlaceRecommendationForm, type PlaceRecommendationDraft } from "@/components/place-recommendation-form";
 import { SubmitButton } from "@/components/submit-button";
 import { Field, inputClass, textareaClass } from "@/components/ui/panel";
 import { isEssentialCategory, normalizePlaceCategory, type PlaceRecommendationCategory } from "@/lib/place-recommendation";
@@ -1921,25 +1920,12 @@ function ModuleSheet({
                       className="inline-flex min-h-10 items-center gap-2 rounded-[14px] bg-white px-3 text-xs font-black text-[#111827] shadow-[0_12px_30px_rgba(17,24,39,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-[#172234]/8"
                     >
                       <Link2 size={14} />
-                      Manual link
+                      Add place
                     </button>
                   </div>
                 </div>
 
                 <div className="grid gap-3 p-3 lg:p-4">
-                  <GeoapifyPlacePicker
-                    defaultCategory={defaultCategory}
-                    onSelect={(place) => {
-                      setRecommendationDrafts((drafts) => [
-                        ...drafts,
-                        {
-                          ...draftFromGeoapifyPlace(place, defaultCategory, drafts.length + 1),
-                          isEssential: activeModule === "essentials" || isEssentialCategory(place.category)
-                        }
-                      ]);
-                    }}
-                  />
-
                   {recommendationDrafts.length ? (
                     recommendationDrafts.map((draft, index) => (
                       <PlaceRecommendationForm
@@ -1953,14 +1939,14 @@ function ModuleSheet({
                   ) : (
                     <div className="rounded-[18px] border border-dashed border-[#172234]/14 bg-[#F9FAFB] px-4 py-8 text-center">
                       <p className="text-sm font-black text-[#111827]">No {activeModule === "restaurants" ? "places" : activeModule === "essentials" ? "essentials" : "activities"} yet.</p>
-                      <p className="mt-1 text-xs font-semibold text-[#111827]/48">Search a place, select a result, add an optional host tip, then save.</p>
+                      <p className="mt-1 text-xs font-semibold text-[#111827]/48">Add the name, type, description and link manually.</p>
                       <button
                         type="button"
                         onClick={() => setRecommendationDrafts([createManualPlaceDraft(defaultCategory, 1, activeModule === "essentials")])}
                         className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-[14px] bg-white px-4 text-xs font-black text-[#111827] shadow-[0_12px_30px_rgba(17,24,39,0.08)] ring-1 ring-[#172234]/8"
                       >
                         <Link2 size={14} />
-                        Add manually
+                        Add place
                       </button>
                     </div>
                   )}
