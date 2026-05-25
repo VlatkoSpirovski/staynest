@@ -40,6 +40,8 @@ import { Field, inputClass, textareaClass } from "@/components/ui/panel";
 import { isEssentialCategory, normalizePlaceCategory, type PlaceRecommendationCategory } from "@/lib/place-recommendation";
 import { getGuideTheme, guideThemeStyle, guideThemes, type GuideTheme, type GuideThemeId } from "@/themes";
 
+const BILLING_BASE_URL = "https://staynest.site";
+
 interface Recommendation {
   id: string;
   propertyId: string;
@@ -1647,7 +1649,7 @@ function SettingsScreen({
             return (
               <a
                 key={plan.id}
-                href={`/billing?plan=${plan.id}`}
+                href={`${BILLING_BASE_URL}/billing?plan=${plan.id}`}
                 className={`rounded-[20px] border p-4 shadow-[0_18px_48px_rgba(17,24,39,0.085),inset_0_1px_0_rgba(255,255,255,0.76)] transition hover:-translate-y-0.5 ${
                   active ? "border-[#111827]/35 bg-[#111827] text-white" : "border-[#172234]/7 bg-[#FFFFFF] text-[#111827]"
                 }`}

@@ -1,4 +1,4 @@
-import { getAppUrl } from "@/lib/utils";
+import { getPaymentUrl } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -10,20 +10,20 @@ const links = [
 ];
 
 export function AppLegalLinks({ className }: { className?: string }) {
-  const appUrl = getAppUrl();
+  const paymentUrl = getPaymentUrl();
 
   return (
     <footer className={cn("text-center text-xs font-semibold leading-6 text-ink/48", className)}>
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
         {links.map((link) => (
-          <a key={link.href} href={`${appUrl}${link.href}`} className="transition hover:text-ink">
+          <a key={link.href} href={`${paymentUrl}${link.href}`} className="transition hover:text-ink">
             {link.label}
           </a>
         ))}
       </div>
       <p className="mt-2">
         StayNest is a monthly SaaS subscription for rental hosts. Payments are processed securely by Paddle on
-        dashboard.staynest.site.
+        staynest.site.
       </p>
     </footer>
   );

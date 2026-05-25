@@ -3,20 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 const protectedPrefixes = ["/dashboard", "/admin", "/change-password"];
 const hostAppPrefixes = [
   "/auth",
-  "/billing",
   "/change-password",
   "/check-email",
-  "/contact",
   "/dashboard",
   "/forgot-password",
   "/login",
-  "/pricing",
-  "/privacy",
   "/register",
-  "/refund",
   "/reset-password",
   "/stay",
-  "/terms",
   "/verify-email"
 ];
 

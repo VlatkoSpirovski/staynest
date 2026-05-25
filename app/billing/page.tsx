@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { PaddleCheckoutButton } from "@/components/paddle-checkout-button";
 import { Panel } from "@/components/ui/panel";
 import { requireReadyUser } from "@/lib/auth";
-import { getAppUrl } from "@/lib/utils";
+import { getPaymentUrl } from "@/lib/utils";
 
 const planCopy = {
   basic: { name: "Basic", price: "€10/month" },
@@ -42,7 +42,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const clientToken = process.env.PADDLE_CLIENT_TOKEN || "";
   const paddleEnvironment = process.env.PADDLE_ENV === "sandbox" ? "sandbox" : "production";
   const paddleError = paddleConfigError({ clientToken, priceId, environment: paddleEnvironment });
-  const successUrl = `${getAppUrl()}/billing/complete`;
+  const successUrl = `${getPaymentUrl()}/billing/complete`;
 
   return (
     <main className="grid min-h-screen place-items-center bg-mist px-5 py-10 text-ink">
@@ -78,7 +78,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
             {trialDate ? `Trial runs until ${trialDate}. Paddle prices include the 7-day trial.` : "Trial started today."}
           </div>
           <p className="mt-3 text-sm leading-6 text-ink/60">
-            Paddle handles secure checkout, tax, invoicing and recurring billing on dashboard.staynest.site. After
+            Paddle handles secure checkout, tax, invoicing and recurring billing on staynest.site. After
             checkout, webhooks update your StayNest subscription status.
           </p>
         </div>

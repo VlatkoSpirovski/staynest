@@ -174,9 +174,10 @@ Recommended production flow:
    - Keep the direct connection string available for migrations if your provider recommends that.
 3. Add these environment variables in your hosting dashboard:
    - `DATABASE_URL`
-   - `NEXT_PUBLIC_SITE_URL=https://dashboard.staynest.site`
+   - `NEXT_PUBLIC_SITE_URL=https://staynest.site`
    - `NEXT_PUBLIC_APP_URL=https://dashboard.staynest.site`
    - `NEXT_PUBLIC_ADMIN_URL=https://admin.staynest.site`
+   - `NEXT_PUBLIC_PAYMENT_URL=https://staynest.site`
    - `SESSION_COOKIE_DOMAIN=.staynest.site`
 4. Run Prisma migration against production from a secure terminal:
 
