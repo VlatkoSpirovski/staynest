@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { AppLegalLinks } from "@/components/app-legal-links";
+import { getAppUrl } from "@/lib/utils";
 
 export function LegalPage({
   eyebrow,
@@ -10,14 +11,16 @@ export function LegalPage({
   title: string;
   children: React.ReactNode;
 }) {
+  const appUrl = getAppUrl();
+
   return (
     <main className="min-h-screen bg-mist text-ink">
       <div className="mx-auto max-w-3xl px-5 py-10">
         <div className="mb-8 flex items-center justify-between gap-4">
-          <a href="/" className="text-lg font-extrabold">
+          <a href={appUrl} className="text-lg font-extrabold">
             StayNest
           </a>
-          <Button href="/pricing" variant="secondary">
+          <Button href={`${appUrl}/pricing`} variant="secondary">
             Pricing
           </Button>
         </div>

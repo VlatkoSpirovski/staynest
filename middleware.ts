@@ -6,11 +6,17 @@ const hostAppPrefixes = [
   "/billing",
   "/change-password",
   "/check-email",
+  "/contact",
   "/dashboard",
   "/forgot-password",
   "/login",
+  "/pricing",
+  "/privacy",
   "/register",
+  "/refund",
   "/reset-password",
+  "/stay",
+  "/terms",
   "/verify-email"
 ];
 
@@ -26,7 +32,7 @@ function shouldUseProductionSubdomains(host: string) {
   return host === "staynest.site" || host === "www.staynest.site" || host === "dashboard.staynest.site" || host === "admin.staynest.site";
 }
 
-function subdomainUrl(request: NextRequest, hostname: "staynest.site" | "dashboard.staynest.site" | "admin.staynest.site") {
+function subdomainUrl(request: NextRequest, hostname: "dashboard.staynest.site" | "admin.staynest.site") {
   const url = request.nextUrl.clone();
   url.protocol = "https:";
   url.hostname = hostname;
@@ -47,12 +53,8 @@ export function middleware(request: NextRequest) {
       if (host !== "dashboard.staynest.site" && host !== "admin.staynest.site") {
         return NextResponse.redirect(subdomainUrl(request, "dashboard.staynest.site"));
       }
-    } else if (host === "dashboard.staynest.site" && pathname === "/") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
-    } else if (host === "dashboard.staynest.site" && pathname.startsWith("/stay/")) {
-      return NextResponse.redirect(subdomainUrl(request, "staynest.site"));
+    } else if ((host === "staynest.site" || host === "www.staynest.site") && pathname === "/") {
+      return NextResponse.redirect(subdomainUrl(request, "dashboard.staynest.site"));
     }
   }
 

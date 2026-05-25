@@ -1,13 +1,20 @@
 import { LegalPage } from "@/components/legal-page";
+import { getAppUrl } from "@/lib/utils";
 
 export default function TermsPage() {
+  const appUrl = getAppUrl();
+
   return (
     <LegalPage eyebrow="Terms" title="Terms of Service">
       <p>Last updated: May 25, 2026</p>
       <p>
         These Terms of Service (&quot;Terms&quot;) govern your access to and use of StayNest, a software-as-a-service
         platform that lets rental and accommodation owners create digital guest guides. By creating an account or using
-        StayNest, you agree to be bound by these Terms.
+        StayNest at{" "}
+        <a href={appUrl} className="font-bold text-lagoon">
+          dashboard.staynest.site
+        </a>
+        , you agree to be bound by these Terms.
       </p>
 
       <h2 className="text-xl font-bold text-ink">Service Description</h2>
@@ -26,13 +33,14 @@ export default function TermsPage() {
 
       <h2 className="text-xl font-bold text-ink">Payment &amp; Billing</h2>
       <p>
-        Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all
-        our orders. Paddle provides all customer service inquiries and handles returns.
+        Our checkout is available through dashboard.staynest.site and is conducted by our online reseller Paddle.com.
+        Paddle.com is the Merchant of Record for all StayNest orders and handles payment processing, tax calculation,
+        invoicing and returns.
       </p>
       <p>
         Paid plans are billed on a recurring monthly basis after any free trial period. Plan features and prices are
         listed on our{" "}
-        <a href="/pricing" className="font-bold text-lagoon">
+        <a href={`${appUrl}/pricing`} className="font-bold text-lagoon">
           pricing page
         </a>
         . If payment fails, access to paid features may be limited or suspended until payment is resolved. All prices
@@ -41,11 +49,12 @@ export default function TermsPage() {
 
       <h2 className="text-xl font-bold text-ink">Subscriptions &amp; Cancellation</h2>
       <p>
-        You may cancel your subscription at any time from your account dashboard. Upon cancellation, you will retain
-        access to paid features until the end of your current billing period. No further charges will be made after
-        cancellation. Cancelling a subscription does not automatically trigger a refund for the current billing period —
+        You may cancel your subscription at any time from your account dashboard or by emailing support. Upon
+        cancellation, you will retain access to paid features until the end of your current billing period. No further
+        charges will be made after cancellation. Cancelling a subscription does not automatically trigger a refund for
+        the current billing period —
         please see our{" "}
-        <a href="/refund" className="font-bold text-lagoon">
+        <a href={`${appUrl}/refund`} className="font-bold text-lagoon">
           Refund Policy
         </a>{" "}
         for details.
@@ -67,8 +76,26 @@ export default function TermsPage() {
 
       <h2 className="text-xl font-bold text-ink">Acceptable Use</h2>
       <p>
-        You may not use StayNest for illegal content, harmful instructions, spam, fraud, or content that infringes the
-        rights of others. StayNest reserves the right to remove content or suspend accounts that violate this policy.
+        You may not use StayNest for illegal content, harmful instructions, spam, fraud, deceptive activity, physical
+        goods, human services unrelated to software, regulated financial services, medical advice, gambling, adult
+        content, unauthorized data access, intellectual-property infringement, or any content that violates Paddle&apos;s
+        Acceptable Use Policy. StayNest reserves the right to remove content or suspend accounts that violate this
+        policy.
+      </p>
+
+      <h2 className="text-xl font-bold text-ink">Support &amp; Complaints</h2>
+      <p>
+        For product support, billing questions, cancellation requests or complaints, contact us at{" "}
+        <a href="mailto:staynest2026@gmail.com" className="font-bold text-lagoon">
+          staynest2026@gmail.com
+        </a>
+        . We aim to acknowledge support requests within 2 business days and resolve complaints within 14 business days.
+        If your complaint relates to a Paddle payment and is not resolved to your satisfaction, you may also contact
+        Paddle Buyer Support through{" "}
+        <a href="https://paddle.net" className="font-bold text-lagoon" target="_blank" rel="noopener noreferrer">
+          paddle.net
+        </a>
+        .
       </p>
 
       <h2 className="text-xl font-bold text-ink">Limitation of Liability</h2>

@@ -78,7 +78,8 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
             {trialDate ? `Trial runs until ${trialDate}. Paddle prices include the 7-day trial.` : "Trial started today."}
           </div>
           <p className="mt-3 text-sm leading-6 text-ink/60">
-            Paddle handles tax, checkout and recurring billing. After checkout, webhooks update your StayNest subscription status.
+            Paddle handles secure checkout, tax, invoicing and recurring billing on dashboard.staynest.site. After
+            checkout, webhooks update your StayNest subscription status.
           </p>
         </div>
 
@@ -98,6 +99,10 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         <Button href="/dashboard" variant="secondary" className="mt-3 w-full">
           Go to dashboard
         </Button>
+        <p className="mt-4 text-center text-xs leading-5 text-ink/50">
+          By continuing, you agree to the StayNest Terms, Privacy Policy and Refund Policy. Paddle.com is the Merchant
+          of Record for this order.
+        </p>
         <AppLegalLinks className="mt-6 border-t border-ink/10 pt-5" />
       </Panel>
     </main>

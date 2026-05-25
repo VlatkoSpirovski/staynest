@@ -27,7 +27,7 @@ export default function PricingPage() {
     <main className="min-h-screen bg-mist text-ink">
       <section className="mx-auto max-w-6xl px-5 py-10">
         <header className="mb-10 flex items-center justify-between gap-4">
-          <a href="/" className="text-lg font-extrabold">
+          <a href={appUrl} className="text-lg font-extrabold">
             StayNest
           </a>
           <Button href={`${appUrl}/login`} variant="secondary">
@@ -67,7 +67,9 @@ export default function PricingPage() {
           ))}
         </div>
         <div className="mt-8 rounded-[8px] border border-ink/10 bg-white p-5 text-sm leading-7 text-ink/65">
-          Prices are shown in EUR and billed monthly. StayNest is a digital SaaS product for rental owners and hosts.
+          Prices are shown in EUR and billed monthly after the 7-day free trial. StayNest is a digital SaaS product for
+          rental owners and hosts. Payments, taxes, invoicing, subscription renewals and refunds are handled by
+          Paddle.com as Merchant of Record. You can cancel any time from your dashboard or by contacting support.
         </div>
         <AppLegalLinks className="mt-8" />
       </section>

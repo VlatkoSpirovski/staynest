@@ -590,7 +590,7 @@ export default function DashboardClient(props: DashboardClientProps) {
     if (initialPublicUrl && initialProperty?.slug) {
       return initialPublicUrl.replace(new RegExp(`/stay/${initialProperty.slug}$`), "");
     }
-    return "https://staynest.site";
+    return "https://dashboard.staynest.site";
   }, [initialProperty?.slug, initialPublicUrl]);
   const publicUrl = property.slug ? `${siteBaseUrl}/stay/${property.slug}` : "";
   const qrCode = publicUrl ? `/api/qr?text=${encodeURIComponent(publicUrl)}` : initialQrCode || "";

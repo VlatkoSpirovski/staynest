@@ -1,13 +1,19 @@
 import { LegalPage } from "@/components/legal-page";
+import { getAppUrl } from "@/lib/utils";
 
 export default function PrivacyPage() {
+  const appUrl = getAppUrl();
+
   return (
     <LegalPage eyebrow="Privacy" title="Privacy Policy">
       <p>Last updated: May 25, 2026</p>
       <p>
         This Privacy Policy explains how StayNest (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) collects, uses,
-        shares and protects your information when you use our platform. We are committed to protecting your privacy and
-        handling your data transparently.
+        shares and protects your information when you use our platform at{" "}
+        <a href={appUrl} className="font-bold text-lagoon">
+          dashboard.staynest.site
+        </a>
+        . We are committed to protecting your privacy and handling your data transparently.
       </p>
 
       <h2 className="text-xl font-bold text-ink">Information We Collect</h2>

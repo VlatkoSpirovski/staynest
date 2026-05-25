@@ -118,8 +118,8 @@ export function PoweredByStayNest({ className = "", label = "Powered by" }: { cl
   return (
     <p className={`text-center text-xs font-semibold text-[var(--guide-muted)] ${className}`}>
       {label}{" "}
-      <a href="https://staynest.site" target="_blank" rel="noreferrer" className="font-bold text-[var(--guide-text)] underline-offset-2 opacity-70 hover:underline">
-        staynest.site
+      <a href="https://dashboard.staynest.site" target="_blank" rel="noreferrer" className="font-bold text-[var(--guide-text)] underline-offset-2 opacity-70 hover:underline">
+        dashboard.staynest.site
       </a>
     </p>
   );
