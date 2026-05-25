@@ -66,6 +66,7 @@ export type GuestGuideSectionProperty = {
   hostContactName: string | null;
   hostPhone: string | null;
   hostEmail: string | null;
+  aiKnowledge: string | null;
   guideSections: GuideSection[];
   recommendations: Recommendation[];
   reviewLinks: ReviewLink[];

@@ -106,6 +106,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     },
     body: JSON.stringify({
       model: openAiModel(),
+      max_output_tokens: 220,
       instructions:
         "You are StayNest's guest assistant. Answer only from the provided property context. Reply in English. Be concise, warm, and practical. If the answer is missing, say you do not have that detail and tell the guest to contact the host. Never invent codes, prices, policies, addresses, or emergency instructions.",
       input: [

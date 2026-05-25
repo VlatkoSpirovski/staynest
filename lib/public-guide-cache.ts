@@ -57,6 +57,7 @@ export function getCachedPublicGuideSection(slug: string) {
           hostContactName: true,
           hostPhone: true,
           hostEmail: true,
+          aiKnowledge: true,
           guideSections: {
             orderBy: { sortOrder: "asc" },
             select: {

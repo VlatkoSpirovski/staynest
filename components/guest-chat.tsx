@@ -5,12 +5,162 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useGuestLanguage } from "@/components/guest-language";
 import { cn } from "@/lib/utils";
 
+type ChatRecommendation = {
+  title?: string | null;
+  name?: string | null;
+  customTitle?: string | null;
+  category: string;
+  address?: string | null;
+  formattedAddress?: string | null;
+  googleMapsUrl?: string | null;
+  url?: string | null;
+  isEssential?: boolean;
+  isVisible?: boolean;
+};
+
+export type GuestChatContext = {
+  wifiName?: string | null;
+  wifiPassword?: string | null;
+  checkInInfo?: string | null;
+  checkOutInfo?: string | null;
+  parkingInfo?: string | null;
+  houseRules?: string | null;
+  emergencyInfo?: string | null;
+  hostContactName?: string | null;
+  hostPhone?: string | null;
+  hostEmail?: string | null;
+  aiKnowledge?: string | null;
+  recommendations?: ChatRecommendation[];
+};
+
 type ChatMessage = {
   role: "guest" | "assistant";
   text: string;
 };
 
-export function GuestChat({ slug, propertyName, initialOpen = false }: { slug: string; propertyName: string; initialOpen?: boolean }) {
+function clean(value?: string | null) {
+  return value?.trim() || "";
+}
+
+function placeTitle(item: ChatRecommendation) {
+  return clean(item.customTitle) || clean(item.title) || clean(item.name) || "Recommended place";
+}
+
+function placeAddress(item: ChatRecommendation) {
+  return clean(item.formattedAddress) || clean(item.address);
+}
+
+function formatPlaceAnswer(intro: string, item?: ChatRecommendation) {
+  if (!item) return "";
+
+  const address = placeAddress(item);
+  const link = clean(item.googleMapsUrl) || clean(item.url);
+
+  return [intro, placeTitle(item), address ? `Address: ${address}` : "", link ? `Map: ${link}` : ""].filter(Boolean).join("\n");
+}
+
+function words(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/https?:\/\/\S+/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 2);
+}
+
+function aiKnowledgeAnswer(message: string, aiKnowledge?: string | null) {
+  const knowledge = clean(aiKnowledge);
+  if (!knowledge) return "";
+
+  const questionWords = new Set(words(message));
+  if (!questionWords.size) return "";
+
+  const sections = knowledge
+    .split(/\n{2,}|(?<=\.)\s+(?=[A-Z0-9])/)
+    .map((section) => section.trim())
+    .filter((section) => section.length > 20);
+
+  const best = sections
+    .map((section) => {
+      const sectionWords = new Set(words(section));
+      let score = 0;
+      questionWords.forEach((word) => {
+        if (sectionWords.has(word)) score += 1;
+      });
+
+      return { section, score };
+    })
+    .sort((a, b) => b.score - a.score)[0];
+
+  if (!best || best.score < Math.min(2, questionWords.size)) return "";
+
+  return best.section.length > 650 ? `${best.section.slice(0, 647).trim()}...` : best.section;
+}
+
+function localAnswer(message: string, propertyName: string, context?: GuestChatContext) {
+  if (!context) return "";
+
+  const lower = message.toLowerCase();
+  const visibleRecommendations = (context.recommendations || []).filter((item) => item.isVisible !== false);
+  const findPlace = (pattern: RegExp) => visibleRecommendations.find((item) => pattern.test(item.category.toLowerCase()) || pattern.test(placeTitle(item).toLowerCase()));
+
+  if (/\b(wi-?fi|wifi|internet|password|network)\b/.test(lower)) {
+    const network = clean(context.wifiName);
+    const password = clean(context.wifiPassword);
+    if (network || password) {
+      return [`Wi-Fi for ${propertyName}:`, network ? `Network: ${network}` : "", password ? `Password: ${password}` : ""].filter(Boolean).join("\n");
+    }
+  }
+
+  if (/\b(check.?out|checkout|leave|departure)\b/.test(lower) && clean(context.checkOutInfo)) {
+    return context.checkOutInfo || "";
+  }
+
+  if (/\b(check.?in|checkin|arrival|arrive)\b/.test(lower) && clean(context.checkInInfo)) {
+    return context.checkInInfo || "";
+  }
+
+  if (/\b(parking|park|car)\b/.test(lower) && clean(context.parkingInfo)) {
+    return context.parkingInfo || "";
+  }
+
+  if (/\b(rule|rules|house)\b/.test(lower) && clean(context.houseRules)) {
+    return context.houseRules || "";
+  }
+
+  if (/\b(emergency|urgent|doctor|hospital|police|ambulance)\b/.test(lower) && clean(context.emergencyInfo)) {
+    return context.emergencyInfo || "";
+  }
+
+  if (/\b(contact|host|phone|call|whatsapp|email)\b/.test(lower)) {
+    const contact = [
+      clean(context.hostContactName) || "Host",
+      clean(context.hostPhone) ? `Phone: ${context.hostPhone}` : "",
+      clean(context.hostEmail) ? `Email: ${context.hostEmail}` : ""
+    ].filter(Boolean);
+
+    if (contact.length > 1) return contact.join("\n");
+  }
+
+  if (/\b(supermarket|grocery|groceries|market|shop)\b/.test(lower)) {
+    return formatPlaceAnswer("Nearest supermarket:", findPlace(/supermarket|grocery|market|convenience/));
+  }
+
+  if (/\b(pharmacy|chemist|medicine)\b/.test(lower)) {
+    return formatPlaceAnswer("Nearest pharmacy:", findPlace(/pharmacy/));
+  }
+
+  if (/\b(restaurant|food|eat|dinner|lunch|breakfast|cafe|bar)\b/.test(lower)) {
+    return formatPlaceAnswer("Recommended nearby place:", findPlace(/restaurant|cafe|bar|food|bakery/));
+  }
+
+  const hostKnowledgeAnswer = aiKnowledgeAnswer(message, context.aiKnowledge);
+  if (hostKnowledgeAnswer) return hostKnowledgeAnswer;
+
+  return "";
+}
+
+export function GuestChat({ slug, propertyName, context, initialOpen = false }: { slug: string; propertyName: string; context?: GuestChatContext; initialOpen?: boolean }) {
   const { t } = useGuestLanguage();
   const botLabel = useMemo(() => t.chat.propertyBot(propertyName.trim() || "house"), [propertyName, t]);
   const askLabel = propertyName.trim() ? t.chat.askProperty(propertyName.trim()) : t.chat.askYourHost;
@@ -38,6 +188,12 @@ export function GuestChat({ slug, propertyName, initialOpen = false }: { slug: s
 
     setMessage("");
     setMessages((current) => [...current, { role: "guest", text: trimmed }]);
+
+    const instantAnswer = localAnswer(trimmed, propertyName, context);
+    if (instantAnswer) {
+      setMessages((current) => [...current, { role: "assistant", text: instantAnswer }]);
+      return;
+    }
 
     startTransition(async () => {
       try {

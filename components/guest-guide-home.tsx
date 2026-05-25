@@ -180,7 +180,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
 
           <MenuGrid />
           <Footer />
-          <GuestChatLauncher slug={property.slug} propertyName={property.name} />
+          <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} />
         </div>
       </main>
     );
@@ -205,7 +205,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
 
           <MenuGrid />
           <Footer />
-          <GuestChatLauncher slug={property.slug} propertyName={property.name} />
+          <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} />
         </div>
       </main>
     );
@@ -232,7 +232,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
 
           <MenuGrid />
           <Footer />
-          <GuestChatLauncher slug={property.slug} propertyName={property.name} />
+          <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} />
         </div>
       </main>
     );
@@ -268,7 +268,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
 
         <Footer />
 
-        <GuestChatLauncher slug={property.slug} propertyName={property.name} />
+        <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} />
       </div>
     </main>
   );

@@ -4,13 +4,14 @@ import dynamic from "next/dynamic";
 import { MessageCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useGuestLanguage } from "@/components/guest-language";
+import type { GuestChatContext } from "@/components/guest-chat";
 
 const GuestChat = dynamic(() => import("@/components/guest-chat").then((mod) => mod.GuestChat), {
   loading: () => null,
   ssr: false
 });
 
-export function GuestChatLauncher({ slug, propertyName }: { slug: string; propertyName: string }) {
+export function GuestChatLauncher({ slug, propertyName, context }: { slug: string; propertyName: string; context?: GuestChatContext }) {
   const { t } = useGuestLanguage();
   const [started, setStarted] = useState(false);
   const askLabel = useMemo(
@@ -19,7 +20,7 @@ export function GuestChatLauncher({ slug, propertyName }: { slug: string; proper
   );
 
   if (started) {
-    return <GuestChat slug={slug} propertyName={propertyName} initialOpen />;
+    return <GuestChat slug={slug} propertyName={propertyName} context={context} initialOpen />;
   }
 
   return (
