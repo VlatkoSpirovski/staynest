@@ -10,7 +10,7 @@ export const metadata = {
   }
 };
 
-const sectionIds = new Set(["wifi", "contact", "arrival", "house", "restaurants", "activities", "reviews", "emergency"]);
+const sectionIds = new Set(["wifi", "contact", "arrival", "house", "restaurants", "activities", "essentials", "reviews", "emergency"]);
 
 type PageProps = {
   params: {

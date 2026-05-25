@@ -1,9 +1,12 @@
 "use client";
 
-import { Car, MapPin, MessageCircle, Phone } from "lucide-react";
+import { Car, MessageCircle, Phone } from "lucide-react";
 import { CopyButton } from "@/components/copy-button";
+import { EssentialPlaceCard } from "@/components/essential-place-card";
 import { GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
+import { PlaceCard } from "@/components/place-card";
 import { DetailShell, EmptyNote, MiniCard } from "@/app/stay/[slug]/guide-ui";
+import { isEssentialCategory } from "@/lib/place-recommendation";
 import { getGuideTheme, guideThemeStyle } from "@/themes";
 
 type GuideSection = {
@@ -19,6 +22,23 @@ type Recommendation = {
   description: string;
   address: string | null;
   url: string | null;
+  imageUrl: string | null;
+  placeId: string | null;
+  name: string;
+  customTitle: string | null;
+  customDescription: string | null;
+  formattedAddress: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  googleMapsUrl: string | null;
+  rating: number | null;
+  userRatingsTotal: number | null;
+  openingHours: string[];
+  website: string | null;
+  phoneNumber: string | null;
+  photoUrl: string | null;
+  isEssential: boolean;
+  isVisible: boolean;
 };
 
 type ReviewLink = {
@@ -74,8 +94,10 @@ function GuestGuideSectionContent({ property, section }: { property: GuestProper
   const backHref = `/stay/${property.slug}`;
   const callUrl = property.hostPhone ? `tel:${property.hostPhone.replace(/\s+/g, "")}` : undefined;
   const whatsApp = whatsappUrl(property.hostPhone, property.name, t.content.whatsappStaying);
-  const restaurantRecommendations = property.recommendations.filter((item) => /restaurant|cafe|bar|food|dinner|bakery/i.test(item.category));
-  const activityRecommendations = property.recommendations.filter((item) => !restaurantRecommendations.some((restaurant) => restaurant.id === item.id));
+  const visibleRecommendations = property.recommendations.filter((item) => item.isVisible);
+  const restaurantRecommendations = visibleRecommendations.filter((item) => !item.isEssential && /restaurant|cafe|bar|food|dinner|bakery/i.test(item.category));
+  const essentialRecommendations = visibleRecommendations.filter((item) => item.isEssential || isEssentialCategory(item.category));
+  const activityRecommendations = visibleRecommendations.filter((item) => !restaurantRecommendations.some((restaurant) => restaurant.id === item.id) && !essentialRecommendations.some((essential) => essential.id === item.id));
   const themeStyle = guideThemeStyle(getGuideTheme(property.templateId), {
     accentColor: property.accentColor,
     designSerif: property.designSerif,
@@ -152,7 +174,7 @@ function GuestGuideSectionContent({ property, section }: { property: GuestProper
         {section === "restaurants" ? (
           (restaurantRecommendations.length > 0 ? restaurantRecommendations : property.recommendations).length > 0 ? (
             (restaurantRecommendations.length > 0 ? restaurantRecommendations : property.recommendations).map((item) => (
-              <RecommendationCard key={item.id} item={item} openMapLabel={t.content.openMap} />
+              <PlaceCard key={item.id} item={item} openMapLabel={t.content.openMap} />
             ))
           ) : (
             <EmptyNote>{t.content.noRestaurants}</EmptyNote>
@@ -162,10 +184,22 @@ function GuestGuideSectionContent({ property, section }: { property: GuestProper
         {section === "activities" ? (
           (activityRecommendations.length > 0 ? activityRecommendations : property.recommendations).length > 0 ? (
             (activityRecommendations.length > 0 ? activityRecommendations : property.recommendations).map((item) => (
-              <RecommendationCard key={item.id} item={item} openMapLabel={t.content.openMap} />
+              <PlaceCard key={item.id} item={item} openMapLabel={t.content.openMap} />
             ))
           ) : (
             <EmptyNote>{t.content.noActivities}</EmptyNote>
+          )
+        ) : null}
+
+        {section === "essentials" ? (
+          essentialRecommendations.length > 0 ? (
+            <div className="grid gap-3">
+              {essentialRecommendations.map((item) => (
+                <EssentialPlaceCard key={item.id} item={item} />
+              ))}
+            </div>
+          ) : (
+            <EmptyNote>{t.content.noEssentials}</EmptyNote>
           )
         ) : null}
 
@@ -201,27 +235,5 @@ function GuestGuideSectionContent({ property, section }: { property: GuestProper
         ) : null}
       </DetailShell>
     </div>
-  );
-}
-
-function RecommendationCard({
-  item,
-  openMapLabel
-}: {
-  item: Recommendation;
-  openMapLabel: string;
-}) {
-  return (
-    <MiniCard title={item.title}>
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--guide-accent)]">{item.category}</p>
-      <p className="mt-2">{item.description}</p>
-      {item.address ? <p className="mt-3 font-semibold text-[var(--guide-text)] opacity-70">{item.address}</p> : null}
-      {item.url ? (
-        <a href={item.url} className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-elevated-bg)] px-4 text-sm font-bold text-[var(--guide-accent)] ring-1 ring-[var(--guide-card-border)]">
-          <MapPin size={16} />
-          {openMapLabel}
-        </a>
-      ) : null}
-    </MiniCard>
   );
 }

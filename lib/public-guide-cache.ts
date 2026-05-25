@@ -71,7 +71,24 @@ export function getCachedPublicGuideSection(slug: string) {
               category: true,
               description: true,
               address: true,
-              url: true
+              url: true,
+              imageUrl: true,
+              placeId: true,
+              name: true,
+              customTitle: true,
+              customDescription: true,
+              formattedAddress: true,
+              latitude: true,
+              longitude: true,
+              googleMapsUrl: true,
+              rating: true,
+              userRatingsTotal: true,
+              openingHours: true,
+              website: true,
+              phoneNumber: true,
+              photoUrl: true,
+              isEssential: true,
+              isVisible: true
             }
           },
           reviewLinks: {
@@ -139,7 +156,19 @@ export function getCachedPublicGuideChatContext(slug: string) {
               category: true,
               description: true,
               address: true,
-              url: true
+              url: true,
+              placeId: true,
+              name: true,
+              customTitle: true,
+              customDescription: true,
+              formattedAddress: true,
+              googleMapsUrl: true,
+              rating: true,
+              userRatingsTotal: true,
+              website: true,
+              phoneNumber: true,
+              isEssential: true,
+              isVisible: true
             }
           },
           reviewLinks: {

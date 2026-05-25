@@ -32,6 +32,13 @@ export type GuideTheme = {
     cardBorder: string;
     elevatedBackground: string;
     iconBackground: string;
+    accentSoft: string;
+    cardInsetShadow: string;
+    cardHoverShadow: string;
+    cardBackdrop: string;
+    heroImageFilter: string;
+    languageBackground: string;
+    languageText: string;
     buttonBackground: string;
     buttonText: string;
     headingFont: string;

@@ -16,6 +16,7 @@ export type GuestMessages = {
     house: { title: string; subtitle: string };
     restaurants: { title: string; subtitle: string };
     activities: { title: string; subtitle: string };
+    essentials: { title: string; subtitle: string };
     reviews: { title: string; subtitle: string };
     emergency: { title: string; subtitle: string };
   };
@@ -36,7 +37,7 @@ export type GuestMessages = {
     errorNow: string;
   };
   sections: Record<
-    "wifi" | "contact" | "arrival" | "house" | "restaurants" | "activities" | "reviews" | "emergency",
+    "wifi" | "contact" | "arrival" | "house" | "restaurants" | "activities" | "essentials" | "reviews" | "emergency",
     { eyebrow: string; title: string }
   >;
   content: {
@@ -58,6 +59,7 @@ export type GuestMessages = {
     houseRulesFallback: string;
     noRestaurants: string;
     noActivities: string;
+    noEssentials: string;
     leaveReview: string;
     reviewBlurb: string;
     noReviewLinks: string;
@@ -82,6 +84,7 @@ const en: GuestMessages = {
     house: { title: "House Guide", subtitle: "About the property" },
     restaurants: { title: "Restaurants", subtitle: "Food nearby" },
     activities: { title: "Activities", subtitle: "Things to do" },
+    essentials: { title: "Essentials", subtitle: "Nearby help" },
     reviews: { title: "Reviews", subtitle: "Share your stay" },
     emergency: { title: "Emergency", subtitle: "Important contacts" }
   },
@@ -108,6 +111,7 @@ const en: GuestMessages = {
     house: { eyebrow: "House guide", title: "Everything inside the property." },
     restaurants: { eyebrow: "Restaurants", title: "Where to eat." },
     activities: { eyebrow: "Activities", title: "Things to do nearby." },
+    essentials: { eyebrow: "Essentials", title: "Useful places nearby." },
     reviews: { eyebrow: "Reviews", title: "Enjoying your stay?" },
     emergency: { eyebrow: "Emergency", title: "Important information." }
   },
@@ -130,6 +134,7 @@ const en: GuestMessages = {
     houseRulesFallback: "Please enjoy the home with care and respect quiet hours.",
     noRestaurants: "Your host has not added restaurant recommendations yet.",
     noActivities: "Your host has not added activities yet.",
+    noEssentials: "Your host has not added essential places yet.",
     leaveReview: "Leave a review",
     reviewBlurb: "A quick review helps future guests and means a lot to your host.",
     noReviewLinks: "Review links will appear here once your host adds them.",

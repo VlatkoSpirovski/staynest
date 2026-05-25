@@ -22,6 +22,20 @@ function optionalValue(formData: FormData, key: string) {
   return value.length > 0 ? value : null;
 }
 
+function optionalNumberValue(formData: FormData, key: string) {
+  const value = stringValue(formData, key);
+  if (!value) return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function stringListValue(formData: FormData, key: string) {
+  return stringValue(formData, key)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 function fileValue(formData: FormData, key: string) {
   const value = formData.get(key);
   return value instanceof File && value.size > 0 ? value : null;
@@ -902,22 +916,45 @@ export async function saveRecommendation(formData: FormData) {
     redirect("/dashboard");
   }
   const title = stringValue(formData, "title");
+  const name = stringValue(formData, "name") || stringValue(formData, "manualName") || title;
+  const customTitle = optionalValue(formData, "customTitle") || (title && title !== name ? title : null);
   const category = stringValue(formData, "category");
-  const description = stringValue(formData, "description");
+  const description = stringValue(formData, "description") || stringValue(formData, "customDescription");
+  const customDescription = optionalValue(formData, "customDescription") || optionalValue(formData, "description");
+  const googleMapsUrl = optionalValue(formData, "googleMapsUrl") || optionalValue(formData, "url");
+  const formattedAddress = optionalValue(formData, "formattedAddress") || optionalValue(formData, "address");
 
-  if (!title || !category || !description) {
-    redirect("/dashboard?error=Fill%20in%20recommendation%20title,%20category%20and%20description.");
+  if (!name || !category) {
+    redirect("/dashboard?error=Fill%20in%20recommendation%20name%20and%20category.");
   }
 
   if (recommendationId) {
     await prisma.recommendation.updateMany({
       where: { id: recommendationId, propertyId },
       data: {
-        title,
+        title: customTitle || name,
+        name,
+        customTitle,
         category,
         description,
-        address: optionalValue(formData, "address"),
-        url: optionalValue(formData, "url")
+        customDescription,
+        address: formattedAddress,
+        url: googleMapsUrl,
+        placeId: optionalValue(formData, "placeId"),
+        formattedAddress,
+        latitude: optionalNumberValue(formData, "latitude"),
+        longitude: optionalNumberValue(formData, "longitude"),
+        googleMapsUrl,
+        rating: optionalNumberValue(formData, "rating"),
+        userRatingsTotal: optionalNumberValue(formData, "userRatingsTotal"),
+        openingHours: stringListValue(formData, "openingHours"),
+        website: optionalValue(formData, "website"),
+        phoneNumber: optionalValue(formData, "phoneNumber"),
+        photoUrl: optionalValue(formData, "photoUrl"),
+        imageUrl: optionalValue(formData, "photoUrl"),
+        isEssential: checkedValue(formData, "isEssential"),
+        isVisible: formData.get("isVisible") !== "",
+        sortOrder: optionalNumberValue(formData, "sortOrder") || undefined
       }
     });
   } else {
@@ -925,12 +962,29 @@ export async function saveRecommendation(formData: FormData) {
     await prisma.recommendation.create({
       data: {
         propertyId,
-        title,
+        title: customTitle || name,
+        name,
+        customTitle,
         category,
         description,
-        address: optionalValue(formData, "address"),
-        url: optionalValue(formData, "url"),
-        sortOrder: recommendationCount + 1
+        customDescription,
+        address: formattedAddress,
+        url: googleMapsUrl,
+        placeId: optionalValue(formData, "placeId"),
+        formattedAddress,
+        latitude: optionalNumberValue(formData, "latitude"),
+        longitude: optionalNumberValue(formData, "longitude"),
+        googleMapsUrl,
+        rating: optionalNumberValue(formData, "rating"),
+        userRatingsTotal: optionalNumberValue(formData, "userRatingsTotal"),
+        openingHours: stringListValue(formData, "openingHours"),
+        website: optionalValue(formData, "website"),
+        phoneNumber: optionalValue(formData, "phoneNumber"),
+        photoUrl: optionalValue(formData, "photoUrl"),
+        imageUrl: optionalValue(formData, "photoUrl"),
+        isEssential: checkedValue(formData, "isEssential"),
+        isVisible: formData.get("isVisible") !== "",
+        sortOrder: optionalNumberValue(formData, "sortOrder") || recommendationCount + 1
       }
     });
   }
@@ -961,11 +1015,16 @@ export async function saveRecommendationInline(formData: FormData) {
     }
 
     const title = stringValue(formData, "title");
+    const name = stringValue(formData, "name") || stringValue(formData, "manualName") || title;
+    const customTitle = optionalValue(formData, "customTitle") || (title && title !== name ? title : null);
     const category = stringValue(formData, "category");
-    const description = stringValue(formData, "description");
+    const description = stringValue(formData, "description") || stringValue(formData, "customDescription");
+    const customDescription = optionalValue(formData, "customDescription") || optionalValue(formData, "description");
+    const googleMapsUrl = optionalValue(formData, "googleMapsUrl") || optionalValue(formData, "url");
+    const formattedAddress = optionalValue(formData, "formattedAddress") || optionalValue(formData, "address");
 
-    if (!title || !category || !description) {
-      throw new Error("Fill in recommendation title, category and description.");
+    if (!name || !category) {
+      throw new Error("Fill in recommendation name and category.");
     }
 
     const recommendationSelect = {
@@ -977,6 +1036,22 @@ export async function saveRecommendationInline(formData: FormData) {
       address: true,
       url: true,
       imageUrl: true,
+      placeId: true,
+      name: true,
+      customTitle: true,
+      customDescription: true,
+      formattedAddress: true,
+      latitude: true,
+      longitude: true,
+      googleMapsUrl: true,
+      rating: true,
+      userRatingsTotal: true,
+      openingHours: true,
+      website: true,
+      phoneNumber: true,
+      photoUrl: true,
+      isEssential: true,
+      isVisible: true,
       sortOrder: true
     } as const;
 
@@ -993,11 +1068,29 @@ export async function saveRecommendationInline(formData: FormData) {
           return prisma.recommendation.update({
             where: { id: recommendationId },
             data: {
-              title,
+              title: customTitle || name,
+              name,
+              customTitle,
               category,
               description,
-              address: optionalValue(formData, "address"),
-              url: optionalValue(formData, "url")
+              customDescription,
+              address: formattedAddress,
+              url: googleMapsUrl,
+              placeId: optionalValue(formData, "placeId"),
+              formattedAddress,
+              latitude: optionalNumberValue(formData, "latitude"),
+              longitude: optionalNumberValue(formData, "longitude"),
+              googleMapsUrl,
+              rating: optionalNumberValue(formData, "rating"),
+              userRatingsTotal: optionalNumberValue(formData, "userRatingsTotal"),
+              openingHours: stringListValue(formData, "openingHours"),
+              website: optionalValue(formData, "website"),
+              phoneNumber: optionalValue(formData, "phoneNumber"),
+              photoUrl: optionalValue(formData, "photoUrl"),
+              imageUrl: optionalValue(formData, "photoUrl"),
+              isEssential: checkedValue(formData, "isEssential"),
+              isVisible: formData.get("isVisible") !== "",
+              sortOrder: optionalNumberValue(formData, "sortOrder") || undefined
             },
             select: recommendationSelect
           });
@@ -1005,12 +1098,29 @@ export async function saveRecommendationInline(formData: FormData) {
       : await prisma.recommendation.create({
           data: {
             propertyId,
-            title,
+            title: customTitle || name,
+            name,
+            customTitle,
             category,
             description,
-            address: optionalValue(formData, "address"),
-            url: optionalValue(formData, "url"),
-            sortOrder: (await prisma.recommendation.count({ where: { propertyId } })) + 1
+            customDescription,
+            address: formattedAddress,
+            url: googleMapsUrl,
+            placeId: optionalValue(formData, "placeId"),
+            formattedAddress,
+            latitude: optionalNumberValue(formData, "latitude"),
+            longitude: optionalNumberValue(formData, "longitude"),
+            googleMapsUrl,
+            rating: optionalNumberValue(formData, "rating"),
+            userRatingsTotal: optionalNumberValue(formData, "userRatingsTotal"),
+            openingHours: stringListValue(formData, "openingHours"),
+            website: optionalValue(formData, "website"),
+            phoneNumber: optionalValue(formData, "phoneNumber"),
+            photoUrl: optionalValue(formData, "photoUrl"),
+            imageUrl: optionalValue(formData, "photoUrl"),
+            isEssential: checkedValue(formData, "isEssential"),
+            isVisible: formData.get("isVisible") !== "",
+            sortOrder: optionalNumberValue(formData, "sortOrder") || (await prisma.recommendation.count({ where: { propertyId } })) + 1
           },
           select: recommendationSelect
         });

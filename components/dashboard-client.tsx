@@ -20,22 +20,25 @@ import {
   MapPin,
   Phone,
   Palette,
+  Pill,
   Plus,
   QrCode,
   Save,
   Settings,
   ShieldAlert,
   Star,
-  Trash2,
   Utensils,
   WandSparkles,
   Wifi
 } from "lucide-react";
 
 import { CopyButton } from "@/components/copy-button";
+import { GeoapifyPlacePicker } from "@/components/geoapify-place-picker";
 import { ImageUploadField } from "@/components/image-upload-field";
+import { createManualPlaceDraft, draftFromGeoapifyPlace, PlaceRecommendationForm, type PlaceRecommendationDraft } from "@/components/place-recommendation-form";
 import { SubmitButton } from "@/components/submit-button";
 import { Field, inputClass, textareaClass } from "@/components/ui/panel";
+import { isEssentialCategory, normalizePlaceCategory, type PlaceRecommendationCategory } from "@/lib/place-recommendation";
 import { getGuideTheme, guideThemeStyle, guideThemes, type GuideTheme, type GuideThemeId } from "@/themes";
 
 interface Recommendation {
@@ -47,6 +50,22 @@ interface Recommendation {
   address: string | null;
   url: string | null;
   imageUrl: string | null;
+  placeId: string | null;
+  name: string;
+  customTitle: string | null;
+  customDescription: string | null;
+  formattedAddress: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  googleMapsUrl: string | null;
+  rating: number | null;
+  userRatingsTotal: number | null;
+  openingHours: string[];
+  website: string | null;
+  phoneNumber: string | null;
+  photoUrl: string | null;
+  isEssential: boolean;
+  isVisible: boolean;
   sortOrder: number;
 }
 
@@ -113,7 +132,7 @@ interface DashboardClientProps {
 }
 
 type TabId = "setup" | "modules" | "design" | "settings";
-type ModuleId = "photos" | "welcome" | "wifi" | "checkin" | "rules" | "restaurants" | "activities" | "contact" | "emergency" | "ai" | "reviews";
+type ModuleId = "photos" | "welcome" | "wifi" | "checkin" | "rules" | "restaurants" | "activities" | "essentials" | "contact" | "emergency" | "ai" | "reviews";
 
 const tabs: Array<{ id: TabId; label: string; icon: typeof Home }> = [
   { id: "setup", label: "Setup", icon: BadgeCheck },
@@ -181,6 +200,13 @@ const moduleCopy: Record<
     icon: MapPin,
     accent: "bg-[#E8F4F3] text-[#447977] ring-1 ring-[#5F9D99]/18 shadow-[0_12px_26px_rgba(95,157,153,0.10)]"
   },
+  essentials: {
+    title: "Essentials",
+    subtitle: "Useful places",
+    preview: (property) => essentialItems(property)[0]?.title || essentialItems(property)[0]?.name || "Add pharmacy, ATM, petrol and parking",
+    icon: Pill,
+    accent: "bg-[#EEF4E8] text-[#64734D] ring-1 ring-[#76875D]/18 shadow-[0_12px_26px_rgba(118,135,93,0.10)]"
+  },
   contact: {
     title: "Contact",
     subtitle: "Host help",
@@ -212,12 +238,17 @@ const moduleCopy: Record<
 };
 
 function restaurantItems(property: Property) {
-  return property.recommendations.filter((item) => /restaurant|dinner|wine|bar|cafe|food|tavern|grill/i.test(`${item.category} ${item.title}`));
+  return property.recommendations.filter((item) => !item.isEssential && /restaurant|cafe|bar|food|dinner|bakery/i.test(`${item.category} ${item.title} ${item.name}`));
+}
+
+function essentialItems(property: Property) {
+  return property.recommendations.filter((item) => item.isEssential || isEssentialCategory(item.category));
 }
 
 function activityItems(property: Property) {
   const restaurants = new Set(restaurantItems(property).map((item) => item.id));
-  return property.recommendations.filter((item) => !restaurants.has(item.id));
+  const essentials = new Set(essentialItems(property).map((item) => item.id));
+  return property.recommendations.filter((item) => !restaurants.has(item.id) && !essentials.has(item.id));
 }
 
 function getReviewValue(property: Property, platform: "GOOGLE" | "BOOKING" | "AIRBNB") {
@@ -260,6 +291,10 @@ function createBlankProperty(ownerId: string): Property {
 function formString(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
+}
+
+function formStringArray(formData: FormData, key: string) {
+  return formData.getAll(key).map((value) => (typeof value === "string" ? value.trim() : ""));
 }
 
 function formOptional(formData: FormData, key: string) {
@@ -330,17 +365,131 @@ function optimisticReviewLinksFromForm(formData: FormData, current: Property): R
 function optimisticRecommendationFromForm(formData: FormData, current: Property, fallbackCategory: string): Recommendation {
   const existingId = formString(formData, "recommendationId");
   const existing = current.recommendations.find((item) => item.id === existingId);
+  const name = formString(formData, "name") || formString(formData, "manualName") || formString(formData, "title");
+  const customTitle = formString(formData, "customTitle") || formString(formData, "title");
+  const customDescription = formString(formData, "customDescription") || formString(formData, "description");
+  const googleMapsUrl = formOptional(formData, "googleMapsUrl") || formOptional(formData, "url");
+  const formattedAddress = formOptional(formData, "formattedAddress") || formOptional(formData, "address");
+  const rating = Number(formString(formData, "rating"));
+  const userRatingsTotal = Number(formString(formData, "userRatingsTotal"));
 
   return {
     id: existingId || `optimistic-${Date.now()}`,
     propertyId: current.id,
-    title: formString(formData, "title"),
+    title: customTitle || name,
     category: formString(formData, "category") || fallbackCategory,
-    description: formString(formData, "description"),
-    address: formOptional(formData, "address"),
-    url: formOptional(formData, "url"),
-    imageUrl: existing?.imageUrl || null,
-    sortOrder: existing?.sortOrder || current.recommendations.length + 1
+    description: customDescription,
+    address: formattedAddress,
+    url: googleMapsUrl,
+    imageUrl: existing?.imageUrl || formOptional(formData, "photoUrl"),
+    placeId: formOptional(formData, "placeId"),
+    name,
+    customTitle: customTitle || null,
+    customDescription: customDescription || null,
+    formattedAddress,
+    latitude: Number.isFinite(Number(formString(formData, "latitude"))) ? Number(formString(formData, "latitude")) : null,
+    longitude: Number.isFinite(Number(formString(formData, "longitude"))) ? Number(formString(formData, "longitude")) : null,
+    googleMapsUrl,
+    rating: Number.isFinite(rating) ? rating : null,
+    userRatingsTotal: Number.isFinite(userRatingsTotal) ? userRatingsTotal : null,
+    openingHours: formString(formData, "openingHours").split("\n").map((line) => line.trim()).filter(Boolean),
+    website: formOptional(formData, "website"),
+    phoneNumber: formOptional(formData, "phoneNumber"),
+    photoUrl: formOptional(formData, "photoUrl"),
+    isEssential: checkedFormValue(formData, "isEssential"),
+    isVisible: formData.get("isVisible") !== "",
+    sortOrder: Number(formString(formData, "sortOrder")) || existing?.sortOrder || current.recommendations.length + 1
+  };
+}
+
+function optimisticRecommendationsFromBulkForm(formData: FormData, current: Property, fallbackCategory: string): Recommendation[] {
+  const ids = formStringArray(formData, "recommendationId");
+  const names = formStringArray(formData, "name");
+  const manualNames = formStringArray(formData, "manualName");
+  const customTitles = formStringArray(formData, "customTitle");
+  const customDescriptions = formStringArray(formData, "customDescription");
+  const urls = formStringArray(formData, "url");
+  const categories = formStringArray(formData, "category");
+  const addresses = formStringArray(formData, "formattedAddress");
+  const placeIds = formStringArray(formData, "placeId");
+  const latitudes = formStringArray(formData, "latitude");
+  const longitudes = formStringArray(formData, "longitude");
+  const googleMapsUrls = formStringArray(formData, "googleMapsUrl");
+  const ratings = formStringArray(formData, "rating");
+  const userRatingsTotals = formStringArray(formData, "userRatingsTotal");
+  const openingHours = formStringArray(formData, "openingHours");
+  const websites = formStringArray(formData, "website");
+  const phoneNumbers = formStringArray(formData, "phoneNumber");
+  const photoUrls = formStringArray(formData, "photoUrl");
+  const isEssentials = formStringArray(formData, "isEssential");
+  const isVisibleValues = formStringArray(formData, "isVisible");
+  const sortOrders = formStringArray(formData, "sortOrder");
+  const now = Date.now();
+
+  return names
+    .map((rawName, index) => {
+      const existingId = ids[index] || "";
+      const existing = current.recommendations.find((item) => item.id === existingId);
+      const name = rawName || manualNames[index] || "";
+      const customTitle = customTitles[index] || "";
+      const customDescription = customDescriptions[index] || "";
+      const rating = Number(ratings[index]);
+      const userRatingsTotal = Number(userRatingsTotals[index]);
+
+      return {
+        id: existingId || `optimistic-${now}-${index}`,
+        propertyId: current.id,
+        title: customTitle || name,
+        category: categories[index] || fallbackCategory,
+        description: customDescription,
+        address: addresses[index] || null,
+        url: googleMapsUrls[index] || urls[index] || null,
+        imageUrl: existing?.imageUrl || photoUrls[index] || null,
+        placeId: placeIds[index] || null,
+        name,
+        customTitle: customTitle || null,
+        customDescription: customDescription || null,
+        formattedAddress: addresses[index] || null,
+        latitude: Number.isFinite(Number(latitudes[index])) ? Number(latitudes[index]) : null,
+        longitude: Number.isFinite(Number(longitudes[index])) ? Number(longitudes[index]) : null,
+        googleMapsUrl: googleMapsUrls[index] || urls[index] || null,
+        rating: Number.isFinite(rating) ? rating : null,
+        userRatingsTotal: Number.isFinite(userRatingsTotal) ? userRatingsTotal : null,
+        openingHours: (openingHours[index] || "").split("\n").map((line) => line.trim()).filter(Boolean),
+        website: websites[index] || null,
+        phoneNumber: phoneNumbers[index] || null,
+        photoUrl: photoUrls[index] || null,
+        isEssential: isEssentials[index] === "1",
+        isVisible: isVisibleValues[index] !== "",
+        sortOrder: Number(sortOrders[index]) || existing?.sortOrder || current.recommendations.length + index + 1
+      };
+    })
+    .filter((item) => item.title);
+}
+
+function createRecommendationDraft(item: Recommendation, fallbackCategory: PlaceRecommendationCategory): PlaceRecommendationDraft {
+  return {
+    clientId: item.id,
+    id: item.id,
+    placeId: item.placeId || "",
+    name: item.name || item.title,
+    customTitle: item.customTitle || "",
+    customDescription: item.customDescription || item.description || "",
+    formattedAddress: item.formattedAddress || item.address || "",
+    latitude: item.latitude === null ? "" : String(item.latitude),
+    longitude: item.longitude === null ? "" : String(item.longitude),
+    googleMapsUrl: item.googleMapsUrl || item.url || "",
+    rating: item.rating === null ? "" : String(item.rating),
+    userRatingsTotal: item.userRatingsTotal === null ? "" : String(item.userRatingsTotal),
+    openingHours: item.openingHours || [],
+    website: item.website || "",
+    phoneNumber: item.phoneNumber || "",
+    photoUrl: item.photoUrl || item.imageUrl || "",
+    category: normalizePlaceCategory(item.category || fallbackCategory),
+    isEssential: item.isEssential || isEssentialCategory(item.category),
+    isVisible: item.isVisible,
+    sortOrder: item.sortOrder || 0,
+    manualUrl: item.googleMapsUrl || item.url || ""
   };
 }
 
@@ -460,6 +609,7 @@ export default function DashboardClient(props: DashboardClientProps) {
       { id: "rules" as ModuleId, label: "Rules", done: Boolean(property.houseRules || property.parkingInfo) },
       { id: "restaurants" as ModuleId, label: "Restaurants", done: restaurantItems(property).length >= 1 },
       { id: "activities" as ModuleId, label: "Activities", done: activityItems(property).length >= 1 },
+      { id: "essentials" as ModuleId, label: "Essentials", done: essentialItems(property).length >= 2 },
       { id: "contact" as ModuleId, label: "Contact", done: Boolean(property.hostPhone && property.hostEmail) },
       { id: "emergency" as ModuleId, label: "Emergency", done: Boolean(property.emergencyInfo) },
       { id: "ai" as ModuleId, label: "AI", done: Boolean(property.aiKnowledge) },
@@ -596,6 +746,93 @@ export default function DashboardClient(props: DashboardClientProps) {
     });
   }
 
+  function handleRecommendationsBulkSave(formData: FormData, fallbackCategory: string) {
+    const previousProperty = property;
+    const visibleBefore = fallbackCategory === "restaurant" ? restaurantItems(property) : fallbackCategory === "pharmacy" ? essentialItems(property) : activityItems(property);
+    const visibleIds = new Set(visibleBefore.map((item) => item.id));
+    const optimisticRecommendations = optimisticRecommendationsFromBulkForm(formData, property, fallbackCategory);
+    const keptExistingIds = new Set(optimisticRecommendations.filter((item) => !item.id.startsWith("optimistic-")).map((item) => item.id));
+    const deleteIds = visibleBefore.filter((item) => !keptExistingIds.has(item.id)).map((item) => item.id);
+    const label = fallbackCategory === "restaurant" ? "Restaurants" : fallbackCategory === "pharmacy" ? "Essentials" : "Activities";
+
+    setProperty((current) => ({
+      ...current,
+      recommendations: [
+        ...current.recommendations.filter((item) => !visibleIds.has(item.id)),
+        ...optimisticRecommendations
+      ]
+    }));
+    setSheetOpen(false);
+
+    finishInlineSave({
+      key: `recommendations:${fallbackCategory}`,
+      previousProperty,
+      message: `${label} saved.`,
+      action: async () => {
+        for (const id of deleteIds) {
+          const deleteForm = new FormData();
+          deleteForm.set("id", id);
+          const deleteResult = await deleteRecommendationInlineAction(deleteForm);
+          if (!deleteResult?.ok) {
+            throw new Error(deleteResult?.error || `Could not remove ${label.toLowerCase()}.`);
+          }
+        }
+
+        const savedRecommendations: Recommendation[] = [];
+        for (const item of optimisticRecommendations) {
+          const itemForm = new FormData();
+          itemForm.set("propertyId", property.id);
+          if (!item.id.startsWith("optimistic-")) {
+            itemForm.set("recommendationId", item.id);
+          }
+          itemForm.set("category", item.category || fallbackCategory);
+          itemForm.set("title", item.title);
+          itemForm.set("name", item.name || item.title);
+          if (item.customTitle) itemForm.set("customTitle", item.customTitle);
+          if (item.description) itemForm.set("description", item.description);
+          if (item.customDescription) itemForm.set("customDescription", item.customDescription);
+          if (item.address) itemForm.set("address", item.address);
+          if (item.formattedAddress) itemForm.set("formattedAddress", item.formattedAddress);
+          if (item.url) itemForm.set("url", item.url);
+          if (item.placeId) itemForm.set("placeId", item.placeId);
+          if (item.latitude !== null) itemForm.set("latitude", String(item.latitude));
+          if (item.longitude !== null) itemForm.set("longitude", String(item.longitude));
+          if (item.googleMapsUrl) itemForm.set("googleMapsUrl", item.googleMapsUrl);
+          if (item.rating !== null) itemForm.set("rating", String(item.rating));
+          if (item.userRatingsTotal !== null) itemForm.set("userRatingsTotal", String(item.userRatingsTotal));
+          if (item.openingHours?.length) itemForm.set("openingHours", item.openingHours.join("\n"));
+          if (item.website) itemForm.set("website", item.website);
+          if (item.phoneNumber) itemForm.set("phoneNumber", item.phoneNumber);
+          if (item.photoUrl) itemForm.set("photoUrl", item.photoUrl);
+          if (item.isEssential) itemForm.set("isEssential", "1");
+          if (item.isVisible) itemForm.set("isVisible", "1");
+          itemForm.set("sortOrder", String(item.sortOrder));
+
+          const saveResult = await saveRecommendationInlineAction(itemForm);
+          if (!saveResult?.ok || !saveResult.data?.recommendation) {
+            throw new Error(saveResult?.error || `Could not save ${label.toLowerCase()}.`);
+          }
+          savedRecommendations.push(saveResult.data.recommendation);
+        }
+
+        const optimisticIds = new Set(optimisticRecommendations.map((item) => item.id));
+        setProperty((current) => ({
+          ...current,
+          recommendations: [
+            ...current.recommendations.filter((item) => !visibleIds.has(item.id) && !optimisticIds.has(item.id)),
+            ...savedRecommendations
+          ]
+        }));
+
+        return {
+          ok: true,
+          data: { recommendations: savedRecommendations },
+          message: `${label} saved.`
+        };
+      }
+    });
+  }
+
   function handleReviewLinksSave(formData: FormData) {
     const previousProperty = property;
     setProperty((current) => ({
@@ -725,8 +962,7 @@ export default function DashboardClient(props: DashboardClientProps) {
           activeModule={activeModule}
           onClose={() => setSheetOpen(false)}
           onSaveProperty={handlePropertySave}
-          onSaveRecommendation={handleRecommendationSave}
-          onDeleteRecommendation={handleRecommendationDelete}
+          onSaveRecommendationsBulk={handleRecommendationsBulkSave}
           onSaveReviewLinks={handleReviewLinksSave}
           savingKey={savingKey}
         />
@@ -1181,7 +1417,10 @@ function TemplatePhonePreview({
 
   function PreviewLogo({ small = false }: { small?: boolean }) {
     return (
-      <div className={`${small ? "h-9 w-9 rounded-[13px]" : "h-12 w-12 rounded-[18px]"} grid shrink-0 place-items-center overflow-hidden bg-[var(--guide-elevated-bg)] p-1 text-[10px] font-black text-[var(--guide-text)] shadow-[0_12px_34px_rgba(0,0,0,0.16)] ring-1 ring-[var(--guide-card-border)]`}>
+      <div
+        className={`${small ? "h-9 w-9 rounded-[13px]" : "h-12 w-12 rounded-[18px]"} grid shrink-0 place-items-center overflow-hidden p-1 text-[10px] font-black text-[var(--guide-text)] shadow-[0_12px_34px_rgba(0,0,0,0.16)] ring-1 ring-[var(--guide-card-border)]`}
+        style={{ background: "var(--guide-elevated-bg)" }}
+      >
         {property.logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={property.logoUrl} alt="" className="h-full w-full rounded-[inherit] object-cover" />
@@ -1197,7 +1436,7 @@ function TemplatePhonePreview({
       <div className={`relative overflow-hidden ${className}`} style={{ background: theme.preview.heroBackground }}>
         {property.coverImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={property.coverImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={property.coverImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ filter: "var(--guide-hero-image-filter)" }} />
         ) : null}
         <div className="absolute inset-0" style={{ background: "var(--guide-hero-overlay)" }} />
       </div>
@@ -1211,8 +1450,12 @@ function TemplatePhonePreview({
           const Icon = item.icon;
           if (variant === "modern") {
             return (
-              <div key={item.title} className="flex min-h-[54px] items-center gap-2 rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] bg-[var(--guide-card-bg)] px-3 text-left shadow-[var(--guide-card-shadow)]">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--guide-icon-radius)] bg-[var(--guide-icon-bg)] text-[var(--guide-accent)]">
+              <div
+                key={item.title}
+                className="flex min-h-[54px] items-center gap-2 rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] px-3 text-left shadow-[var(--guide-card-shadow)] backdrop-blur-xl"
+                style={{ background: "var(--guide-card-bg)", boxShadow: "var(--guide-card-shadow), var(--guide-card-inset-shadow)", backdropFilter: "var(--guide-card-backdrop)" }}
+              >
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--guide-icon-radius)] text-[var(--guide-accent)]" style={{ background: "var(--guide-icon-bg)" }}>
                   <Icon size={13} />
                 </span>
                 <span className="min-w-0">
@@ -1224,8 +1467,12 @@ function TemplatePhonePreview({
           }
 
           return (
-            <div key={item.title} className={`${compact ? "min-h-[74px] p-3" : "min-h-[108px] p-4"} rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] bg-[var(--guide-card-bg)] ${variant === "darkLuxury" ? "text-left" : "text-center"} shadow-[var(--guide-card-shadow)]`}>
-              <span className={`${compact ? "h-8 w-8" : "h-11 w-11"} ${variant === "darkLuxury" ? "" : "mx-auto"} grid place-items-center rounded-[var(--guide-icon-radius)] bg-[var(--guide-icon-bg)] text-[var(--guide-accent)] shadow-[var(--guide-icon-shadow)]`}>
+            <div
+              key={item.title}
+              className={`${compact ? "min-h-[74px] p-3" : "min-h-[108px] p-4"} rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] ${variant === "darkLuxury" ? "text-left" : "text-center"} shadow-[var(--guide-card-shadow)] backdrop-blur-xl`}
+              style={{ background: "var(--guide-card-bg)", boxShadow: "var(--guide-card-shadow), var(--guide-card-inset-shadow)", backdropFilter: "var(--guide-card-backdrop)" }}
+            >
+              <span className={`${compact ? "h-8 w-8" : "h-11 w-11"} ${variant === "darkLuxury" ? "" : "mx-auto"} grid place-items-center rounded-[var(--guide-icon-radius)] text-[var(--guide-accent)] shadow-[var(--guide-icon-shadow)]`} style={{ background: "var(--guide-icon-bg)" }}>
                 <Icon size={compact ? 14 : 17} />
               </span>
               <p className={`${compact ? "mt-2 text-[11px]" : "mt-3 text-sm"} font-black`}>{item.title}</p>
@@ -1239,7 +1486,7 @@ function TemplatePhonePreview({
 
   if (theme.layout === "modern") {
     return (
-      <div style={style} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] bg-[var(--guide-shell-bg)] text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
+      <div style={{ ...style, background: "var(--guide-shell-bg)" }} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
         <header className={`${compact ? "px-4 py-3" : "px-5 py-4"} flex items-center justify-between border-b border-[var(--guide-section-divider)]`}>
           <div className="flex items-center gap-2">
             <PreviewLogo small={compact} />
@@ -1248,7 +1495,7 @@ function TemplatePhonePreview({
               <p className={`${compact ? "text-xs" : "text-sm"} font-black`}>{displayName}</p>
             </div>
           </div>
-          <span className="rounded-full border border-[var(--guide-card-border)] bg-white px-2.5 py-1 text-[9px] font-black">EN</span>
+          <span className="rounded-full border border-[var(--guide-card-border)] px-2.5 py-1 text-[9px] font-black backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
         </header>
         <section className={`${compact ? "p-4" : "p-5"}`}>
           <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
@@ -1266,10 +1513,10 @@ function TemplatePhonePreview({
 
   if (theme.layout === "mediterranean") {
     return (
-      <div style={style} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] bg-[var(--guide-shell-bg)] p-3 text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
+      <div style={{ ...style, background: "var(--guide-shell-bg)" }} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] p-3 text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
         <header className="mb-3 flex items-center justify-between">
           <PreviewLogo small={compact} />
-          <span className="rounded-full border border-[var(--guide-card-border)] bg-white/75 px-2.5 py-1 text-[9px] font-black text-[var(--guide-text)]">EN</span>
+          <span className="rounded-full border border-[var(--guide-card-border)] px-2.5 py-1 text-[9px] font-black backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
         </header>
         <section className="relative overflow-hidden rounded-[var(--guide-hero-radius)]">
           <HeroLayer className={compact ? "h-32" : "h-44"} />
@@ -1287,13 +1534,13 @@ function TemplatePhonePreview({
 
   if (theme.layout === "darkLuxury") {
     return (
-      <div style={style} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] bg-[var(--guide-shell-bg)] text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-[#D6AF6F]/20`}>
+      <div style={{ ...style, background: "var(--guide-shell-bg)" }} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-[#D6AF6F]/20`}>
         <section className={`${compact ? "h-40" : "h-56"} relative overflow-hidden`}>
           <HeroLayer className="absolute inset-0" />
           <div className={`${compact ? "p-4" : "p-5"} relative flex h-full flex-col justify-between`}>
             <div className="flex items-start justify-between">
               <PreviewLogo small={compact} />
-              <span className="rounded-full border border-[#D6AF6F]/28 bg-white/8 px-2.5 py-1 text-[9px] font-black text-[#F7F0E2]">EN</span>
+              <span className="rounded-full border border-[#D6AF6F]/28 px-2.5 py-1 text-[9px] font-black backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
             </div>
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.24em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
@@ -1309,13 +1556,13 @@ function TemplatePhonePreview({
   }
 
   return (
-    <div style={style} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] bg-[var(--guide-shell-bg)] text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
+    <div style={{ ...style, background: "var(--guide-shell-bg)" }} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
       <section className={`${compact ? "h-44" : "h-64"} relative overflow-hidden`}>
         <HeroLayer className="absolute inset-0" />
         <div className={`${compact ? "p-4" : "p-5"} relative flex h-full flex-col justify-between text-white`}>
           <div className="flex items-start justify-between gap-3">
             <PreviewLogo small={compact} />
-            <span className="rounded-full bg-white/18 px-3 py-1.5 text-[10px] font-black tracking-[0.12em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl">EN</span>
+            <span className="rounded-full px-3 py-1.5 text-[10px] font-black tracking-[0.12em] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
           </div>
           <div>
             <p className={`${compact ? "text-sm" : "text-xl"} leading-tight`} style={{ fontFamily: "var(--guide-heading-font)" }}>Welcome to</p>
@@ -1428,8 +1675,7 @@ function ModuleSheet({
   activeModule,
   onClose,
   onSaveProperty,
-  onSaveRecommendation,
-  onDeleteRecommendation,
+  onSaveRecommendationsBulk,
   onSaveReviewLinks,
   savingKey
 }: {
@@ -1437,16 +1683,37 @@ function ModuleSheet({
   activeModule: ModuleId;
   onClose: () => void;
   onSaveProperty: (formData: FormData) => void;
-  onSaveRecommendation: (formData: FormData, fallbackCategory: string) => void;
-  onDeleteRecommendation: (formData: FormData) => void;
+  onSaveRecommendationsBulk: (formData: FormData, fallbackCategory: string) => void;
   onSaveReviewLinks: (formData: FormData) => void;
   savingKey: string;
 }) {
   const info = moduleCopy[activeModule];
   const Icon = info.icon;
-  const isPropertyModule = !["restaurants", "activities", "reviews"].includes(activeModule);
-  const visibleRecommendations = activeModule === "restaurants" ? restaurantItems(property) : activityItems(property);
-  const defaultCategory = activeModule === "restaurants" ? "Restaurant" : "Activity";
+  const isPlaceModule = activeModule === "restaurants" || activeModule === "activities" || activeModule === "essentials";
+  const isPropertyModule = !isPlaceModule && activeModule !== "reviews";
+  const defaultCategory: PlaceRecommendationCategory = activeModule === "restaurants" ? "restaurant" : activeModule === "essentials" ? "pharmacy" : "attraction";
+  const visibleRecommendations = useMemo(
+    () => (activeModule === "restaurants" ? restaurantItems(property) : activeModule === "essentials" ? essentialItems(property) : activityItems(property)),
+    [activeModule, property]
+  );
+  const [recommendationDrafts, setRecommendationDrafts] = useState<PlaceRecommendationDraft[]>([]);
+
+  useEffect(() => {
+    if (!isPlaceModule) return;
+    setRecommendationDrafts(
+      visibleRecommendations.length
+        ? visibleRecommendations.map((item) => createRecommendationDraft(item, defaultCategory))
+        : []
+    );
+  }, [activeModule, visibleRecommendations, defaultCategory, isPlaceModule]);
+
+  function updateRecommendationDraft(clientId: string, patch: Partial<PlaceRecommendationDraft>) {
+    setRecommendationDrafts((drafts) => drafts.map((draft) => (draft.clientId === clientId ? { ...draft, ...patch } : draft)));
+  }
+
+  function removeRecommendationDraft(clientId: string) {
+    setRecommendationDrafts((drafts) => drafts.filter((draft) => draft.clientId !== clientId));
+  }
 
   return (
     <div className="dashboard-sheet-overlay fixed inset-0 z-50 flex flex-col justify-end bg-[#0B1220]/64 backdrop-blur-md lg:items-center lg:justify-center lg:p-6">
@@ -1630,81 +1897,83 @@ function ModuleSheet({
               </InlineSaveButton>
             </form>
           ) : (
-            <div className="space-y-4">
-              <form
-                onSubmit={(event: FormEvent<HTMLFormElement>) => {
-                  event.preventDefault();
-                  const form = event.currentTarget;
-                  onSaveRecommendation(new FormData(form), defaultCategory);
-                  form.reset();
-                }}
-                className="rounded-[20px] border border-[#172234]/8 bg-white p-4 shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)]"
-              >
-                <input type="hidden" name="propertyId" value={property.id} />
-                <input type="hidden" name="category" value={defaultCategory} />
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="Place">
-                    <input name="title" className={`${inputClass} bg-[#F9FAFB]`} placeholder={activeModule === "restaurants" ? "Casa Antica" : "Sunset boat tour"} required />
-                  </Field>
-                  <Field label="Link">
-                    <input name="url" className={`${inputClass} bg-[#F9FAFB]`} placeholder="https://maps.google.com/..." />
-                  </Field>
-                </div>
-                <Field label="Why guests love it">
-                  <textarea name="description" className={`${textareaClass} mt-2 min-h-24 bg-[#F9FAFB]`} placeholder="A candlelit terrace, handmade pasta and a perfect first evening." required />
-                </Field>
-                <InlineSaveButton saving={savingKey === "recommendation:new"} savingText="Adding..." className="mt-4 min-h-12 w-full rounded-[16px] bg-[#111827] text-white shadow-[0_18px_50px_rgba(17,24,39,0.26),inset_0_1px_0_rgba(255,255,255,0.12)]">
-                  <Plus size={16} />
-                  Add {activeModule === "restaurants" ? "restaurant" : "activity"}
-                </InlineSaveButton>
-              </form>
+            <form
+              onSubmit={(event: FormEvent<HTMLFormElement>) => {
+                event.preventDefault();
+                onSaveRecommendationsBulk(new FormData(event.currentTarget), defaultCategory);
+              }}
+              className="space-y-4"
+            >
+              <input type="hidden" name="propertyId" value={property.id} />
 
-              <div className="grid gap-2">
-                {visibleRecommendations.map((item) => (
-                  <article key={item.id} className="rounded-[18px] border border-[#172234]/8 bg-white p-3 shadow-[0_14px_38px_rgba(17,24,39,0.075),inset_0_1px_0_rgba(255,255,255,0.84)]">
-                    <form
-                      id={`recommendation-${item.id}`}
-                      onSubmit={(event: FormEvent<HTMLFormElement>) => {
-                        event.preventDefault();
-                        onSaveRecommendation(new FormData(event.currentTarget), defaultCategory);
-                      }}
-                      className="grid gap-2"
+              <div className="overflow-hidden rounded-[20px] border border-[#172234]/8 bg-white shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)]">
+                <div className="grid gap-3 border-b border-[#172234]/8 bg-[#F9FAFB] px-4 py-3 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#5F9D99]">Add place</p>
+                    <h3 className="text-base font-black">
+                      {activeModule === "restaurants" ? "Restaurants, cafes and bars" : activeModule === "essentials" ? "Nearby essentials" : "Attractions, beaches and activities"}
+                    </h3>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRecommendationDrafts((drafts) => [...drafts, createManualPlaceDraft(defaultCategory, drafts.length + 1, activeModule === "essentials")])}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-[14px] bg-white px-3 text-xs font-black text-[#111827] shadow-[0_12px_30px_rgba(17,24,39,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-[#172234]/8"
                     >
-                      <input type="hidden" name="propertyId" value={property.id} />
-                      <input type="hidden" name="recommendationId" value={item.id} />
-                      <input type="hidden" name="category" value={item.category || defaultCategory} />
-                      <input name="title" className={`${inputClass} min-h-10 bg-[#F9FAFB] text-xs font-bold`} defaultValue={item.title} required />
-                      <textarea name="description" className={`${textareaClass} min-h-20 bg-[#F9FAFB] text-xs font-semibold`} defaultValue={item.description} required />
-                      <input name="url" className={`${inputClass} min-h-10 bg-[#F9FAFB] text-xs font-semibold`} defaultValue={item.url || ""} placeholder="Link only" />
-                    </form>
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      <InlineSaveButton form={`recommendation-${item.id}`} saving={savingKey === `recommendation:${item.id}`} savingText="Saving..." className="min-h-10 rounded-[14px] bg-[#111827] px-4 text-xs text-white">
-                        Save
-                      </InlineSaveButton>
-                      <form
-                        onSubmit={(event: FormEvent<HTMLFormElement>) => {
-                          event.preventDefault();
-                          if (window.confirm(`Remove ${item.title}?`)) {
-                            onDeleteRecommendation(new FormData(event.currentTarget));
-                          }
-                        }}
+                      <Link2 size={14} />
+                      Manual link
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 p-3 lg:p-4">
+                  <GeoapifyPlacePicker
+                    defaultCategory={defaultCategory}
+                    onSelect={(place) => {
+                      setRecommendationDrafts((drafts) => [
+                        ...drafts,
+                        {
+                          ...draftFromGeoapifyPlace(place, defaultCategory, drafts.length + 1),
+                          isEssential: activeModule === "essentials" || isEssentialCategory(place.category)
+                        }
+                      ]);
+                    }}
+                  />
+
+                  {recommendationDrafts.length ? (
+                    recommendationDrafts.map((draft, index) => (
+                      <PlaceRecommendationForm
+                        key={draft.clientId}
+                        draft={draft}
+                        label={`${activeModule === "restaurants" ? "Place" : activeModule === "essentials" ? "Essential" : "Activity"} ${index + 1}`}
+                        onChange={(patch) => updateRecommendationDraft(draft.clientId, patch)}
+                        onRemove={() => removeRecommendationDraft(draft.clientId)}
+                      />
+                    ))
+                  ) : (
+                    <div className="rounded-[18px] border border-dashed border-[#172234]/14 bg-[#F9FAFB] px-4 py-8 text-center">
+                      <p className="text-sm font-black text-[#111827]">No {activeModule === "restaurants" ? "places" : activeModule === "essentials" ? "essentials" : "activities"} yet.</p>
+                      <p className="mt-1 text-xs font-semibold text-[#111827]/48">Search a place, select a result, add an optional host tip, then save.</p>
+                      <button
+                        type="button"
+                        onClick={() => setRecommendationDrafts([createManualPlaceDraft(defaultCategory, 1, activeModule === "essentials")])}
+                        className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-[14px] bg-white px-4 text-xs font-black text-[#111827] shadow-[0_12px_30px_rgba(17,24,39,0.08)] ring-1 ring-[#172234]/8"
                       >
-                        <input type="hidden" name="id" value={item.id} />
-                        <button
-                          type="submit"
-                          aria-label={`Remove ${item.title}`}
-                          title={`Remove ${item.title}`}
-                          disabled={savingKey === `delete:${item.id}`}
-                          className="grid h-10 w-10 place-items-center rounded-[14px] text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {savingKey === `delete:${item.id}` ? <Loader2 className="animate-spin" size={15} /> : <Trash2 size={15} />}
-                        </button>
-                      </form>
+                        <Link2 size={14} />
+                        Add manually
+                      </button>
                     </div>
-                  </article>
-                ))}
+                  )}
+                </div>
               </div>
-            </div>
+
+              <div className="sticky bottom-2 lg:static lg:flex lg:justify-end">
+                <InlineSaveButton saving={savingKey === `recommendations:${defaultCategory}`} savingText="Saving..." className="min-h-12 w-full rounded-[16px] bg-[#111827] text-white shadow-[0_18px_50px_rgba(17,24,39,0.26),inset_0_1px_0_rgba(255,255,255,0.12)] lg:w-auto lg:px-8">
+                  <Save size={16} />
+                  Save {activeModule === "restaurants" ? "places" : activeModule === "essentials" ? "essentials" : "activities"}
+                </InlineSaveButton>
+              </div>
+            </form>
           )}
         </div>
       </section>

@@ -158,21 +158,38 @@ model GuideSection {
 }
 
 model Recommendation {
-  id          String   @id @default(cuid())
-  propertyId  String
-  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  title       String
-  category    String
-  description String   @db.Text
-  address     String?
-  url         String?
-  imageUrl    String?
-  translations Json?
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(cuid())
+  propertyId        String
+  property          Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  title             String
+  category          String
+  description       String   @db.Text
+  address           String?
+  url               String?
+  imageUrl          String?
+  placeId           String?
+  name              String   @default("")
+  customTitle       String?
+  customDescription String?  @db.Text
+  formattedAddress  String?
+  latitude          Float?
+  longitude         Float?
+  googleMapsUrl     String?
+  rating            Float?
+  userRatingsTotal  Int?
+  openingHours      String[] @default([])
+  website           String?
+  phoneNumber       String?
+  photoUrl          String?
+  isEssential       Boolean  @default(false)
+  isVisible         Boolean  @default(true)
+  translations      Json?
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([propertyId, sortOrder])
+  @@index([placeId])
 }
 
 model ReviewLink {
