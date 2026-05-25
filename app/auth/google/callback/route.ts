@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { billingUrl } from "@/lib/billing";
 import { getGoogleProfile, signInWithOAuthProfile, verifyOAuthState } from "@/lib/oauth";
 
 export const dynamic = "force-dynamic";
@@ -23,5 +24,5 @@ export async function GET(request: Request) {
     redirect(`/login?error=${encodeURIComponent(error instanceof Error ? error.message : "Google login failed.")}`);
   }
 
-  redirect(result.isNewUser ? `/billing?plan=${result.selectedPlan}` : "/dashboard");
+  redirect(result.isNewUser ? billingUrl(result.selectedPlan) : "/dashboard");
 }

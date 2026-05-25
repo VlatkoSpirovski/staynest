@@ -2,8 +2,11 @@ import { CheckCircle2 } from "lucide-react";
 import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
+import { getAppUrl } from "@/lib/utils";
 
 export default function BillingCompletePage() {
+  const dashboardUrl = `${getAppUrl()}/dashboard`;
+
   return (
     <main className="grid min-h-screen place-items-center bg-mist px-5 py-10 text-ink">
       <Panel className="w-full max-w-md text-center">
@@ -12,9 +15,9 @@ export default function BillingCompletePage() {
         </div>
         <h1 className="mt-5 text-2xl font-bold">Checkout complete</h1>
         <p className="mt-3 text-sm leading-6 text-ink/65">
-          Paddle is confirming the subscription. Your dashboard will update automatically after the webhook arrives.
+          Paddle is confirming the subscription. Your dashboard opens as soon as the webhook marks the trial active.
         </p>
-        <Button href="/dashboard" className="mt-6 w-full">
+        <Button href={dashboardUrl} className="mt-6 w-full">
           Open dashboard
         </Button>
         <AppLegalLinks className="mt-6 border-t border-ink/10 pt-5" />

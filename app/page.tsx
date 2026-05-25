@@ -91,17 +91,21 @@ const plans = [
   {
     name: "Basic",
     price: "€10",
+    yearly: "€60",
+    savings: "Save €60 yearly",
     text: "For owners who need a clean QR guest guide without AI.",
     items: ["Mobile guest guide", "QR code and public link", "Wi-Fi, rules and recommendations", "Review links"],
-    plan: "basic",
+    plan: "basic-yearly",
     cta: "Choose Basic"
   },
   {
     name: "Full AI",
     price: "€15",
+    yearly: "€80",
+    savings: "Save €100 yearly",
     text: "For premium stays that want guest chat and faster setup.",
     items: ["Everything in Basic", "AI guest assistant", "Property knowledge training", "Booking/Airbnb import support"],
-    plan: "ai",
+    plan: "ai-yearly",
     cta: "Choose Full AI",
     popular: true
   }
@@ -367,7 +371,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Pricing</p>
-            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">Simple monthly plans with a 7-day free trial</h2>
+            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">Simple plans with a 7-day free trial</h2>
           </div>
 
           <div className="mx-auto mt-10 grid max-w-5xl gap-5 lg:grid-cols-2">
@@ -392,7 +396,7 @@ export default function LandingPage() {
                   <span className="pb-2 text-sm font-semibold text-[#172033]/42">/month</span>
                 </div>
                 <p className="mt-4 inline-flex rounded-full bg-[#F1F5F1] px-3 py-1 text-xs font-semibold text-[#6F9287] ring-1 ring-[#C9D8D2]/70">
-                  7-day free trial
+                  Yearly {plan.yearly} · {plan.savings}
                 </p>
                 <div className="mt-7 grid gap-3">
                   {plan.items.map((item) => (
@@ -403,7 +407,10 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <Button href={`${appUrl}/register?plan=${plan.plan}`} className="mt-8 w-full rounded-full shadow-[0_14px_34px_rgba(23,32,51,0.14)]">
-                  {plan.cta}
+                  {plan.cta} yearly
+                </Button>
+                <Button href={`${appUrl}/register?plan=${plan.plan.replace("yearly", "monthly")}`} variant="secondary" className="mt-3 w-full rounded-full">
+                  Monthly option
                 </Button>
               </article>
             ))}

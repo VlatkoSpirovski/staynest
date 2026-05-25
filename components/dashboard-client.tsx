@@ -40,7 +40,7 @@ import { Field, inputClass, textareaClass } from "@/components/ui/panel";
 import { isEssentialCategory, normalizePlaceCategory, type PlaceRecommendationCategory } from "@/lib/place-recommendation";
 import { getGuideTheme, guideThemeStyle, guideThemes, type GuideTheme, type GuideThemeId } from "@/themes";
 
-const BILLING_BASE_URL = "https://staynest.site";
+const BILLING_BASE_URL = (process.env.NEXT_PUBLIC_PAYMENT_URL || (process.env.NODE_ENV === "production" ? "https://staynest.site" : "http://localhost:3000")).replace(/\/$/, "");
 
 interface Recommendation {
   id: string;
@@ -120,7 +120,6 @@ interface DashboardClientProps {
   successMessage: string | null;
   errorMessage: string | null;
   planName: string;
-  planPrice: string;
   selectedPlan: string;
   trialLabel: string | null;
   logoutAction: any;
@@ -558,7 +557,6 @@ export default function DashboardClient(props: DashboardClientProps) {
     successMessage,
     errorMessage,
     planName,
-    planPrice,
     selectedPlan,
     logoutAction,
     importListingAction,
@@ -953,7 +951,7 @@ export default function DashboardClient(props: DashboardClientProps) {
         ) : null}
 
         {activeTab === "settings" ? (
-          <SettingsScreen property={property} publicUrl={publicUrl} qrCode={qrCode} planName={planName} planPrice={planPrice} selectedPlan={selectedPlan} />
+          <SettingsScreen property={property} publicUrl={publicUrl} qrCode={qrCode} planName={planName} selectedPlan={selectedPlan} />
         ) : null}
       </div>
 
@@ -1585,14 +1583,12 @@ function SettingsScreen({
   publicUrl,
   qrCode,
   planName,
-  planPrice,
   selectedPlan
 }: {
   property: Property;
   publicUrl: string;
   qrCode: string;
   planName: string;
-  planPrice: string;
   selectedPlan: string;
 }) {
   return (
@@ -1642,10 +1638,10 @@ function SettingsScreen({
         <h2 className="mt-2 text-2xl font-black tracking-tight">Choose your host plan</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {[
-            { id: "basic", name: "Basic", price: "€10", text: "Beautiful guest guide, QR sharing, restaurants and house info." },
-            { id: "ai", name: "AI Concierge", price: "€15", text: "Everything in Basic plus guest chat knowledge and AI answers." }
+            { id: "basic-yearly", tier: "basic", name: "Basic", price: "€60/year", text: "Beautiful guest guide, QR sharing, restaurants and house info. Save €60 yearly." },
+            { id: "ai-yearly", tier: "ai", name: "AI Concierge", price: "€80/year", text: "Everything in Basic plus guest chat knowledge and AI answers. Save €100 yearly." }
           ].map((plan) => {
-            const active = selectedPlan === plan.id || planName.toLowerCase().includes(plan.name.toLowerCase());
+            const active = selectedPlan === plan.tier || planName.toLowerCase().includes(plan.name.toLowerCase());
             return (
               <a
                 key={plan.id}
@@ -1659,7 +1655,7 @@ function SettingsScreen({
                     <p className={`text-[10px] font-black uppercase tracking-[0.16em] ${active ? "text-[#B7DAD5]" : "text-[#5F9D99]"}`}>{active ? "Current plan" : "Upgrade option"}</p>
                     <h3 className="mt-2 text-lg font-black">{plan.name}</h3>
                   </div>
-                  <p className="text-2xl font-black">{active ? planPrice || plan.price : plan.price}</p>
+                  <p className="text-2xl font-black">{plan.price}</p>
                 </div>
                 <p className={`mt-3 text-xs font-semibold leading-5 ${active ? "text-white/66" : "text-[#111827]/58"}`}>{plan.text}</p>
               </a>

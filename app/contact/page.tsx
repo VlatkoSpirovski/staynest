@@ -1,8 +1,9 @@
 import { LegalPage } from "@/components/legal-page";
-import { getAppUrl } from "@/lib/utils";
+import { getAppUrl, getPaymentUrl } from "@/lib/utils";
 
 export default function ContactPage() {
   const appUrl = getAppUrl();
+  const paymentUrl = getPaymentUrl();
 
   return (
     <LegalPage eyebrow="Contact" title="Contact StayNest">
@@ -23,7 +24,7 @@ export default function ContactPage() {
       </p>
       <h2 className="text-xl font-bold text-ink">Billing</h2>
       <p>
-        StayNest subscriptions are billed monthly after any free trial. Payments, tax calculation, invoicing, and
+        StayNest subscriptions are billed monthly or yearly after any free trial. Payments, tax calculation, invoicing, and
         recurring billing are processed securely by Paddle.com, the Merchant of Record for StayNest orders.
       </p>
       <h2 className="text-xl font-bold text-ink">Response Times &amp; Complaints</h2>
@@ -38,9 +39,9 @@ export default function ContactPage() {
       </p>
       <h2 className="text-xl font-bold text-ink">Policies</h2>
       <p>
-        Please review our <a href={`${appUrl}/terms`} className="font-bold text-lagoon">Terms of Service</a>,{" "}
-        <a href={`${appUrl}/privacy`} className="font-bold text-lagoon">Privacy Policy</a>, and{" "}
-        <a href={`${appUrl}/refund`} className="font-bold text-lagoon">Refund Policy</a>.
+        Please review our <a href={`${paymentUrl}/terms`} className="font-bold text-lagoon">Terms of Service</a>,{" "}
+        <a href={`${paymentUrl}/privacy`} className="font-bold text-lagoon">Privacy Policy</a>, and{" "}
+        <a href={`${paymentUrl}/refund`} className="font-bold text-lagoon">Refund Policy</a>.
       </p>
     </LegalPage>
   );

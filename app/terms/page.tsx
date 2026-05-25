@@ -1,8 +1,9 @@
 import { LegalPage } from "@/components/legal-page";
-import { getAppUrl } from "@/lib/utils";
+import { getAppUrl, getPaymentUrl } from "@/lib/utils";
 
 export default function TermsPage() {
   const appUrl = getAppUrl();
+  const paymentUrl = getPaymentUrl();
 
   return (
     <LegalPage eyebrow="Terms" title="Terms of Service">
@@ -33,14 +34,14 @@ export default function TermsPage() {
 
       <h2 className="text-xl font-bold text-ink">Payment &amp; Billing</h2>
       <p>
-        Our checkout is available through dashboard.staynest.site and is conducted by our online reseller Paddle.com.
+        Our checkout is available through staynest.site and is conducted by our online reseller Paddle.com.
         Paddle.com is the Merchant of Record for all StayNest orders and handles payment processing, tax calculation,
         invoicing and returns.
       </p>
       <p>
-        Paid plans are billed on a recurring monthly basis after any free trial period. Plan features and prices are
+        Paid plans are billed on a recurring monthly or yearly basis after any free trial period. Plan features and prices are
         listed on our{" "}
-        <a href={`${appUrl}/pricing`} className="font-bold text-lagoon">
+        <a href={`${paymentUrl}/pricing`} className="font-bold text-lagoon">
           pricing page
         </a>
         . If payment fails, access to paid features may be limited or suspended until payment is resolved. All prices
@@ -54,7 +55,7 @@ export default function TermsPage() {
         charges will be made after cancellation. Cancelling a subscription does not automatically trigger a refund for
         the current billing period —
         please see our{" "}
-        <a href={`${appUrl}/refund`} className="font-bold text-lagoon">
+        <a href={`${paymentUrl}/refund`} className="font-bold text-lagoon">
           Refund Policy
         </a>{" "}
         for details.

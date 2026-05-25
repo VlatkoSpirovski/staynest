@@ -5,6 +5,7 @@ import { OAuthProvider } from "@prisma/client";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
+import { normalizePlanKey, normalizeTier } from "@/lib/billing";
 import { getAppUrl } from "@/lib/utils";
 
 const oauthStateCookie = "staynest_oauth_state";
@@ -31,12 +32,12 @@ export function createOAuthState() {
 }
 
 export function setOAuthPlan(plan: string | null) {
-  if (plan !== "basic" && plan !== "ai") {
+  const selectedPlan = normalizePlanKey(plan);
+  if (!plan || (plan !== "basic" && plan !== "ai" && selectedPlan !== plan)) {
     cookies().delete(oauthPlanCookie);
     return;
   }
 
-  const selectedPlan = plan;
   cookies().set(oauthPlanCookie, selectedPlan, {
     httpOnly: true,
     sameSite: "lax",
@@ -48,7 +49,7 @@ export function setOAuthPlan(plan: string | null) {
 
 function consumeOAuthPlan() {
   const value = cookies().get(oauthPlanCookie)?.value;
-  const selectedPlan = value === "basic" || value === "ai" ? value : null;
+  const selectedPlan = value ? normalizePlanKey(value) : null;
   cookies().delete(oauthPlanCookie);
   return selectedPlan;
 }
@@ -226,9 +227,8 @@ export async function signInWithOAuthProfile(profile: OAuthProfile) {
       name: profile.name,
       email: profile.email,
       emailVerifiedAt: profile.emailVerified ? new Date() : null,
-      selectedPlan: selectedPlan ?? "basic",
-      trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      subscriptionStatus: "TRIALING",
+      selectedPlan: normalizeTier(selectedPlan),
+      subscriptionStatus: "PENDING",
       oauthAccounts: {
         create: {
           provider: profile.provider,
@@ -239,7 +239,7 @@ export async function signInWithOAuthProfile(profile: OAuthProfile) {
   });
 
   await createSession(user.id);
-  return { user, isNewUser: true, selectedPlan: selectedPlan ?? "basic" };
+  return { user, isNewUser: true, selectedPlan: selectedPlan ?? "basic-monthly" };
 }
 
 function createAppleClientSecret() {

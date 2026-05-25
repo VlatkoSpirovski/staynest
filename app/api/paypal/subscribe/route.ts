@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireReadyUser } from "@/lib/auth";
-import { getAppUrl } from "@/lib/utils";
+import { getPaymentUrl } from "@/lib/utils";
 
 function paypalBaseUrl() {
   return process.env.PAYPAL_ENV === "live" ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com";
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   const planId = planIdFor(plan);
 
   if (!clientId || !clientSecret || !planId) {
-    return NextResponse.redirect(`${getAppUrl()}/billing?plan=${plan}&error=${encodeURIComponent("PayPal is not configured yet.")}`);
+    return NextResponse.redirect(`${getPaymentUrl()}/billing?plan=${plan}&error=${encodeURIComponent("PayPal is not configured yet.")}`);
   }
 
   const baseUrl = paypalBaseUrl();
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
   });
 
   if (!tokenResponse.ok) {
-    return NextResponse.redirect(`${getAppUrl()}/billing?plan=${plan}&error=${encodeURIComponent("PayPal authorization failed.")}`);
+    return NextResponse.redirect(`${getPaymentUrl()}/billing?plan=${plan}&error=${encodeURIComponent("PayPal authorization failed.")}`);
   }
 
   const tokenData = (await tokenResponse.json()) as { access_token: string };
@@ -52,15 +52,15 @@ export async function GET(request: Request) {
         locale: "en-US",
         shipping_preference: "NO_SHIPPING",
         user_action: "SUBSCRIBE_NOW",
-        return_url: `${getAppUrl()}/billing/complete`,
-        cancel_url: `${getAppUrl()}/billing?plan=${plan}`
+        return_url: `${getPaymentUrl()}/billing/complete`,
+        cancel_url: `${getPaymentUrl()}/billing?plan=${plan}`
       }
     }),
     cache: "no-store"
   });
 
   if (!subscriptionResponse.ok) {
-    return NextResponse.redirect(`${getAppUrl()}/billing?plan=${plan}&error=${encodeURIComponent("Could not create PayPal subscription.")}`);
+    return NextResponse.redirect(`${getPaymentUrl()}/billing?plan=${plan}&error=${encodeURIComponent("Could not create PayPal subscription.")}`);
   }
 
   const subscription = (await subscriptionResponse.json()) as {
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
   const approveUrl = subscription.links?.find((link) => link.rel === "approve")?.href;
 
   if (!approveUrl) {
-    return NextResponse.redirect(`${getAppUrl()}/billing?plan=${plan}&error=${encodeURIComponent("PayPal did not return an approval link.")}`);
+    return NextResponse.redirect(`${getPaymentUrl()}/billing?plan=${plan}&error=${encodeURIComponent("PayPal did not return an approval link.")}`);
   }
 
   await prisma.user.update({

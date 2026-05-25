@@ -9,8 +9,10 @@ import {
 } from "@/app/actions";
 import DashboardClient from "@/components/dashboard-client";
 import { requireReadyUser } from "@/lib/auth";
+import { billingUrl, hasBillingAccess } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/utils";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 export const preferredRegion = "fra1";
@@ -102,12 +104,15 @@ function savedMessage(saved?: string) {
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const user = await requireReadyUser();
+  if (!hasBillingAccess(user)) {
+    redirect(billingUrl(user.selectedPlan));
+  }
+
   const property = await getDashboardProperty(user.id);
   const publicUrl = property ? `${getSiteUrl()}/stay/${property.slug}` : "";
   const qrCode = publicUrl ? `/api/qr?text=${encodeURIComponent(publicUrl)}` : "";
   const selectedPlan = user.selectedPlan === "ai" ? "ai" : "basic";
   const planName = selectedPlan === "ai" ? "Premium AI Concierge" : "Essential Guest Guide";
-  const planPrice = selectedPlan === "ai" ? "€15" : "€10";
   const trialLabel = user.trialEndsAt
     ? user.trialEndsAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
     : null;
@@ -121,7 +126,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       successMessage={savedMessage(searchParams?.saved)}
       errorMessage={searchParams?.error || null}
       planName={planName}
-      planPrice={planPrice}
       selectedPlan={selectedPlan}
       trialLabel={trialLabel}
       logoutAction={logoutOwner}

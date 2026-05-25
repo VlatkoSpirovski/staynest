@@ -22,7 +22,7 @@ export function AppLegalLinks({ className }: { className?: string }) {
         ))}
       </div>
       <p className="mt-2">
-        StayNest is a monthly SaaS subscription for rental hosts. Payments are processed securely by Paddle on
+        StayNest is a SaaS subscription for rental hosts. Payments are processed securely by Paddle on
         staynest.site.
       </p>
     </footer>

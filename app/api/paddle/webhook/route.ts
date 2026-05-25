@@ -17,6 +17,8 @@ type PaddleWebhook = {
     custom_data?: {
       userId?: string;
       plan?: string;
+      planKey?: string;
+      billingInterval?: string;
     } | null;
   };
 };
@@ -77,6 +79,7 @@ export async function POST(request: Request) {
   const subscriptionId = eventType.startsWith("subscription.") ? data.id : data.subscription_id || undefined;
   const transactionId = eventType.startsWith("transaction.") ? data.id : undefined;
   const status = subscriptionStatus(eventType, data.status);
+  const trialEndsAt = status === "TRIALING" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : undefined;
 
   const where = userId
     ? { id: userId }
@@ -95,6 +98,7 @@ export async function POST(request: Request) {
     data: {
       ...(plan ? { selectedPlan: plan } : {}),
       ...(status ? { subscriptionStatus: status } : {}),
+      ...(trialEndsAt ? { trialEndsAt } : {}),
       ...(customerId ? { paddleCustomerId: customerId } : {}),
       ...(subscriptionId ? { paddleSubscriptionId: subscriptionId } : {}),
       ...(transactionId ? { paddleTransactionId: transactionId } : {})

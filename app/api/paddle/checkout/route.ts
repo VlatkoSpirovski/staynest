@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireReadyUser } from "@/lib/auth";
+import { normalizePlanKey, planOption, priceIdForPlan } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -48,8 +49,9 @@ function paddleErrorMessage(status: number, payload: PaddleErrorResponse) {
 export async function POST(request: Request) {
   const user = await requireReadyUser();
   const body = (await request.json().catch(() => ({}))) as CheckoutRequest;
-  const plan = body.plan === "ai" ? "ai" : "basic";
-  const priceId = plan === "ai" ? process.env.PADDLE_AI_PRICE_ID : process.env.PADDLE_BASIC_PRICE_ID;
+  const planKey = normalizePlanKey(body.plan);
+  const plan = planOption(planKey);
+  const priceId = priceIdForPlan(planKey);
   const apiKey = process.env.PADDLE_API_KEY || "";
   const configError = paddleConfigError(apiKey, priceId);
 
@@ -68,7 +70,9 @@ export async function POST(request: Request) {
       collection_mode: "automatic",
       custom_data: {
         userId: user.id,
-        plan
+        plan: plan.tier,
+        planKey,
+        billingInterval: plan.interval
       }
     })
   });

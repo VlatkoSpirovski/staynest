@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const protectedPrefixes = ["/dashboard", "/admin", "/change-password"];
+const protectedPrefixes = ["/dashboard", "/admin", "/billing", "/change-password"];
 const hostAppPrefixes = [
   "/auth",
   "/change-password",
@@ -47,8 +47,6 @@ export function middleware(request: NextRequest) {
       if (host !== "dashboard.staynest.site" && host !== "admin.staynest.site") {
         return NextResponse.redirect(subdomainUrl(request, "dashboard.staynest.site"));
       }
-    } else if ((host === "staynest.site" || host === "www.staynest.site") && pathname === "/") {
-      return NextResponse.redirect(subdomainUrl(request, "dashboard.staynest.site"));
     }
   }
 
@@ -61,7 +59,7 @@ export function middleware(request: NextRequest) {
   const hasSession = Boolean(request.cookies.get("staynest_session")?.value);
   if (!hasSession) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
+    loginUrl.searchParams.set("next", request.nextUrl.toString());
     return NextResponse.redirect(loginUrl);
   }
 

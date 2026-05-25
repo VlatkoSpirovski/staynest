@@ -7,6 +7,7 @@ import { createSession, destroySession, hashToken, requireCurrentUser } from "@/
 import { sendEmail } from "@/lib/email";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { passwordRulesText, validatePassword } from "@/lib/password-policy";
+import { billingUrl, normalizePlanKey, normalizeTier } from "@/lib/billing";
 import { getAppUrl } from "@/lib/utils";
 
 function stringValue(formData: FormData, key: string) {
@@ -23,12 +24,23 @@ function redirectWithError(path: string, message: string): never {
   redirect(`${path}${separator}error=${encodeURIComponent(message)}`);
 }
 
-function planValue(value: string) {
-  return value === "ai" ? "ai" : "basic";
-}
+function safeRedirectTarget(value: string) {
+  if (value.startsWith("/")) return value;
 
-function planRedirectPath(plan: string) {
-  return `/billing?plan=${encodeURIComponent(planValue(plan))}`;
+  try {
+    const url = new URL(value);
+    const allowedHosts = new Set([
+      "staynest.site",
+      "www.staynest.site",
+      "dashboard.staynest.site",
+      "admin.staynest.site",
+      "localhost",
+      "127.0.0.1"
+    ]);
+    return allowedHosts.has(url.hostname) ? url.toString() : "/dashboard";
+  } catch {
+    return "/dashboard";
+  }
 }
 
 export async function registerOwner(formData: FormData) {
@@ -36,8 +48,9 @@ export async function registerOwner(formData: FormData) {
   const email = normalizeEmail(stringValue(formData, "email"));
   const password = stringValue(formData, "password");
   const confirmPassword = stringValue(formData, "confirmPassword");
-  const plan = planValue(stringValue(formData, "plan"));
-  const registerPath = `/register?plan=${encodeURIComponent(plan)}`;
+  const planKey = normalizePlanKey(stringValue(formData, "plan"));
+  const plan = normalizeTier(planKey);
+  const registerPath = `/register?plan=${encodeURIComponent(planKey)}`;
 
   if (!name || !email || !password) {
     redirectWithError(registerPath, "Please complete every required field.");
@@ -64,13 +77,12 @@ export async function registerOwner(formData: FormData) {
       passwordHash: hashPassword(password),
       emailVerifiedAt: new Date(),
       selectedPlan: plan,
-      trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      subscriptionStatus: "TRIALING"
+      subscriptionStatus: "PENDING"
     }
   });
 
   await createSession(user.id);
-  redirect(planRedirectPath(plan));
+  redirect(billingUrl(planKey));
 }
 
 export async function loginOwner(formData: FormData) {
@@ -89,7 +101,7 @@ export async function loginOwner(formData: FormData) {
     redirect("/change-password");
   }
 
-  redirect(next.startsWith("/") ? next : "/dashboard");
+  redirect(safeRedirectTarget(next));
 }
 
 export async function changePassword(formData: FormData) {
