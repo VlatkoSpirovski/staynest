@@ -22,7 +22,8 @@ function openAiModel() {
 
 function buildPropertyContext(property: NonNullable<Awaited<ReturnType<typeof getCachedPublicGuideChatContext>>>) {
   const recommendations = property.recommendations
-    .map((item) => `${item.title} (${item.category}): ${item.description}${item.address ? ` Address: ${item.address}.` : ""}${item.url ? ` Link: ${item.url}.` : ""}`)
+    .filter((item) => item.isVisible)
+    .map((item) => `${item.customTitle || item.title || item.name} (${item.category}${item.isEssential ? ", essential" : ""}): ${item.customDescription || item.description || ""}${item.formattedAddress || item.address ? ` Address: ${item.formattedAddress || item.address}.` : ""}${item.googleMapsUrl || item.url ? ` Link: ${item.googleMapsUrl || item.url}.` : ""}${item.phoneNumber ? ` Phone: ${item.phoneNumber}.` : ""}`)
     .join("\n");
 
   const guideSections = property.guideSections.map((section) => `${section.title}: ${section.content}`).join("\n");
