@@ -23,10 +23,10 @@ function matchesPrefix(pathname: string, prefixes: string[]) {
 }
 
 function shouldUseProductionSubdomains(host: string) {
-  return host === "staynest.site" || host === "www.staynest.site" || host === "app.staynest.site" || host === "admin.staynest.site";
+  return host === "staynest.site" || host === "www.staynest.site" || host === "dashboard.staynest.site" || host === "admin.staynest.site";
 }
 
-function subdomainUrl(request: NextRequest, hostname: "staynest.site" | "app.staynest.site" | "admin.staynest.site") {
+function subdomainUrl(request: NextRequest, hostname: "staynest.site" | "dashboard.staynest.site" | "admin.staynest.site") {
   const url = request.nextUrl.clone();
   url.protocol = "https:";
   url.hostname = hostname;
@@ -44,14 +44,14 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(subdomainUrl(request, "admin.staynest.site"));
       }
     } else if (matchesPrefix(pathname, hostAppPrefixes)) {
-      if (host !== "app.staynest.site" && host !== "admin.staynest.site") {
-        return NextResponse.redirect(subdomainUrl(request, "app.staynest.site"));
+      if (host !== "dashboard.staynest.site" && host !== "admin.staynest.site") {
+        return NextResponse.redirect(subdomainUrl(request, "dashboard.staynest.site"));
       }
-    } else if (host === "app.staynest.site" && pathname === "/") {
+    } else if (host === "dashboard.staynest.site" && pathname === "/") {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       return NextResponse.redirect(url);
-    } else if (host === "app.staynest.site" && pathname.startsWith("/stay/")) {
+    } else if (host === "dashboard.staynest.site" && pathname.startsWith("/stay/")) {
       return NextResponse.redirect(subdomainUrl(request, "staynest.site"));
     }
   }

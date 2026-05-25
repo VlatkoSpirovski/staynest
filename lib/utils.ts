@@ -14,7 +14,7 @@ export function getSiteUrl() {
 }
 
 export function getAppUrl() {
-  return envUrl(process.env.NEXT_PUBLIC_APP_URL, process.env.NODE_ENV === "production" ? "https://app.staynest.site" : "http://localhost:3000");
+  return envUrl(process.env.NEXT_PUBLIC_APP_URL, process.env.NODE_ENV === "production" ? "https://dashboard.staynest.site" : "http://localhost:3000");
 }
 
 export function getAdminUrl() {
