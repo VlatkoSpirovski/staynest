@@ -1,13 +1,16 @@
+import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export function MenuLink({
   href,
+  onClick,
   icon,
   title,
   subtitle,
   variant = "classic"
 }: {
   href: string;
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>;
   icon: React.ReactNode;
   title: string;
   subtitle: string;
@@ -30,8 +33,10 @@ export function MenuLink({
       : "grid h-14 w-14 place-items-center rounded-[var(--guide-icon-radius)] bg-[var(--guide-icon-bg)] text-[var(--guide-accent)] shadow-[var(--guide-icon-shadow)]";
 
   return (
-    <a
+    <Link
       href={href}
+      prefetch
+      onClick={onClick}
       className={cardClass}
       style={{ background: "var(--guide-card-bg)", boxShadow: "var(--guide-card-shadow), var(--guide-card-inset-shadow)", backdropFilter: "var(--guide-card-backdrop)" }}
     >
@@ -42,13 +47,14 @@ export function MenuLink({
           <span className={`${isModern ? "text-sm" : "mt-5 text-base"} block font-black tracking-tight text-[var(--guide-text)]`}>{title}</span>
         <span className={`${isModern ? "text-xs" : "mt-1 text-sm"} block font-semibold text-[var(--guide-muted)]`}>{subtitle}</span>
       </span>
-    </a>
+    </Link>
   );
 }
 
 export function DetailShell({
   backHref,
   backLabel,
+  onBack,
   poweredByLabel,
   eyebrow,
   title,
@@ -56,6 +62,7 @@ export function DetailShell({
 }: {
   backHref: string;
   backLabel: string;
+  onBack?: () => void;
   poweredByLabel: string;
   eyebrow: string;
   title: string;
@@ -64,13 +71,25 @@ export function DetailShell({
   return (
     <main className="min-h-screen text-[var(--guide-text)]" style={{ background: "var(--guide-app-bg)", fontFamily: "var(--guide-body-font)" }}>
       <div className="mx-auto min-h-screen max-w-[430px] px-5 py-5 shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)" }}>
-        <a
-          href={backHref}
-          className="inline-flex min-h-11 items-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-elevated-bg)] px-4 text-sm font-bold text-[var(--guide-text)] shadow-sm ring-1 ring-[var(--guide-card-border)]"
-        >
-          <ArrowLeft size={16} />
-          {backLabel}
-        </a>
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex min-h-11 items-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-elevated-bg)] px-4 text-sm font-bold text-[var(--guide-text)] shadow-sm ring-1 ring-[var(--guide-card-border)]"
+          >
+            <ArrowLeft size={16} />
+            {backLabel}
+          </button>
+        ) : (
+          <Link
+            href={backHref}
+            prefetch
+            className="inline-flex min-h-11 items-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-elevated-bg)] px-4 text-sm font-bold text-[var(--guide-text)] shadow-sm ring-1 ring-[var(--guide-card-border)]"
+          >
+            <ArrowLeft size={16} />
+            {backLabel}
+          </Link>
+        )}
         <div className="mt-8">
           <p className="text-[10px] font-black uppercase tracking-[0.32em] text-[var(--guide-accent)]">{eyebrow}</p>
           <h1 className="mt-3 text-4xl font-black leading-[1.02] tracking-tight text-[var(--guide-text)]" style={{ fontFamily: "var(--guide-heading-font)" }}>{title}</h1>

@@ -1,6 +1,7 @@
 "use client";
 
 import { ExternalLink, Globe, MapPin, Phone, Star } from "lucide-react";
+import { warmExternalOrigin } from "@/lib/external-link-warmup";
 import { displayPlaceTitle, mapsUrlForPlace, normalizePlaceCategory, placeCategoryLabels } from "@/lib/place-recommendation";
 
 export type PlaceCardItem = {
@@ -73,7 +74,15 @@ export function PlaceCard({ item, openMapLabel = "Open in Maps" }: { item: Place
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           {mapsUrl ? (
-            <a href={mapsUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-button-bg)] px-3 text-sm font-bold text-[var(--guide-button-text)]">
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onPointerEnter={() => warmExternalOrigin(mapsUrl)}
+              onPointerDown={() => warmExternalOrigin(mapsUrl)}
+              onTouchStart={() => warmExternalOrigin(mapsUrl)}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-button-bg)] px-3 text-sm font-bold text-[var(--guide-button-text)]"
+            >
               <ExternalLink size={15} />
               {openMapLabel}
             </a>
@@ -85,7 +94,15 @@ export function PlaceCard({ item, openMapLabel = "Open in Maps" }: { item: Place
             </a>
           ) : null}
           {item.website ? (
-            <a href={item.website} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-elevated-bg)] px-3 text-sm font-bold text-[var(--guide-text)] ring-1 ring-[var(--guide-card-border)]">
+            <a
+              href={item.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              onPointerEnter={() => warmExternalOrigin(item.website)}
+              onPointerDown={() => warmExternalOrigin(item.website)}
+              onTouchStart={() => warmExternalOrigin(item.website)}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-elevated-bg)] px-3 text-sm font-bold text-[var(--guide-text)] ring-1 ring-[var(--guide-card-border)]"
+            >
               <Globe size={15} />
               Website
             </a>

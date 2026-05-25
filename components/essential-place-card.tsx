@@ -1,6 +1,7 @@
 "use client";
 
 import { CircleParking, CreditCard, Fuel, Hospital, MapPin, Phone, Pill, ShoppingBasket } from "lucide-react";
+import { warmExternalOrigin } from "@/lib/external-link-warmup";
 import { mapsUrlForPlace, normalizePlaceCategory } from "@/lib/place-recommendation";
 import type { PlaceCardItem } from "@/components/place-card";
 
@@ -46,7 +47,15 @@ export function EssentialPlaceCard({ item }: { item: PlaceCardItem }) {
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2">
         {mapsUrl ? (
-          <a href={mapsUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-button-bg)] px-3 text-xs font-bold text-[var(--guide-button-text)]">
+          <a
+            href={mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onPointerEnter={() => warmExternalOrigin(mapsUrl)}
+            onPointerDown={() => warmExternalOrigin(mapsUrl)}
+            onTouchStart={() => warmExternalOrigin(mapsUrl)}
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-button-bg)] px-3 text-xs font-bold text-[var(--guide-button-text)]"
+          >
             <MapPin size={14} />
             Open in Maps
           </a>

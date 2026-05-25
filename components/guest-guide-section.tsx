@@ -1,6 +1,8 @@
 "use client";
 
 import { Car, MessageCircle, Phone } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { CopyButton } from "@/components/copy-button";
 import { EssentialPlaceCard } from "@/components/essential-place-card";
 import { GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
@@ -47,7 +49,7 @@ type ReviewLink = {
   url: string;
 };
 
-type GuestProperty = {
+export type GuestGuideSectionProperty = {
   slug: string;
   name: string;
   accentColor: string;
@@ -75,7 +77,7 @@ function whatsappUrl(phone: string | null | undefined, propertyName: string, tem
   return `https://wa.me/${phone.replace(/[^\d+]/g, "").replace(/^\+/, "")}?text=${text}`;
 }
 
-export function GuestGuideSection({ property, section }: { property: GuestProperty; section: string }) {
+export function GuestGuideSection({ property, section }: { property: GuestGuideSectionProperty; section: string }) {
   return (
     <GuestLanguageProvider>
       <GuestGuideSectionContent property={property} section={section} />
@@ -83,15 +85,20 @@ export function GuestGuideSection({ property, section }: { property: GuestProper
   );
 }
 
-function GuestGuideSectionContent({ property, section }: { property: GuestProperty; section: string }) {
+export function GuestGuideSectionContent({ property, section, onBack }: { property: GuestGuideSectionProperty; section: string; onBack?: () => void }) {
   const { t } = useGuestLanguage();
+  const router = useRouter();
   const meta = t.sections[section as keyof typeof t.sections];
+  const backHref = `/stay/${property.slug}`;
+
+  useEffect(() => {
+    router.prefetch(backHref);
+  }, [backHref, router]);
 
   if (!meta) {
     return null;
   }
 
-  const backHref = `/stay/${property.slug}`;
   const callUrl = property.hostPhone ? `tel:${property.hostPhone.replace(/\s+/g, "")}` : undefined;
   const whatsApp = whatsappUrl(property.hostPhone, property.name, t.content.whatsappStaying);
   const visibleRecommendations = property.recommendations.filter((item) => item.isVisible);
@@ -106,7 +113,7 @@ function GuestGuideSectionContent({ property, section }: { property: GuestProper
 
   return (
     <div style={themeStyle}>
-      <DetailShell backHref={backHref} backLabel={t.back} poweredByLabel={t.poweredBy} eyebrow={meta.eyebrow} title={meta.title}>
+      <DetailShell backHref={backHref} backLabel={t.back} onBack={onBack} poweredByLabel={t.poweredBy} eyebrow={meta.eyebrow} title={meta.title}>
         {section === "wifi" ? (
           <>
             <MiniCard title={t.content.network}>

@@ -30,6 +30,7 @@ export function GuestChat({ slug, propertyName, initialOpen = false }: { slug: s
   }, [botLabel, propertyName, t]);
 
   const suggestedPrompts = [t.chat.promptSupermarket, t.chat.promptCheckout, t.chat.promptWifi];
+  const chatElevatedStyle = { background: "var(--guide-chat-elevated-bg)" };
 
   function sendMessage(text?: string) {
     const trimmed = (text ?? message).trim();
@@ -69,7 +70,10 @@ export function GuestChat({ slug, propertyName, initialOpen = false }: { slug: s
     <div className="pointer-events-none fixed bottom-3 right-3 z-30 w-[min(390px,calc(100vw-20px))] sm:right-[max(12px,calc(50%-215px))]">
       <div className="pointer-events-auto ml-auto flex w-full max-w-[min(100%,320px)] flex-col items-end gap-2">
       {open ? (
-        <section className="w-full overflow-hidden rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] bg-[var(--guide-card-bg)] text-[var(--guide-text)] shadow-[var(--guide-card-shadow)]">
+        <section
+          className="w-full overflow-hidden rounded-[var(--guide-card-radius)] border text-[var(--guide-text)] shadow-[var(--guide-chat-shadow)]"
+          style={{ background: "var(--guide-chat-bg)", borderColor: "var(--guide-chat-border)" }}
+        >
           <div className="flex items-center justify-between bg-[var(--guide-button-bg)] px-4 py-3 text-[var(--guide-button-text)]">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] opacity-60">{t.chat.stayAssistant}</p>
@@ -82,7 +86,10 @@ export function GuestChat({ slug, propertyName, initialOpen = false }: { slug: s
           <div className="grid max-h-80 gap-3 overflow-y-auto p-4">
             {messages.length === 1 ? (
               <div className="grid place-items-center py-4 text-center">
-                <div className="grid h-14 w-14 place-items-center rounded-full bg-[var(--guide-icon-bg)] text-[var(--guide-accent)] shadow-[0_8px_20px_rgba(76,55,37,0.12)] ring-1 ring-[var(--guide-card-border)]">
+                <div
+                  className="grid h-14 w-14 place-items-center rounded-full text-[var(--guide-accent)] shadow-[0_8px_20px_rgba(76,55,37,0.12)] ring-1 ring-[var(--guide-chat-border)]"
+                  style={{ background: "var(--guide-icon-bg)" }}
+                >
                   <Sparkles size={22} />
                 </div>
                 <p className="mt-4 text-sm font-bold text-[var(--guide-text)]">{t.chat.helpTitle}</p>
@@ -94,13 +101,18 @@ export function GuestChat({ slug, propertyName, initialOpen = false }: { slug: s
                 key={`${item.role}-${index}`}
                 className={cn(
                   "rounded-[14px] px-3 py-2 text-sm leading-6",
-                  item.role === "guest" ? "ml-8 bg-[var(--guide-button-bg)] text-[var(--guide-button-text)]" : "mr-8 bg-[var(--guide-elevated-bg)] text-[var(--guide-text)] ring-1 ring-[var(--guide-card-border)]"
+                  item.role === "guest" ? "ml-8 bg-[var(--guide-button-bg)] text-[var(--guide-button-text)]" : "mr-8 text-[var(--guide-text)] ring-1 ring-[var(--guide-chat-border)]"
                 )}
+                style={item.role === "assistant" ? chatElevatedStyle : undefined}
               >
                 {item.text}
               </div>
             ))}
-            {isPending ? <div className="mr-8 rounded-[14px] bg-[var(--guide-elevated-bg)] px-3 py-2 text-sm text-[var(--guide-muted)] ring-1 ring-[var(--guide-card-border)]">{t.chat.thinking}</div> : null}
+            {isPending ? (
+              <div className="mr-8 rounded-[14px] px-3 py-2 text-sm text-[var(--guide-muted)] ring-1 ring-[var(--guide-chat-border)]" style={chatElevatedStyle}>
+                {t.chat.thinking}
+              </div>
+            ) : null}
             {messages.length === 1 ? (
               <div className="grid gap-2">
                 {suggestedPrompts.map((prompt) => (
@@ -108,7 +120,8 @@ export function GuestChat({ slug, propertyName, initialOpen = false }: { slug: s
                     key={prompt}
                     type="button"
                     onClick={() => sendMessage(prompt)}
-                    className="rounded-[14px] border border-[var(--guide-card-border)] bg-[var(--guide-elevated-bg)] px-3 py-2.5 text-left text-xs font-semibold text-[var(--guide-muted)] transition"
+                    className="rounded-[14px] border border-[var(--guide-chat-border)] px-3 py-2.5 text-left text-xs font-semibold text-[var(--guide-muted)] transition"
+                    style={chatElevatedStyle}
                   >
                     {prompt}
                   </button>
@@ -116,7 +129,7 @@ export function GuestChat({ slug, propertyName, initialOpen = false }: { slug: s
               </div>
             ) : null}
           </div>
-          <div className="flex gap-2 border-t border-[var(--guide-card-border)] p-3">
+          <div className="flex gap-2 border-t border-[var(--guide-chat-border)] p-3">
             <input
               value={message}
               onChange={(event) => setMessage(event.target.value)}
@@ -126,7 +139,8 @@ export function GuestChat({ slug, propertyName, initialOpen = false }: { slug: s
                   sendMessage();
                 }
               }}
-              className="min-h-11 min-w-0 flex-1 rounded-[var(--guide-button-radius)] border border-[var(--guide-card-border)] bg-[var(--guide-elevated-bg)] px-4 text-sm text-[var(--guide-text)] outline-none focus:ring-2 focus:ring-[var(--guide-accent)]/30"
+              className="min-h-11 min-w-0 flex-1 rounded-[var(--guide-button-radius)] border border-[var(--guide-chat-border)] px-4 text-sm text-[var(--guide-text)] outline-none focus:ring-2 focus:ring-[var(--guide-accent)]/30"
+              style={chatElevatedStyle}
               placeholder={t.chat.askAnything}
             />
             <button type="button" onClick={() => sendMessage()} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[var(--guide-button-bg)] text-[var(--guide-button-text)]">

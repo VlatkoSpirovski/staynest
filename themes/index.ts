@@ -26,6 +26,32 @@ export function guideThemeStyle(themeOrId: GuideTheme | GuideThemeId | string | 
   const rounded = options.designRounded ?? theme.defaults.roundedCards;
   const serif = options.designSerif ?? theme.defaults.serifHeading;
   const headingFont = serif ? theme.css.headingFont : theme.css.bodyFont;
+  const chatSurfaceByLayout = {
+    classic: {
+      surface: "linear-gradient(145deg, #FFFBF4 0%, #F6EADA 100%)",
+      elevated: "#FFFFFF",
+      border: "rgba(76,55,37,0.14)",
+      shadow: "0 28px 78px rgba(76,55,37,0.26)"
+    },
+    modern: {
+      surface: "linear-gradient(180deg, #FFFFFF 0%, #F7F9FC 100%)",
+      elevated: "#FFFFFF",
+      border: "rgba(17,24,39,0.10)",
+      shadow: "0 28px 78px rgba(17,24,39,0.20)"
+    },
+    darkLuxury: {
+      surface: "linear-gradient(145deg, #111B24 0%, #070B10 100%)",
+      elevated: "rgba(22,33,43,0.98)",
+      border: "rgba(214,175,111,0.32)",
+      shadow: "0 30px 92px rgba(0,0,0,0.66), 0 0 42px rgba(214,175,111,0.10)"
+    },
+    mediterranean: {
+      surface: "linear-gradient(145deg, #FFFFFF 0%, #F1FAF8 100%)",
+      elevated: "#FFFFFF",
+      border: "rgba(64,99,112,0.16)",
+      shadow: "0 28px 78px rgba(64,99,112,0.24)"
+    }
+  }[theme.layout];
 
   return {
     "--accent": accent,
@@ -47,6 +73,10 @@ export function guideThemeStyle(themeOrId: GuideTheme | GuideThemeId | string | 
     "--guide-hero-image-filter": theme.css.heroImageFilter,
     "--guide-button-bg": theme.css.buttonBackground,
     "--guide-button-text": theme.css.buttonText,
+    "--guide-chat-bg": chatSurfaceByLayout.surface,
+    "--guide-chat-elevated-bg": chatSurfaceByLayout.elevated,
+    "--guide-chat-border": chatSurfaceByLayout.border,
+    "--guide-chat-shadow": chatSurfaceByLayout.shadow,
     "--guide-heading-font": headingFont,
     "--guide-body-font": theme.css.bodyFont,
     "--guide-hero-text": theme.css.heroTextColor,

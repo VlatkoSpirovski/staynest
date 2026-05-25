@@ -1,13 +1,16 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Home, KeyRound, Map, Phone, Pill, ShieldAlert, Star, Utensils, Wifi } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
 import { GuestChatLauncher } from "@/components/guest-chat-launcher";
 import { MenuLink, PoweredByStayNest } from "@/app/stay/[slug]/guide-ui";
+import { GuestGuideSectionContent, type GuestGuideSectionProperty } from "@/components/guest-guide-section";
 import { getGuideTheme, guideThemeStyle } from "@/themes";
 
-type GuestProperty = {
+type GuestProperty = GuestGuideSectionProperty & {
   slug: string;
   name: string;
   logoUrl: string | null;
@@ -28,6 +31,8 @@ export function GuestGuideHome({ property }: { property: GuestProperty }) {
 
 function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
   const { t } = useGuestLanguage();
+  const router = useRouter();
+  const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const baseHref = `/stay/${property.slug}`;
   const theme = getGuideTheme(property.templateId);
   const layout = theme.layout;
@@ -36,17 +41,34 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
     designSerif: property.designSerif,
     designRounded: property.designRounded
   }) as React.CSSProperties;
-  const menuItems = [
-    { href: `${baseHref}/wifi`, icon: <Wifi size={21} />, title: t.menu.wifi.title, subtitle: t.menu.wifi.subtitle },
-    { href: `${baseHref}/contact`, icon: <Phone size={21} />, title: t.menu.contact.title, subtitle: t.menu.contact.subtitle },
-    { href: `${baseHref}/arrival`, icon: <KeyRound size={21} />, title: t.menu.arrival.title, subtitle: t.menu.arrival.subtitle },
-    { href: `${baseHref}/house`, icon: <Home size={21} />, title: t.menu.house.title, subtitle: t.menu.house.subtitle },
-    { href: `${baseHref}/restaurants`, icon: <Utensils size={21} />, title: t.menu.restaurants.title, subtitle: t.menu.restaurants.subtitle },
-    { href: `${baseHref}/activities`, icon: <Map size={21} />, title: t.menu.activities.title, subtitle: t.menu.activities.subtitle },
-    { href: `${baseHref}/essentials`, icon: <Pill size={21} />, title: t.menu.essentials.title, subtitle: t.menu.essentials.subtitle },
-    { href: `${baseHref}/reviews`, icon: <Star size={21} />, title: t.menu.reviews.title, subtitle: t.menu.reviews.subtitle },
-    { href: `${baseHref}/emergency`, icon: <ShieldAlert size={21} />, title: t.menu.emergency.title, subtitle: t.menu.emergency.subtitle }
-  ];
+  const menuItems = useMemo(() => [
+    { id: "wifi", href: `${baseHref}/wifi`, icon: <Wifi size={21} />, title: t.menu.wifi.title, subtitle: t.menu.wifi.subtitle },
+    { id: "contact", href: `${baseHref}/contact`, icon: <Phone size={21} />, title: t.menu.contact.title, subtitle: t.menu.contact.subtitle },
+    { id: "arrival", href: `${baseHref}/arrival`, icon: <KeyRound size={21} />, title: t.menu.arrival.title, subtitle: t.menu.arrival.subtitle },
+    { id: "house", href: `${baseHref}/house`, icon: <Home size={21} />, title: t.menu.house.title, subtitle: t.menu.house.subtitle },
+    { id: "restaurants", href: `${baseHref}/restaurants`, icon: <Utensils size={21} />, title: t.menu.restaurants.title, subtitle: t.menu.restaurants.subtitle },
+    { id: "activities", href: `${baseHref}/activities`, icon: <Map size={21} />, title: t.menu.activities.title, subtitle: t.menu.activities.subtitle },
+    { id: "essentials", href: `${baseHref}/essentials`, icon: <Pill size={21} />, title: t.menu.essentials.title, subtitle: t.menu.essentials.subtitle },
+    { id: "reviews", href: `${baseHref}/reviews`, icon: <Star size={21} />, title: t.menu.reviews.title, subtitle: t.menu.reviews.subtitle },
+    { id: "emergency", href: `${baseHref}/emergency`, icon: <ShieldAlert size={21} />, title: t.menu.emergency.title, subtitle: t.menu.emergency.subtitle }
+  ], [baseHref, t]);
+  const sectionIds = useMemo(() => new Set(menuItems.map((item) => item.id)), [menuItems]);
+
+  useEffect(() => {
+    menuItems.forEach((item) => router.prefetch(item.href));
+  }, [menuItems, router]);
+
+  useEffect(() => {
+    function syncSectionFromUrl() {
+      const section = window.location.pathname.split("/").filter(Boolean).at(-1) || "";
+      setSelectedSection(sectionIds.has(section) ? section : null);
+    }
+
+    syncSectionFromUrl();
+    window.addEventListener("popstate", syncSectionFromUrl);
+
+    return () => window.removeEventListener("popstate", syncSectionFromUrl);
+  }, [sectionIds]);
   const menuClass =
     layout === "modern"
       ? "grid gap-[var(--guide-menu-gap)] px-[var(--guide-menu-padding)] py-4"
@@ -92,7 +114,17 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
     return (
       <section className={menuClass}>
         {menuItems.map((item) => (
-          <MenuLink key={item.href} {...item} variant={layout} />
+          <MenuLink
+            key={item.href}
+            {...item}
+            variant={layout}
+            onClick={(event) => {
+              event.preventDefault();
+              setSelectedSection(item.id);
+              window.history.pushState(null, "", item.href);
+              window.scrollTo({ top: 0 });
+            }}
+          />
         ))}
       </section>
     );
@@ -103,6 +135,20 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
       <div className="px-5 pb-[4.75rem] pt-0">
         <PoweredByStayNest label={t.poweredBy} />
       </div>
+    );
+  }
+
+  if (selectedSection) {
+    return (
+      <GuestGuideSectionContent
+        property={property}
+        section={selectedSection}
+        onBack={() => {
+          setSelectedSection(null);
+          window.history.replaceState(null, "", baseHref);
+          window.scrollTo({ top: 0 });
+        }}
+      />
     );
   }
 

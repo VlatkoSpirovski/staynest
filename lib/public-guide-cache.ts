@@ -41,6 +41,8 @@ export function getCachedPublicGuideSection(slug: string) {
         select: {
           slug: true,
           name: true,
+          logoUrl: true,
+          coverImageUrl: true,
           accentColor: true,
           templateId: true,
           designSerif: true,
