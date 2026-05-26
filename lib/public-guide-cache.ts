@@ -1,6 +1,7 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
+import { examplePublicGuide, isExamplePublicGuide } from "@/lib/example-public-guide";
 import { prisma } from "@/lib/prisma";
 
 const PUBLIC_GUIDE_REVALIDATE_SECONDS = 60 * 60 * 24;
@@ -11,8 +12,8 @@ export function publicGuideCacheTag(slug: string) {
 
 export function getCachedPublicGuideHome(slug: string) {
   return unstable_cache(
-    async () =>
-      prisma.property.findUnique({
+    async () => {
+      const property = await prisma.property.findUnique({
         where: { slug },
         select: {
           slug: true,
@@ -24,7 +25,18 @@ export function getCachedPublicGuideHome(slug: string) {
           designSerif: true,
           designRounded: true
         }
-      }),
+      });
+      return property ?? (isExamplePublicGuide(slug) ? {
+        slug: examplePublicGuide.slug,
+        name: examplePublicGuide.name,
+        logoUrl: examplePublicGuide.logoUrl,
+        coverImageUrl: examplePublicGuide.coverImageUrl,
+        accentColor: examplePublicGuide.accentColor,
+        templateId: examplePublicGuide.templateId,
+        designSerif: examplePublicGuide.designSerif,
+        designRounded: examplePublicGuide.designRounded
+      } : null);
+    },
     ["public-guide-home", slug],
     {
       tags: [publicGuideCacheTag(slug)],
@@ -35,8 +47,8 @@ export function getCachedPublicGuideHome(slug: string) {
 
 export function getCachedPublicGuideSection(slug: string) {
   return unstable_cache(
-    async () =>
-      prisma.property.findUnique({
+    async () => {
+      const property = await prisma.property.findUnique({
         where: { slug },
         select: {
           slug: true,
@@ -102,7 +114,9 @@ export function getCachedPublicGuideSection(slug: string) {
             }
           }
         }
-      }),
+      });
+      return property ?? (isExamplePublicGuide(slug) ? examplePublicGuide : null);
+    },
     ["public-guide-section", slug],
     {
       tags: [publicGuideCacheTag(slug)],
@@ -113,11 +127,13 @@ export function getCachedPublicGuideSection(slug: string) {
 
 export function getCachedPublicGuideRedirect(slug: string) {
   return unstable_cache(
-    async () =>
-      prisma.property.findUnique({
+    async () => {
+      const property = await prisma.property.findUnique({
         where: { slug },
         select: { slug: true }
-      }),
+      });
+      return property ?? (isExamplePublicGuide(slug) ? { slug: examplePublicGuide.slug } : null);
+    },
     ["public-guide-redirect", slug],
     {
       tags: [publicGuideCacheTag(slug)],
@@ -128,8 +144,8 @@ export function getCachedPublicGuideRedirect(slug: string) {
 
 export function getCachedPublicGuideChatContext(slug: string) {
   return unstable_cache(
-    async () =>
-      prisma.property.findUnique({
+    async () => {
+      const property = await prisma.property.findUnique({
         where: { slug },
         select: {
           name: true,
@@ -181,7 +197,44 @@ export function getCachedPublicGuideChatContext(slug: string) {
             }
           }
         }
-      }),
+      });
+      return property ?? (isExamplePublicGuide(slug) ? {
+        name: examplePublicGuide.name,
+        welcomeMessage: examplePublicGuide.welcomeMessage,
+        wifiName: examplePublicGuide.wifiName,
+        wifiPassword: examplePublicGuide.wifiPassword,
+        checkInInfo: examplePublicGuide.checkInInfo,
+        checkOutInfo: examplePublicGuide.checkOutInfo,
+        parkingInfo: examplePublicGuide.parkingInfo,
+        houseRules: examplePublicGuide.houseRules,
+        emergencyInfo: examplePublicGuide.emergencyInfo,
+        hostContactName: examplePublicGuide.hostContactName,
+        hostPhone: examplePublicGuide.hostPhone,
+        hostEmail: examplePublicGuide.hostEmail,
+        aiKnowledge: examplePublicGuide.aiKnowledge,
+        guideSections: examplePublicGuide.guideSections.map(({ title, content }) => ({ title, content })),
+        recommendations: examplePublicGuide.recommendations.map((item) => ({
+          title: item.title,
+          category: item.category,
+          description: item.description,
+          address: item.address,
+          url: item.url,
+          placeId: item.placeId,
+          name: item.name,
+          customTitle: item.customTitle,
+          customDescription: item.customDescription,
+          formattedAddress: item.formattedAddress,
+          googleMapsUrl: item.googleMapsUrl,
+          rating: item.rating,
+          userRatingsTotal: item.userRatingsTotal,
+          website: item.website,
+          phoneNumber: item.phoneNumber,
+          isEssential: item.isEssential,
+          isVisible: item.isVisible
+        })),
+        reviewLinks: examplePublicGuide.reviewLinks.map(({ platform, url }) => ({ platform, url }))
+      } : null);
+    },
     ["public-guide-chat", slug],
     {
       tags: [publicGuideCacheTag(slug)],

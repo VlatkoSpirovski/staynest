@@ -10,7 +10,6 @@ const hostAppPrefixes = [
   "/login",
   "/register",
   "/reset-password",
-  "/stay",
   "/verify-email"
 ];
 
