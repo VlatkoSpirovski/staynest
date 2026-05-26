@@ -94,7 +94,11 @@ export function PaddleCheckoutButton({
           token: clientToken,
           eventCallback: (event) => {
             if (event.name === "checkout.completed" || event.event === "checkout.completed") {
-              window.location.href = successUrl;
+              fetch("/api/billing/activate", { method: "POST" })
+                .catch(() => {})
+                .finally(() => {
+                  window.location.href = successUrl;
+                });
             }
           }
         });

@@ -67,6 +67,10 @@ export async function POST(request: Request) {
   const webhookSecret = process.env.PADDLE_WEBHOOK_SECRET;
 
   if (!verifyPaddleSignature(rawBody, request.headers.get("paddle-signature"), webhookSecret || "")) {
+    console.error("[paddle-webhook] Signature verification FAILED", {
+      hasSecret: Boolean(webhookSecret),
+      hasSignatureHeader: Boolean(request.headers.get("paddle-signature"))
+    });
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -81,6 +85,8 @@ export async function POST(request: Request) {
   const status = subscriptionStatus(eventType, data.status);
   const trialEndsAt = status === "TRIALING" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : undefined;
 
+  console.log("[paddle-webhook] Received", { eventType, userId, customerId, subscriptionId, transactionId, status, plan });
+
   const where = userId
     ? { id: userId }
     : subscriptionId
@@ -90,10 +96,11 @@ export async function POST(request: Request) {
         : null;
 
   if (!where) {
+    console.warn("[paddle-webhook] No user lookup key found — ignoring event", { eventType, customData: data.custom_data });
     return NextResponse.json({ received: true, ignored: true });
   }
 
-  await prisma.user.updateMany({
+  const result = await prisma.user.updateMany({
     where,
     data: {
       ...(plan ? { selectedPlan: plan } : {}),
@@ -104,6 +111,8 @@ export async function POST(request: Request) {
       ...(transactionId ? { paddleTransactionId: transactionId } : {})
     }
   });
+
+  console.log("[paddle-webhook] Updated", { where, matchedCount: result.count });
 
   return NextResponse.json({ received: true });
 }
