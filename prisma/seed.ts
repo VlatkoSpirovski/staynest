@@ -47,7 +47,8 @@ async function main() {
     name: "Example Stay",
     logoUrl: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=400&auto=format&fit=crop",
     coverImageUrl: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1600&auto=format&fit=crop",
-    accentColor: "#4a8a8f",
+    accentColor: "#111827",
+    templateId: "modern",
     welcomeMessage:
       "Welcome to Example Stay. We are happy to host you and hope your stay feels calm, private and effortless. This guide includes everything you need for arrival, Wi-Fi, house rules and our favorite nearby places.",
     wifiName: "Example Guest",
