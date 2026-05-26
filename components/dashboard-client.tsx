@@ -1635,32 +1635,28 @@ function SettingsScreen({
 
       <section className="rounded-[24px] border border-[#172234]/8 bg-white p-5 shadow-[0_30px_90px_rgba(17,24,39,0.12),inset_0_1px_0_rgba(255,255,255,0.92)]">
         <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#5F9D99]">Billing</p>
-        <h2 className="mt-2 text-2xl font-black tracking-tight">Choose your host plan</h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {[
-            { id: "basic-yearly", tier: "basic", name: "Basic", price: "€60/year", text: "Beautiful guest guide, QR sharing, restaurants and house info. Save €60 yearly." },
-            { id: "ai-yearly", tier: "ai", name: "AI Concierge", price: "€80/year", text: "Everything in Basic plus guest chat knowledge and AI answers. Save €100 yearly." }
-          ].map((plan) => {
-            const active = selectedPlan === plan.tier || planName.toLowerCase().includes(plan.name.toLowerCase());
-            return (
-              <a
-                key={plan.id}
-                href={`${BILLING_BASE_URL}/billing?plan=${plan.id}`}
-                className={`rounded-[20px] border p-4 shadow-[0_18px_48px_rgba(17,24,39,0.085),inset_0_1px_0_rgba(255,255,255,0.76)] transition hover:-translate-y-0.5 ${
-                  active ? "border-[#111827]/35 bg-[#111827] text-white" : "border-[#172234]/7 bg-[#FFFFFF] text-[#111827]"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className={`text-[10px] font-black uppercase tracking-[0.16em] ${active ? "text-[#B7DAD5]" : "text-[#5F9D99]"}`}>{active ? "Current plan" : "Upgrade option"}</p>
-                    <h3 className="mt-2 text-lg font-black">{plan.name}</h3>
-                  </div>
-                  <p className="text-2xl font-black">{plan.price}</p>
-                </div>
-                <p className={`mt-3 text-xs font-semibold leading-5 ${active ? "text-white/66" : "text-[#111827]/58"}`}>{plan.text}</p>
-              </a>
-            );
-          })}
+        <h2 className="mt-2 text-2xl font-black tracking-tight">Manage your subscription</h2>
+        <div className="mt-3 rounded-[18px] border border-[#172234]/10 bg-[#F9FAFB] p-4">
+          <p className="text-xs font-bold text-[#111827]/55">Current plan</p>
+          <p className="mt-1 text-sm font-black text-[#111827]">{planName}</p>
+          <p className="mt-1 text-xs font-semibold text-[#111827]/60">
+            {selectedPlan === "ai"
+              ? "Full AI concierge features are active for this account."
+              : "Essential guest guide features are active. Upgrade to AI for concierge-style chat."}
+          </p>
+        </div>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs font-semibold text-[#111827]/55">
+            {selectedPlan === "ai"
+              ? "You can downgrade to the Basic plan. Billing is handled securely by Paddle."
+              : "You can upgrade to the Full AI plan. Billing is handled securely by Paddle."}
+          </p>
+          <a
+            href={`${BILLING_BASE_URL}/billing?plan=${selectedPlan === "ai" ? "basic-monthly" : "ai-monthly"}`}
+            className="inline-flex min-h-11 items-center justify-center rounded-[16px] bg-[#111827] px-5 text-sm font-black text-white shadow-[0_18px_48px_rgba(17,24,39,0.24),inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:-translate-y-0.5 hover:bg-[#162033]"
+          >
+            {selectedPlan === "ai" ? "Switch to Basic" : "Upgrade to Full AI"}
+          </a>
         </div>
       </section>
     </div>

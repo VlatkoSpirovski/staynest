@@ -4,7 +4,15 @@ import { Button } from "@/components/ui/button";
 import { PaddleCheckoutButton } from "@/components/paddle-checkout-button";
 import { Panel } from "@/components/ui/panel";
 import { requireReadyUser } from "@/lib/auth";
-import { billingUrl, hasBillingAccess, normalizePlanKey, planOption, priceIdForPlan } from "@/lib/billing";
+import {
+  billingUrl,
+  hasBillingAccess,
+  normalizePlanKey,
+  normalizeTier,
+  planOption,
+  priceIdForPlan,
+  type PlanTier
+} from "@/lib/billing";
 import { getAppUrl, getPaymentUrl } from "@/lib/utils";
 
 export const preferredRegion = "fra1";
@@ -27,7 +35,13 @@ type BillingPageProps = {
 
 export default async function BillingPage({ searchParams }: BillingPageProps) {
   const user = await requireReadyUser();
-  const selectedPlan = normalizePlanKey(searchParams?.plan || (user.selectedPlan === "ai" ? "ai-monthly" : "basic-monthly"));
+  const currentTier: PlanTier = normalizeTier(user.selectedPlan);
+  const currentPlan = planOption(currentTier === "ai" ? "ai-monthly" : "basic-monthly");
+  const selectedPlan = normalizePlanKey(
+    searchParams?.plan ||
+      // When no plan is selected explicitly, default to the *other* tier so the user is clearly switching plans.
+      (currentTier === "ai" ? "basic-monthly" : "ai-monthly")
+  );
   const plan = planOption(selectedPlan);
   const trialDate = user.trialEndsAt?.toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -41,6 +55,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const successUrl = `${getPaymentUrl()}/billing/complete`;
   const dashboardUrl = `${getAppUrl()}/dashboard`;
   const billingReady = hasBillingAccess(user);
+  const switchTier: PlanTier = currentTier === "ai" ? "basic" : "ai";
 
   return (
     <main className="grid min-h-screen place-items-center bg-mist px-5 py-10 text-ink">
@@ -50,8 +65,13 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
             <CreditCard size={20} />
           </div>
           <div>
-            <h1 className="text-xl font-bold">{billingReady ? "Your billing is ready" : "Start your 7-day trial"}</h1>
-            <p className="text-sm text-ink/60">Plan: {plan.name}</p>
+            <h1 className="text-xl font-bold">
+              {billingReady ? "Update your subscription" : "Start your 7-day trial"}
+            </h1>
+            <p className="text-sm text-ink/60">
+              Current plan: {currentPlan.shortName} ·{" "}
+              {currentPlan.cadence === "yearly" ? "Yearly" : "Monthly"}
+            </p>
           </div>
         </div>
 
@@ -64,10 +84,14 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         <div className="mt-6 rounded-[8px] border border-ink/10 bg-white p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.16em] text-lagoon">{plan.shortName}</p>
+              <p className="text-sm font-bold uppercase tracking-[0.16em] text-lagoon">
+                {switchTier === "ai" ? "Upgrade to Full AI" : "Switch to Basic"}
+              </p>
               <p className="mt-2 text-sm leading-6 text-ink/62">
                 {billingReady
-                  ? "Your payment setup is complete. You can open the dashboard and start building your guest guide."
+                  ? switchTier === "ai"
+                    ? "Move from Basic to Full AI. Keep your existing billing, just upgrade what the app can do."
+                    : "Move from Full AI to Basic while keeping access to your guest guide."
                   : "Add your payment method with Paddle to activate the free trial. You will not be charged until the trial ends."}
               </p>
             </div>
@@ -78,8 +102,8 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {[
-              planOption(plan.tier === "ai" ? "ai-monthly" : "basic-monthly"),
-              planOption(plan.tier === "ai" ? "ai-yearly" : "basic-yearly")
+              planOption(switchTier === "ai" ? "ai-monthly" : "basic-monthly"),
+              planOption(switchTier === "ai" ? "ai-yearly" : "basic-yearly")
             ].map((option) => (
               <a
                 key={option.key}
