@@ -5,6 +5,7 @@ import { examplePublicGuide, isExamplePublicGuide } from "@/lib/example-public-g
 import { prisma } from "@/lib/prisma";
 
 const PUBLIC_GUIDE_REVALIDATE_SECONDS = 60 * 60 * 24;
+const PUBLIC_GUIDE_CACHE_VERSION = "v2";
 
 export function publicGuideCacheTag(slug: string) {
   return `public-guide:${slug}`;
@@ -13,6 +14,19 @@ export function publicGuideCacheTag(slug: string) {
 export function getCachedPublicGuideHome(slug: string) {
   return unstable_cache(
     async () => {
+      if (isExamplePublicGuide(slug)) {
+        return {
+          slug: examplePublicGuide.slug,
+          name: examplePublicGuide.name,
+          logoUrl: examplePublicGuide.logoUrl,
+          coverImageUrl: examplePublicGuide.coverImageUrl,
+          accentColor: examplePublicGuide.accentColor,
+          templateId: examplePublicGuide.templateId,
+          designSerif: examplePublicGuide.designSerif,
+          designRounded: examplePublicGuide.designRounded
+        };
+      }
+
       const property = await prisma.property.findUnique({
         where: { slug },
         select: {
@@ -26,18 +40,9 @@ export function getCachedPublicGuideHome(slug: string) {
           designRounded: true
         }
       });
-      return property ?? (isExamplePublicGuide(slug) ? {
-        slug: examplePublicGuide.slug,
-        name: examplePublicGuide.name,
-        logoUrl: examplePublicGuide.logoUrl,
-        coverImageUrl: examplePublicGuide.coverImageUrl,
-        accentColor: examplePublicGuide.accentColor,
-        templateId: examplePublicGuide.templateId,
-        designSerif: examplePublicGuide.designSerif,
-        designRounded: examplePublicGuide.designRounded
-      } : null);
+      return property;
     },
-    ["public-guide-home", slug],
+    ["public-guide-home", PUBLIC_GUIDE_CACHE_VERSION, slug],
     {
       tags: [publicGuideCacheTag(slug)],
       revalidate: PUBLIC_GUIDE_REVALIDATE_SECONDS
@@ -48,6 +53,10 @@ export function getCachedPublicGuideHome(slug: string) {
 export function getCachedPublicGuideSection(slug: string) {
   return unstable_cache(
     async () => {
+      if (isExamplePublicGuide(slug)) {
+        return examplePublicGuide;
+      }
+
       const property = await prisma.property.findUnique({
         where: { slug },
         select: {
@@ -115,9 +124,9 @@ export function getCachedPublicGuideSection(slug: string) {
           }
         }
       });
-      return property ?? (isExamplePublicGuide(slug) ? examplePublicGuide : null);
+      return property;
     },
-    ["public-guide-section", slug],
+    ["public-guide-section", PUBLIC_GUIDE_CACHE_VERSION, slug],
     {
       tags: [publicGuideCacheTag(slug)],
       revalidate: PUBLIC_GUIDE_REVALIDATE_SECONDS
@@ -128,13 +137,17 @@ export function getCachedPublicGuideSection(slug: string) {
 export function getCachedPublicGuideRedirect(slug: string) {
   return unstable_cache(
     async () => {
+      if (isExamplePublicGuide(slug)) {
+        return { slug: examplePublicGuide.slug };
+      }
+
       const property = await prisma.property.findUnique({
         where: { slug },
         select: { slug: true }
       });
-      return property ?? (isExamplePublicGuide(slug) ? { slug: examplePublicGuide.slug } : null);
+      return property;
     },
-    ["public-guide-redirect", slug],
+    ["public-guide-redirect", PUBLIC_GUIDE_CACHE_VERSION, slug],
     {
       tags: [publicGuideCacheTag(slug)],
       revalidate: PUBLIC_GUIDE_REVALIDATE_SECONDS
@@ -145,6 +158,45 @@ export function getCachedPublicGuideRedirect(slug: string) {
 export function getCachedPublicGuideChatContext(slug: string) {
   return unstable_cache(
     async () => {
+      if (isExamplePublicGuide(slug)) {
+        return {
+          name: examplePublicGuide.name,
+          welcomeMessage: examplePublicGuide.welcomeMessage,
+          wifiName: examplePublicGuide.wifiName,
+          wifiPassword: examplePublicGuide.wifiPassword,
+          checkInInfo: examplePublicGuide.checkInInfo,
+          checkOutInfo: examplePublicGuide.checkOutInfo,
+          parkingInfo: examplePublicGuide.parkingInfo,
+          houseRules: examplePublicGuide.houseRules,
+          emergencyInfo: examplePublicGuide.emergencyInfo,
+          hostContactName: examplePublicGuide.hostContactName,
+          hostPhone: examplePublicGuide.hostPhone,
+          hostEmail: examplePublicGuide.hostEmail,
+          aiKnowledge: examplePublicGuide.aiKnowledge,
+          guideSections: examplePublicGuide.guideSections.map(({ title, content }) => ({ title, content })),
+          recommendations: examplePublicGuide.recommendations.map((item) => ({
+            title: item.title,
+            category: item.category,
+            description: item.description,
+            address: item.address,
+            url: item.url,
+            placeId: item.placeId,
+            name: item.name,
+            customTitle: item.customTitle,
+            customDescription: item.customDescription,
+            formattedAddress: item.formattedAddress,
+            googleMapsUrl: item.googleMapsUrl,
+            rating: item.rating,
+            userRatingsTotal: item.userRatingsTotal,
+            website: item.website,
+            phoneNumber: item.phoneNumber,
+            isEssential: item.isEssential,
+            isVisible: item.isVisible
+          })),
+          reviewLinks: examplePublicGuide.reviewLinks.map(({ platform, url }) => ({ platform, url }))
+        };
+      }
+
       const property = await prisma.property.findUnique({
         where: { slug },
         select: {
@@ -198,44 +250,9 @@ export function getCachedPublicGuideChatContext(slug: string) {
           }
         }
       });
-      return property ?? (isExamplePublicGuide(slug) ? {
-        name: examplePublicGuide.name,
-        welcomeMessage: examplePublicGuide.welcomeMessage,
-        wifiName: examplePublicGuide.wifiName,
-        wifiPassword: examplePublicGuide.wifiPassword,
-        checkInInfo: examplePublicGuide.checkInInfo,
-        checkOutInfo: examplePublicGuide.checkOutInfo,
-        parkingInfo: examplePublicGuide.parkingInfo,
-        houseRules: examplePublicGuide.houseRules,
-        emergencyInfo: examplePublicGuide.emergencyInfo,
-        hostContactName: examplePublicGuide.hostContactName,
-        hostPhone: examplePublicGuide.hostPhone,
-        hostEmail: examplePublicGuide.hostEmail,
-        aiKnowledge: examplePublicGuide.aiKnowledge,
-        guideSections: examplePublicGuide.guideSections.map(({ title, content }) => ({ title, content })),
-        recommendations: examplePublicGuide.recommendations.map((item) => ({
-          title: item.title,
-          category: item.category,
-          description: item.description,
-          address: item.address,
-          url: item.url,
-          placeId: item.placeId,
-          name: item.name,
-          customTitle: item.customTitle,
-          customDescription: item.customDescription,
-          formattedAddress: item.formattedAddress,
-          googleMapsUrl: item.googleMapsUrl,
-          rating: item.rating,
-          userRatingsTotal: item.userRatingsTotal,
-          website: item.website,
-          phoneNumber: item.phoneNumber,
-          isEssential: item.isEssential,
-          isVisible: item.isVisible
-        })),
-        reviewLinks: examplePublicGuide.reviewLinks.map(({ platform, url }) => ({ platform, url }))
-      } : null);
+      return property;
     },
-    ["public-guide-chat", slug],
+    ["public-guide-chat", PUBLIC_GUIDE_CACHE_VERSION, slug],
     {
       tags: [publicGuideCacheTag(slug)],
       revalidate: PUBLIC_GUIDE_REVALIDATE_SECONDS
