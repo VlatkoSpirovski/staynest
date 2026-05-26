@@ -38,9 +38,9 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const currentPlan = planOption(currentPlanKey);
   const billingReady = hasBillingAccess(user);
 
-  const isSwitching = billingReady;
-  const targetTier: PlanTier = isSwitching ? (currentPlan.tier === "ai" ? "basic" : "ai") : currentPlan.tier;
   const selectedPlanFromQuery = searchParams?.plan ? normalizePlanKey(searchParams.plan) : undefined;
+  const isSwitching = billingReady && Boolean(selectedPlanFromQuery) && selectedPlanFromQuery !== currentPlanKey;
+  const targetTier: PlanTier = isSwitching && selectedPlanFromQuery ? planOption(selectedPlanFromQuery).tier : currentPlan.tier;
 
   const defaultSelectedPlanKey = `${targetTier}-${currentPlan.interval}`;
 
@@ -143,7 +143,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           </p>
         </div>
 
-        {billingReady ? (
+        {billingReady && !isSwitching ? (
           <Button href={dashboardUrl} className="mt-6 w-full">
             Open dashboard
           </Button>
