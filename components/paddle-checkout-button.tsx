@@ -94,7 +94,11 @@ export function PaddleCheckoutButton({
           token: clientToken,
           eventCallback: (event) => {
             if (event.name === "checkout.completed" || event.event === "checkout.completed") {
-              fetch("/api/billing/activate", { method: "POST" })
+              fetch("/api/billing/activate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ plan })
+              })
                 .catch(() => {})
                 .finally(() => {
                   window.location.href = successUrl;
@@ -111,7 +115,7 @@ export function PaddleCheckoutButton({
     return () => {
       mounted = false;
     };
-  }, [clientToken, environment, successUrl]);
+  }, [clientToken, environment, successUrl, plan]);
 
   return (
     <div className="mt-6">

@@ -9,7 +9,7 @@ import {
 } from "@/app/actions";
 import DashboardClient from "@/components/dashboard-client";
 import { requireReadyUser } from "@/lib/auth";
-import { billingUrl, hasBillingAccess } from "@/lib/billing";
+import { billingUrl, hasBillingAccess, normalizePlanKey, planOption } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/utils";
 import { redirect } from "next/navigation";
@@ -111,8 +111,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const property = await getDashboardProperty(user.id);
   const publicUrl = property ? `${getSiteUrl()}/stay/${property.slug}` : "";
   const qrCode = publicUrl ? `/api/qr?text=${encodeURIComponent(publicUrl)}` : "";
-  const selectedPlan = user.selectedPlan === "ai" ? "ai" : "basic";
-  const planName = selectedPlan === "ai" ? "Premium AI Concierge" : "Essential Guest Guide";
+  const selectedPlan = normalizePlanKey(user.selectedPlan);
+  const currentPlan = planOption(selectedPlan);
+  const planName = currentPlan.tier === "ai" ? "Premium AI Concierge" : "Essential Guest Guide";
   const trialLabel = user.trialEndsAt
     ? user.trialEndsAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
     : null;

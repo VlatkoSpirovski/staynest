@@ -11,7 +11,7 @@ export function BillingCompleteClient({ dashboardUrl }: BillingCompleteClientPro
   const [ready, setReady] = useState(false);
   const [checking, setChecking] = useState(true);
   const attempts = useRef(0);
-  const maxAttempts = 30; // ~60 seconds of polling
+  const maxAttempts = 45; // ~90 seconds of polling (webhook propagation can be slow)
 
   useEffect(() => {
     let mounted = true;

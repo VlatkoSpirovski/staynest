@@ -76,7 +76,7 @@ export async function GET(request: Request) {
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      selectedPlan: plan,
+      selectedPlan: plan === "ai" ? "ai-monthly" : "basic-monthly",
       paypalSubscriptionId: subscription.id,
       subscriptionStatus: "PENDING"
     }

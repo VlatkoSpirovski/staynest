@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { normalizePlanKey } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
   const event = JSON.parse(rawBody) as PaddleWebhook;
   const eventType = event.event_type || "";
   const data = event.data || {};
-  const plan = data.custom_data?.plan === "ai" ? "ai" : data.custom_data?.plan === "basic" ? "basic" : undefined;
+  const selectedPlanKey = data.custom_data?.planKey ? normalizePlanKey(data.custom_data.planKey) : undefined;
   const userId = data.custom_data?.userId;
   const customerId = data.customer_id || undefined;
   const subscriptionId = eventType.startsWith("subscription.") ? data.id : data.subscription_id || undefined;
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
   const status = subscriptionStatus(eventType, data.status);
   const trialEndsAt = status === "TRIALING" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : undefined;
 
-  console.log("[paddle-webhook] Received", { eventType, userId, customerId, subscriptionId, transactionId, status, plan });
+  console.log("[paddle-webhook] Received", { eventType, userId, customerId, subscriptionId, transactionId, status, selectedPlanKey });
 
   const where = userId
     ? { id: userId }
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
   const result = await prisma.user.updateMany({
     where,
     data: {
-      ...(plan ? { selectedPlan: plan } : {}),
+      ...(selectedPlanKey ? { selectedPlan: selectedPlanKey } : {}),
       ...(status ? { subscriptionStatus: status } : {}),
       ...(trialEndsAt ? { trialEndsAt } : {}),
       ...(customerId ? { paddleCustomerId: customerId } : {}),

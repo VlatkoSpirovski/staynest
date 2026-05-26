@@ -8,7 +8,6 @@ import {
   billingUrl,
   hasBillingAccess,
   normalizePlanKey,
-  normalizeTier,
   planOption,
   priceIdForPlan,
   type PlanTier
@@ -35,13 +34,29 @@ type BillingPageProps = {
 
 export default async function BillingPage({ searchParams }: BillingPageProps) {
   const user = await requireReadyUser();
-  const currentTier: PlanTier = normalizeTier(user.selectedPlan);
-  const currentPlan = planOption(currentTier === "ai" ? "ai-monthly" : "basic-monthly");
-  const selectedPlan = normalizePlanKey(
-    searchParams?.plan ||
-      // When no plan is selected explicitly, default to the *other* tier so the user is clearly switching plans.
-      (currentTier === "ai" ? "basic-monthly" : "ai-monthly")
-  );
+  const currentPlanKey = normalizePlanKey(user.selectedPlan);
+  const currentPlan = planOption(currentPlanKey);
+  const billingReady = hasBillingAccess(user);
+
+  const isSwitching = billingReady;
+  const targetTier: PlanTier = isSwitching ? (currentPlan.tier === "ai" ? "basic" : "ai") : currentPlan.tier;
+  const selectedPlanFromQuery = searchParams?.plan ? normalizePlanKey(searchParams.plan) : undefined;
+
+  const defaultSelectedPlanKey = `${targetTier}-${currentPlan.interval}`;
+
+  const selectedPlan = (() => {
+    if (!isSwitching) {
+      return selectedPlanFromQuery ?? normalizePlanKey(defaultSelectedPlanKey);
+    }
+
+    // While switching an active/trialing subscription, force the tier to the opposite.
+    const queryTier = selectedPlanFromQuery ? planOption(selectedPlanFromQuery).tier : targetTier;
+    if (queryTier === targetTier) return selectedPlanFromQuery ?? normalizePlanKey(defaultSelectedPlanKey);
+
+    const queryInterval = selectedPlanFromQuery ? planOption(selectedPlanFromQuery).interval : currentPlan.interval;
+    return normalizePlanKey(`${targetTier}-${queryInterval}`);
+  })();
+
   const plan = planOption(selectedPlan);
   const trialDate = user.trialEndsAt?.toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -54,8 +69,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const paddleError = paddleConfigError({ clientToken, priceId, environment: paddleEnvironment });
   const successUrl = `${getPaymentUrl()}/billing/complete`;
   const dashboardUrl = `${getAppUrl()}/dashboard`;
-  const billingReady = hasBillingAccess(user);
-  const switchTier: PlanTier = currentTier === "ai" ? "basic" : "ai";
+  const optionsTier: PlanTier = isSwitching ? targetTier : plan.tier;
 
   return (
     <main className="grid min-h-screen place-items-center bg-mist px-5 py-10 text-ink">
@@ -69,7 +83,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
               {billingReady ? "Update your subscription" : "Start your 7-day trial"}
             </h1>
             <p className="text-sm text-ink/60">
-              Current plan: {currentPlan.shortName} ·{" "}
+              {isSwitching ? "Current plan" : "Selected plan"}: {currentPlan.shortName} ·{" "}
               {currentPlan.cadence === "yearly" ? "Yearly" : "Monthly"}
             </p>
           </div>
@@ -85,13 +99,11 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.16em] text-lagoon">
-                {switchTier === "ai" ? "Upgrade to Full AI" : "Switch to Basic"}
+                {isSwitching ? (targetTier === "ai" ? "Upgrade to Full AI" : "Switch to Basic") : "Choose your cadence"}
               </p>
               <p className="mt-2 text-sm leading-6 text-ink/62">
-                {billingReady
-                  ? switchTier === "ai"
-                    ? "Move from Basic to Full AI. Keep your existing billing, just upgrade what the app can do."
-                    : "Move from Full AI to Basic while keeping access to your guest guide."
+                {isSwitching
+                  ? "Switch your tier. We’ll keep your existing cadence by default, and you can change monthly/yearly below."
                   : "Add your payment method with Paddle to activate the free trial. You will not be charged until the trial ends."}
               </p>
             </div>
@@ -102,8 +114,8 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {[
-              planOption(switchTier === "ai" ? "ai-monthly" : "basic-monthly"),
-              planOption(switchTier === "ai" ? "ai-yearly" : "basic-yearly")
+              planOption(optionsTier === "ai" ? "ai-monthly" : "basic-monthly"),
+              planOption(optionsTier === "ai" ? "ai-yearly" : "basic-yearly")
             ].map((option) => (
               <a
                 key={option.key}
@@ -119,7 +131,11 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           </div>
           <div className="mt-4 flex gap-3 rounded-[8px] bg-mist p-3 text-sm font-medium text-ink/70">
             <ShieldCheck className="mt-0.5 shrink-0 text-olive" size={18} />
-            {trialDate ? `Trial runs until ${trialDate}.` : `${plan.comparison ? `${plan.comparison}. ` : ""}Paddle starts the 7-day trial during checkout.`}
+            {trialDate
+              ? `Trial runs until ${trialDate}.`
+              : isSwitching
+                ? "Paddle will update your subscription after checkout completes."
+                : `${plan.comparison ? `${plan.comparison}. ` : ""}Paddle starts the 7-day trial during checkout.`}
           </div>
           <p className="mt-3 text-sm leading-6 text-ink/60">
             Paddle handles secure checkout, tax, invoicing and recurring billing on staynest.site. After

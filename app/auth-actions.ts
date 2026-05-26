@@ -7,7 +7,7 @@ import { createSession, destroySession, hashToken, requireCurrentUser } from "@/
 import { sendEmail } from "@/lib/email";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { passwordRulesText, validatePassword } from "@/lib/password-policy";
-import { billingUrl, normalizePlanKey, normalizeTier } from "@/lib/billing";
+import { billingUrl, normalizePlanKey } from "@/lib/billing";
 import { getAppUrl } from "@/lib/utils";
 
 function stringValue(formData: FormData, key: string) {
@@ -49,7 +49,6 @@ export async function registerOwner(formData: FormData) {
   const password = stringValue(formData, "password");
   const confirmPassword = stringValue(formData, "confirmPassword");
   const planKey = normalizePlanKey(stringValue(formData, "plan"));
-  const plan = normalizeTier(planKey);
   const registerPath = `/register?plan=${encodeURIComponent(planKey)}`;
 
   if (!name || !email || !password) {
@@ -76,7 +75,7 @@ export async function registerOwner(formData: FormData) {
       email,
       passwordHash: hashPassword(password),
       emailVerifiedAt: new Date(),
-      selectedPlan: plan,
+      selectedPlan: planKey,
       subscriptionStatus: "PENDING"
     }
   });
