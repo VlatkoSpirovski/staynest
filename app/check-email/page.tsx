@@ -3,6 +3,14 @@ import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
 
+export const metadata = {
+  title: "Check your email",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
+
 type CheckEmailPageProps = {
   searchParams?: {
     email?: string;

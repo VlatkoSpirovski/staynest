@@ -19,6 +19,13 @@ import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+export const metadata = {
+  title: "Admin",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 type AdminPageProps = {
   searchParams?: {

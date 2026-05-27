@@ -15,6 +15,13 @@ import {
 import { getAppUrl, getPaymentUrl } from "@/lib/utils";
 
 export const preferredRegion = "fra1";
+export const metadata = {
+  title: "Billing",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 function paddleConfigError({ clientToken, priceId, environment }: { clientToken: string; priceId?: string; environment: string }) {
   if (!clientToken || !priceId) return "Paddle checkout needs PADDLE_CLIENT_TOKEN and the selected plan price ID in Vercel.";

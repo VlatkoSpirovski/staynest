@@ -1,6 +1,14 @@
 import { LegalPage } from "@/components/legal-page";
 import { getAppUrl } from "@/lib/utils";
 
+export const metadata = {
+  title: "Refund Policy",
+  description: "StayNest refund policy including the 30-day money-back guarantee and how to request a refund.",
+  alternates: {
+    canonical: "/refund"
+  }
+};
+
 export default function RefundPage() {
   const appUrl = getAppUrl();
 

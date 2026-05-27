@@ -1,6 +1,14 @@
 import { LegalPage } from "@/components/legal-page";
 import { getAppUrl, getPaymentUrl } from "@/lib/utils";
 
+export const metadata = {
+  title: "Contact",
+  description: "Contact StayNest support for account, billing, refunds, privacy, or product help.",
+  alternates: {
+    canonical: "/contact"
+  }
+};
+
 export default function ContactPage() {
   const appUrl = getAppUrl();
   const paymentUrl = getPaymentUrl();

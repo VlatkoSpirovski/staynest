@@ -1,6 +1,14 @@
 import { LegalPage } from "@/components/legal-page";
 import { getAppUrl } from "@/lib/utils";
 
+export const metadata = {
+  title: "Privacy Policy",
+  description: "Learn how StayNest collects, uses, and protects information when you use the platform.",
+  alternates: {
+    canonical: "/privacy"
+  }
+};
+
 export default function PrivacyPage() {
   const appUrl = getAppUrl();
 

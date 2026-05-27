@@ -3,6 +3,19 @@ import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { getAppUrl } from "@/lib/utils";
 
+export const metadata = {
+  title: "Pricing",
+  description: "Simple plans for rental hosts. Start with a 7-day free trial and choose monthly or discounted yearly billing.",
+  alternates: {
+    canonical: "/pricing"
+  },
+  openGraph: {
+    title: "StayNest · Pricing",
+    description: "Simple plans for rental hosts. Start with a 7-day free trial and choose monthly or discounted yearly billing.",
+    url: "/pricing"
+  }
+};
+
 const plans = [
   {
     name: "Basic",

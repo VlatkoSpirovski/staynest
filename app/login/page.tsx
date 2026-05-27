@@ -8,6 +8,14 @@ import { SubmitButton } from "@/components/submit-button";
 import { Field, inputClass, Panel } from "@/components/ui/panel";
 import { loginOwner } from "@/app/auth-actions";
 
+export const metadata = {
+  title: "Login",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
+
 type LoginPageProps = {
   searchParams?: {
     error?: string;

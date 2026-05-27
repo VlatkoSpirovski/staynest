@@ -1,6 +1,14 @@
 import { LegalPage } from "@/components/legal-page";
 import { getAppUrl, getPaymentUrl } from "@/lib/utils";
 
+export const metadata = {
+  title: "Terms of Service",
+  description: "Read the StayNest Terms of Service covering accounts, subscriptions, billing, and acceptable use.",
+  alternates: {
+    canonical: "/terms"
+  }
+};
+
 export default function TermsPage() {
   const appUrl = getAppUrl();
   const paymentUrl = getPaymentUrl();

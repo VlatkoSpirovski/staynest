@@ -4,6 +4,14 @@ import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass, Panel } from "@/components/ui/panel";
 
+export const metadata = {
+  title: "Reset password",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
+
 type ResetPasswordPageProps = {
   searchParams?: {
     token?: string;

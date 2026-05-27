@@ -9,6 +9,14 @@ import { Field, inputClass, Panel } from "@/components/ui/panel";
 import { registerOwner } from "@/app/auth-actions";
 import { normalizePlanKey, planOption } from "@/lib/billing";
 
+export const metadata = {
+  title: "Register",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
+
 const plans = {
   basic: {
     name: "Basic",

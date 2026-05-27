@@ -19,6 +19,21 @@ import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { getAppUrl } from "@/lib/utils";
 
+export const metadata = {
+  title: "Digital guest guides for Airbnb & Booking hosts",
+  description:
+    "For Airbnb hosts, Booking.com hosts and apartment hosts: create a beautiful QR guest guide with Wi‑Fi, check‑in, house rules, local recommendations and optional AI guest chat for guests. Set up in minutes.",
+  alternates: {
+    canonical: "/"
+  },
+  openGraph: {
+    title: "StayNest · Digital guest guides for Airbnb & Booking hosts",
+    description:
+      "For Airbnb hosts, Booking.com hosts and apartment hosts: create a beautiful QR guest guide with Wi‑Fi, check‑in, house rules, local recommendations and optional AI guest chat for guests. Set up in minutes.",
+    url: "/"
+  }
+};
+
 const navItems = [
   { label: "Features", href: "#features" },
   { label: "Pricing", href: "#pricing" },
