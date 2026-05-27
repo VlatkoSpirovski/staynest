@@ -1,6 +1,7 @@
 import { CreditCard, ShieldCheck } from "lucide-react";
 import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
+import { DevBillingBypass } from "@/components/dev-billing-bypass";
 import { PaddleCheckoutButton } from "@/components/paddle-checkout-button";
 import { Panel } from "@/components/ui/panel";
 import { requireReadyUser } from "@/lib/auth";
@@ -77,6 +78,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const successUrl = `${getPaymentUrl()}/billing/complete`;
   const dashboardUrl = `${getAppUrl()}/dashboard`;
   const optionsTier: PlanTier = isSwitching ? targetTier : plan.tier;
+  const isDev = process.env.NODE_ENV !== "production";
 
   return (
     <main className="grid min-h-screen place-items-center bg-mist px-5 py-10 text-ink">
@@ -161,6 +163,8 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
             plan={selectedPlan}
             successUrl={successUrl}
           />
+        ) : isDev ? (
+          <DevBillingBypass plan={selectedPlan} successUrl={successUrl} />
         ) : (
           <div className="mt-6 rounded-[8px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
             {paddleError}

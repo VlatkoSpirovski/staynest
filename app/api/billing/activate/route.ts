@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 
 /**
  * Stores the selected plan key right after client-side checkout completes.
- * The webhook remains the authoritative source for subscriptionStatus.
+ * In production, the webhook remains the authoritative source for subscriptionStatus.
  */
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -19,16 +19,23 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { plan?: string };
   const selectedPlanKey = normalizePlanKey(body.plan);
 
-  // If the webhook hasn't arrived yet, ensure the dashboard reflects the plan the user chose.
-  if (selectedPlanKey) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { selectedPlan: selectedPlanKey }
-    });
-  }
+  const isDev = process.env.NODE_ENV !== "production";
+  const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      selectedPlan: selectedPlanKey,
+      ...(isDev
+        ? {
+            subscriptionStatus: "TRIALING",
+            trialEndsAt
+          }
+        : {})
+    }
+  });
 
   return NextResponse.json({
-    status: user.subscriptionStatus,
-    ready: hasBillingAccess(user)
+    status: updatedUser.subscriptionStatus,
+    ready: hasBillingAccess(updatedUser)
   });
 }
