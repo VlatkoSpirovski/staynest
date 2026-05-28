@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { searchGeoapifyPlaces } from "@/lib/geoapify-places";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const preferredRegion = "fra1";
 
 export async function GET(request: Request) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
+  if (user.mustChangePassword) return NextResponse.json({ error: "Password change required." }, { status: 403 });
+
   const url = new URL(request.url);
   const query = url.searchParams.get("query")?.trim() || "";
   const category = url.searchParams.get("category")?.trim() || "";

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireReadyUser } from "@/lib/auth";
 import { normalizePlanKey, planOption, priceIdForPlan } from "@/lib/billing";
+import { isTrustedAppRequest } from "@/lib/request-security";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -47,6 +48,10 @@ function paddleErrorMessage(status: number, payload: PaddleErrorResponse) {
 }
 
 export async function POST(request: Request) {
+  if (!isTrustedAppRequest(request)) {
+    return NextResponse.json({ error: "Untrusted request origin" }, { status: 403 });
+  }
+
   const user = await requireReadyUser();
   const body = (await request.json().catch(() => ({}))) as CheckoutRequest;
   const planKey = normalizePlanKey(body.plan);

@@ -75,7 +75,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  const event = JSON.parse(rawBody) as PaddleWebhook;
+  let event: PaddleWebhook;
+  try {
+    event = JSON.parse(rawBody) as PaddleWebhook;
+  } catch {
+    return NextResponse.json({ error: "Invalid webhook payload" }, { status: 400 });
+  }
   const eventType = event.event_type || "";
   const data = event.data || {};
   const selectedPlanKey = data.custom_data?.planKey ? normalizePlanKey(data.custom_data.planKey) : undefined;
