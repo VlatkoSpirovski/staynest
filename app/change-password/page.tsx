@@ -4,6 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Field, inputClass, Panel } from "@/components/ui/panel";
 import { requireCurrentUser } from "@/lib/auth";
 
+export const metadata = {
+  title: "Change password",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
+
 type ChangePasswordPageProps = {
   searchParams?: {
     error?: string;

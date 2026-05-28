@@ -4,7 +4,7 @@ import { Trash2 } from "lucide-react";
 
 export function ConfirmSubmitButton({
   message = "Remove this item?",
-  children = "Remove"
+  children
 }: {
   message?: string;
   children?: React.ReactNode;
@@ -17,10 +17,12 @@ export function ConfirmSubmitButton({
           event.preventDefault();
         }
       }}
-      className="inline-flex items-center gap-2 text-sm font-semibold text-red-600"
+      aria-label={typeof children === "string" ? children : "Remove"}
+      title={typeof children === "string" ? children : "Remove"}
+      className="grid h-10 w-10 place-items-center rounded-[14px] text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200"
     >
       <Trash2 size={15} />
-      {children}
+      {children ? <span className="sr-only">{children}</span> : null}
     </button>
   );
 }

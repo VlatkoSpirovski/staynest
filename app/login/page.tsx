@@ -1,8 +1,20 @@
 import { Home } from "lucide-react";
+import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { GoogleMark } from "@/components/google-mark";
+import { InAppBrowserNotice } from "@/components/in-app-browser-notice";
+import { LoadingLink } from "@/components/loading-link";
+import { SubmitButton } from "@/components/submit-button";
 import { Field, inputClass, Panel } from "@/components/ui/panel";
 import { loginOwner } from "@/app/auth-actions";
+
+export const metadata = {
+  title: "Login",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 type LoginPageProps = {
   searchParams?: {
@@ -35,15 +47,17 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
             Password reset. You can log in now.
           </div>
         ) : null}
-        <a
+        <InAppBrowserNotice />
+        <LoadingLink
           href="/auth/google"
+          loadingText="Opening Google..."
           className="focus-ring mb-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80"
         >
           <span className="grid h-6 w-6 place-items-center rounded-full bg-white">
             <GoogleMark />
           </span>
           Continue with Google
-        </a>
+        </LoadingLink>
         <div className="mb-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-wide text-ink/45">
           <div className="h-px flex-1 bg-ink/10" />
           Or use email
@@ -57,9 +71,9 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
           <Field label="Password">
             <input name="password" className={inputClass} type="password" autoComplete="current-password" required />
           </Field>
-          <Button type="submit" className="mt-2">
+          <SubmitButton pendingText="Signing in..." className="mt-2 min-h-12 rounded-[16px] font-black">
             Continue to Dashboard
-          </Button>
+          </SubmitButton>
         </form>
         <Button href="/forgot-password" variant="ghost" className="mt-4 w-full">
           Forgot password?
@@ -70,6 +84,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
             Start a 7-day free trial.
           </a>
         </p>
+        <AppLegalLinks className="mt-6 border-t border-ink/10 pt-5" />
       </Panel>
     </main>
   );

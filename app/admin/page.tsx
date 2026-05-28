@@ -16,8 +16,16 @@ import { Button } from "@/components/ui/button";
 import { Field, inputClass, Panel, textareaClass } from "@/components/ui/panel";
 import { requireAdminUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getAppUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+export const metadata = {
+  title: "Admin",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 type AdminPageProps = {
   searchParams?: {
@@ -56,6 +64,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const admin = await requireAdminUser();
   const { users, properties } = await getAdminData();
   const owners = users.filter((user) => user.role === "OWNER");
+  const appUrl = getAppUrl();
 
   return (
     <main className="min-h-screen bg-mist text-ink">
@@ -71,7 +80,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button href="/dashboard" variant="secondary">
+            <Button href={`${appUrl}/dashboard`} variant="secondary">
               Dashboard
             </Button>
             <form action={logoutOwner}>

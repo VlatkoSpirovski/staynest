@@ -10,14 +10,16 @@ type ButtonProps = {
 };
 
 const variants = {
-  primary: "bg-ink text-white shadow-soft hover:bg-ink/90",
-  secondary: "bg-white text-ink ring-1 ring-ink/10 hover:bg-white/80",
-  ghost: "bg-transparent text-ink hover:bg-ink/5"
+  primary:
+    "bg-[#111827] text-white shadow-[0_18px_50px_rgba(17,24,39,0.26),inset_0_1px_0_rgba(255,255,255,0.12)] hover:bg-[#162033]",
+  secondary:
+    "border border-[#172234]/10 bg-white text-[#111827] shadow-[0_14px_38px_rgba(17,24,39,0.08)] hover:bg-[#F9FAFB]",
+  ghost: "bg-transparent text-[#111827] hover:bg-[#111827]/5"
 };
 
 export function Button({ children, className, href, type = "button", variant = "primary" }: ButtonProps) {
   const classes = cn(
-    "focus-ring inline-flex min-h-11 items-center justify-center rounded-full px-5 text-sm font-semibold transition",
+    "focus-ring inline-flex min-h-11 items-center justify-center rounded-[16px] px-5 text-sm font-black transition",
     variants[variant],
     className
   );

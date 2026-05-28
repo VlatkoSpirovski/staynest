@@ -46,6 +46,9 @@ model User {
   trialEndsAt        DateTime?
   subscriptionStatus String?
   paypalSubscriptionId String?
+  paddleCustomerId   String?
+  paddleSubscriptionId String?
+  paddleTransactionId String?
   properties         Property[]
   sessions           Session[]
   oauthAccounts      OAuthAccount[]
@@ -113,6 +116,9 @@ model Property {
   logoUrl         String?
   coverImageUrl   String?
   accentColor     String           @default("#4a8a8f")
+  templateId      String           @default("classic")
+  designSerif     Boolean          @default(true)
+  designRounded   Boolean          @default(true)
   welcomeMessage  String           @db.Text
   wifiName        String?
   wifiPassword    String?
@@ -125,11 +131,15 @@ model Property {
   hostPhone       String?
   hostEmail       String?
   aiKnowledge     String?          @db.Text
+  translationLocales String[]      @default(["en"])
+  translations    Json?
   guideSections   GuideSection[]
   recommendations Recommendation[]
   reviewLinks     ReviewLink[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+
+  @@index([ownerId, updatedAt])
 }
 
 model GuideSection {
@@ -139,6 +149,7 @@ model GuideSection {
   type       GuideSectionType
   title      String
   content    String           @db.Text
+  translations Json?
   sortOrder  Int              @default(0)
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
@@ -147,20 +158,38 @@ model GuideSection {
 }
 
 model Recommendation {
-  id          String   @id @default(cuid())
-  propertyId  String
-  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  title       String
-  category    String
-  description String   @db.Text
-  address     String?
-  url         String?
-  imageUrl    String?
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(cuid())
+  propertyId        String
+  property          Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  title             String
+  category          String
+  description       String   @db.Text
+  address           String?
+  url               String?
+  imageUrl          String?
+  placeId           String?
+  name              String   @default("")
+  customTitle       String?
+  customDescription String?  @db.Text
+  formattedAddress  String?
+  latitude          Float?
+  longitude         Float?
+  googleMapsUrl     String?
+  rating            Float?
+  userRatingsTotal  Int?
+  openingHours      String[] @default([])
+  website           String?
+  phoneNumber       String?
+  photoUrl          String?
+  isEssential       Boolean  @default(false)
+  isVisible         Boolean  @default(true)
+  translations      Json?
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([propertyId, sortOrder])
+  @@index([placeId])
 }
 
 model ReviewLink {

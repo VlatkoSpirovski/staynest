@@ -1,12 +1,13 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { ReviewPlatform, UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 import { passwordRulesText, validatePassword } from "@/lib/password-policy";
+import { publicGuideCacheTag } from "@/lib/public-guide-cache";
 import { createUniqueSecureSlug, hasSecureSlugSuffix } from "@/lib/secure-slug";
 import { normalizeSlug } from "@/lib/utils";
 
@@ -29,6 +30,10 @@ function validateAdminPassword(password: string) {
   if (passwordErrors.length > 0) {
     redirectWithAdminError(`Password must include ${passwordErrors.join(", ")}. ${passwordRulesText()}`);
   }
+}
+
+function revalidatePublicGuide(slug: string) {
+  revalidateTag(publicGuideCacheTag(slug));
 }
 
 export async function createUser(formData: FormData) {
@@ -167,13 +172,13 @@ export async function updateAdminProperty(formData: FormData) {
     redirectWithAdminError("Choose an existing property.");
   }
 
-  const slug =
+  let slug =
     requestedSlug && requestedSlug !== existingProperty.slug
       ? await createUniqueSecureSlug(requestedSlug, id)
       : existingProperty.slug;
 
   if (!hasSecureSlugSuffix(slug)) {
-    redirectWithAdminError("Public guide links must use a secure generated suffix. Regenerate the link before launch.");
+    slug = await createUniqueSecureSlug(name, id);
   }
 
   const property = await prisma.property.update({
@@ -201,7 +206,8 @@ export async function updateAdminProperty(formData: FormData) {
   });
 
   revalidatePath("/admin");
-  revalidatePath(`/stay/${property.slug}`);
+  revalidatePublicGuide(existingProperty.slug);
+  revalidatePublicGuide(property.slug);
   redirect("/admin");
 }
 
@@ -229,20 +235,27 @@ export async function rotateAdminPropertySlug(formData: FormData) {
   });
 
   revalidatePath("/admin");
-  revalidatePath(`/stay/${property.slug}`);
-  revalidatePath(`/stay/${slug}`);
+  revalidatePublicGuide(property.slug);
+  revalidatePublicGuide(slug);
   redirect("/admin");
 }
 
 export async function deleteAdminProperty(formData: FormData) {
   await requireAdminUser();
   const id = stringValue(formData, "id");
+  const property = id
+    ? await prisma.property.findUnique({
+        where: { id },
+        select: { slug: true }
+      })
+    : null;
 
   if (id) {
     await prisma.property.delete({ where: { id } });
   }
 
   revalidatePath("/admin");
+  if (property?.slug) revalidatePublicGuide(property.slug);
   redirect("/admin");
 }
 
@@ -294,19 +307,30 @@ export async function saveAdminRecommendation(formData: FormData) {
   }
 
   revalidatePath("/admin");
-  revalidatePath(`/stay/${property.slug}`);
+  revalidatePublicGuide(property.slug);
   redirect("/admin");
 }
 
 export async function deleteAdminRecommendation(formData: FormData) {
   await requireAdminUser();
   const id = stringValue(formData, "id");
+  const recommendation = id
+    ? await prisma.recommendation.findUnique({
+        where: { id },
+        select: {
+          property: {
+            select: { slug: true }
+          }
+        }
+      })
+    : null;
 
   if (id) {
     await prisma.recommendation.delete({ where: { id } });
   }
 
   revalidatePath("/admin");
+  if (recommendation?.property.slug) revalidatePublicGuide(recommendation.property.slug);
   redirect("/admin");
 }
 
@@ -355,6 +379,6 @@ export async function saveAdminReviewLinks(formData: FormData) {
   );
 
   revalidatePath("/admin");
-  revalidatePath(`/stay/${property.slug}`);
+  revalidatePublicGuide(property.slug);
   redirect("/admin");
 }

@@ -14,15 +14,17 @@ StayNest is a production-ready MVP SaaS for rental and villa owners. Owners crea
 
 ## MVP Features
 
-- Landing page with product positioning and €15/property/month pricing
-- Admin-provisioned owner accounts
+- Landing page with product positioning and public pricing
+- Public owner registration with 7-day trial setup
 - Email/password login with secure HTTP-only session cookies
+- Optional Google owner login
 - First-login forced password change for temporary passwords
 - Forgot/reset password structure with email reset links
 - Password hashing with Node crypto `scrypt`
-- Middleware protection for dashboard/admin routes
+- Middleware protection for billing/dashboard/admin routes
 - Role-based access: `ADMIN` and `OWNER`
 - Admin dashboard for creating/editing/deleting users and properties
+- Paddle checkout and webhook-based subscription status
 - Image upload cards for property logo, cover image and recommendation images
 - Logo URL, cover image URL, property name, slug and accent color customization
 - Wi-Fi, check-in, check-out, parking, house rules and emergency contact fields
@@ -91,14 +93,18 @@ Open:
 
 ## Account Creation
 
-Public self-registration is disabled for the MVP. A platform admin creates owner accounts from `/admin` with:
+Owners can self-register from `/register?plan=basic` or `/register?plan=ai`. New accounts start as `PENDING`, then go
+to Paddle checkout on `staynest.site/billing` to activate the 7-day trial. Dashboard access opens once Paddle marks the
+subscription `TRIALING` or `ACTIVE`.
+
+A platform admin can also create owner accounts from `/admin` with:
 
 - Name
 - Email
 - Temporary password
 - Role
 
-The owner logs in with the temporary password and must change it before dashboard access.
+Admin-created owners log in with the temporary password and must change it before dashboard access.
 
 Password rules:
 
@@ -160,7 +166,8 @@ Hosts and admins can add extra AI assistant knowledge per property. The assistan
 
 ## Social Login
 
-Google and Apple login are disabled for the MVP. The app keeps disabled route stubs that redirect back to login with a clear message.
+Google login is supported when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are configured. Apple login is still
+disabled and redirects back to login with a clear message.
 
 ## Online PostgreSQL Setup
 
@@ -174,7 +181,19 @@ Recommended production flow:
    - Keep the direct connection string available for migrations if your provider recommends that.
 3. Add these environment variables in your hosting dashboard:
    - `DATABASE_URL`
-   - `NEXT_PUBLIC_APP_URL=https://staynest.site`
+   - `NEXT_PUBLIC_SITE_URL=https://staynest.site`
+   - `NEXT_PUBLIC_APP_URL=https://dashboard.staynest.site`
+   - `NEXT_PUBLIC_ADMIN_URL=https://admin.staynest.site`
+   - `NEXT_PUBLIC_PAYMENT_URL=https://staynest.site`
+   - `SESSION_COOKIE_DOMAIN=.staynest.site`
+   - `PADDLE_ENV=production`
+   - `PADDLE_API_KEY`
+   - `PADDLE_CLIENT_TOKEN`
+   - `PADDLE_BASIC_MONTHLY_PRICE_ID` (or legacy `PADDLE_BASIC_PRICE_ID`)
+   - `PADDLE_AI_MONTHLY_PRICE_ID` (or legacy `PADDLE_AI_PRICE_ID`)
+   - `PADDLE_BASIC_YEARLY_PRICE_ID`
+   - `PADDLE_AI_YEARLY_PRICE_ID`
+   - `PADDLE_WEBHOOK_SECRET`
 4. Run Prisma migration against production from a secure terminal:
 
 ```bash
@@ -203,4 +222,7 @@ After changing production environment variables, redeploy the app so the live si
 
 ## Notes
 
-Billing is intentionally lightweight in this MVP. Stripe is not integrated yet. The product is structured so Stripe checkout, AI translation and an AI guest assistant can be added later without changing the core guest guide model.
+Paddle is the production billing provider and merchant of record. Keep `staynest.site` approved in Paddle for checkout
+and make sure the terms, privacy, refund, contact and pricing pages are publicly reachable on that domain. Set every
+Paddle price quantity minimum and maximum to `1` so checkout cannot show quantity steppers or let customers buy multiple
+subscriptions at once.

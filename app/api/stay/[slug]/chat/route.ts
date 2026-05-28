@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getGuestMessages } from "@/lib/guest-i18n";
+import { getCachedPublicGuideChatContext } from "@/lib/public-guide-cache";
 
 export const dynamic = "force-dynamic";
+export const preferredRegion = "fra1";
 
 type RouteContext = {
   params: {
@@ -18,9 +20,10 @@ function openAiModel() {
   return model && model !== "gpt-5.4-mini" ? model : "gpt-5-mini";
 }
 
-function buildPropertyContext(property: NonNullable<Awaited<ReturnType<typeof getPropertyForChat>>>) {
+function buildPropertyContext(property: NonNullable<Awaited<ReturnType<typeof getCachedPublicGuideChatContext>>>) {
   const recommendations = property.recommendations
-    .map((item) => `${item.title} (${item.category}): ${item.description}${item.address ? ` Address: ${item.address}.` : ""}${item.url ? ` Link: ${item.url}.` : ""}`)
+    .filter((item) => item.isVisible)
+    .map((item) => `${item.customTitle || item.title || item.name} (${item.category}${item.isEssential ? ", essential" : ""}): ${item.customDescription || item.description || ""}${item.formattedAddress || item.address ? ` Address: ${item.formattedAddress || item.address}.` : ""}${item.googleMapsUrl || item.url ? ` Link: ${item.googleMapsUrl || item.url}.` : ""}${item.phoneNumber ? ` Phone: ${item.phoneNumber}.` : ""}`)
     .join("\n");
 
   const guideSections = property.guideSections.map((section) => `${section.title}: ${section.content}`).join("\n");
@@ -52,17 +55,6 @@ ${reviews || "None"}
 `.trim();
 }
 
-async function getPropertyForChat(slug: string) {
-  return prisma.property.findUnique({
-    where: { slug },
-    include: {
-      guideSections: { orderBy: { sortOrder: "asc" } },
-      recommendations: { orderBy: { sortOrder: "asc" } },
-      reviewLinks: true
-    }
-  });
-}
-
 function extractResponseText(data: unknown) {
   if (!data || typeof data !== "object") return "";
   if ("output_text" in data && typeof data.output_text === "string") return data.output_text;
@@ -87,20 +79,21 @@ function extractResponseText(data: unknown) {
 export async function POST(request: Request, { params }: RouteContext) {
   const body = (await request.json().catch(() => null)) as { message?: unknown } | null;
   const message = textValue(body?.message).slice(0, 600);
+  const t = getGuestMessages();
 
   if (!message) {
-    return NextResponse.json({ answer: "Please ask a question about your stay." }, { status: 400 });
+    return NextResponse.json({ answer: t.chat.askAnything }, { status: 400 });
   }
 
-  const property = await getPropertyForChat(params.slug);
+  const property = await getCachedPublicGuideChatContext(params.slug);
   if (!property) {
-    return NextResponse.json({ answer: "I could not find this property guide." }, { status: 404 });
+    return NextResponse.json({ answer: t.chat.errorAnswer }, { status: 404 });
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({
-      answer: "The guest assistant is not configured yet. Please contact your host using the contact section."
+      answer: t.chat.errorNow
     });
   }
 
@@ -113,8 +106,9 @@ export async function POST(request: Request, { params }: RouteContext) {
     },
     body: JSON.stringify({
       model: openAiModel(),
+      max_output_tokens: 220,
       instructions:
-        "You are StayNest's guest assistant. Answer only from the provided property context. Be concise, warm, and practical. If the answer is missing, say you do not have that detail and tell the guest to contact the host. Never invent codes, prices, policies, addresses, or emergency instructions.",
+        "You are StayNest's guest assistant. Answer only from the provided property context. Reply in English. Be concise, warm, and practical. If the answer is missing, say you do not have that detail and tell the guest to contact the host. Never invent codes, prices, policies, addresses, or emergency instructions.",
       input: [
         {
           role: "user",
@@ -126,12 +120,12 @@ export async function POST(request: Request, { params }: RouteContext) {
 
   if (!response.ok) {
     return NextResponse.json({
-      answer: "I could not answer right now. Please contact your host using the contact section."
+      answer: t.chat.errorNow
     });
   }
 
   const data = await response.json();
-  const answer = extractResponseText(data) || "I do not have that detail. Please contact your host using the contact section.";
+  const answer = extractResponseText(data) || t.chat.errorAnswer;
 
   return NextResponse.json({ answer });
 }

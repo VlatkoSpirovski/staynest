@@ -1,6 +1,15 @@
 import { MailCheck } from "lucide-react";
+import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
+
+export const metadata = {
+  title: "Check your email",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 type CheckEmailPageProps = {
   searchParams?: {
@@ -29,6 +38,7 @@ export default function CheckEmailPage({ searchParams }: CheckEmailPageProps) {
         <p className="mt-5 text-xs leading-5 text-ink/50">
           In local development without SMTP credentials, the confirmation link is printed in the dev server terminal.
         </p>
+        <AppLegalLinks className="mt-6 border-t border-ink/10 pt-5" />
       </Panel>
     </main>
   );

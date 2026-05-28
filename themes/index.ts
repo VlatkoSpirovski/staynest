@@ -1,0 +1,102 @@
+import { classicTheme } from "./classic";
+import { darkLuxuryTheme } from "./darkLuxury";
+import { mediterraneanTheme } from "./mediterranean";
+import { modernTheme } from "./modern";
+import type { GuideTheme, GuideThemeId, GuideThemeOptions } from "./types";
+
+export type { GuideTheme, GuideThemeId, GuideThemeOptions } from "./types";
+
+export const guideThemes: GuideTheme[] = [classicTheme, modernTheme, darkLuxuryTheme, mediterraneanTheme];
+
+export function isGuideThemeId(value: unknown): value is GuideThemeId {
+  return typeof value === "string" && guideThemes.some((theme) => theme.id === value);
+}
+
+export function getGuideTheme(value: unknown): GuideTheme {
+  return guideThemes.find((theme) => theme.id === value) || classicTheme;
+}
+
+export function curatedAccentForTheme(theme: GuideTheme, accentColor?: string | null) {
+  return accentColor && theme.accentOptions.includes(accentColor) ? accentColor : theme.defaults.accentColor;
+}
+
+export function guideThemeStyle(themeOrId: GuideTheme | GuideThemeId | string | null | undefined, options: GuideThemeOptions = {}) {
+  const theme = typeof themeOrId === "object" && themeOrId ? themeOrId : getGuideTheme(themeOrId);
+  const accent = curatedAccentForTheme(theme, options.accentColor);
+  const rounded = options.designRounded ?? theme.defaults.roundedCards;
+  const serif = options.designSerif ?? theme.defaults.serifHeading;
+  const headingFont = serif ? theme.css.headingFont : theme.css.bodyFont;
+  const chatSurfaceByLayout = {
+    classic: {
+      surface: "linear-gradient(145deg, #FFFBF4 0%, #F6EADA 100%)",
+      elevated: "#FFFFFF",
+      border: "rgba(76,55,37,0.14)",
+      shadow: "0 28px 78px rgba(76,55,37,0.26)"
+    },
+    modern: {
+      surface: "linear-gradient(180deg, #FFFFFF 0%, #F7F9FC 100%)",
+      elevated: "#FFFFFF",
+      border: "rgba(17,24,39,0.10)",
+      shadow: "0 28px 78px rgba(17,24,39,0.20)"
+    },
+    darkLuxury: {
+      surface: "linear-gradient(145deg, #111B24 0%, #070B10 100%)",
+      elevated: "rgba(22,33,43,0.98)",
+      border: "rgba(214,175,111,0.32)",
+      shadow: "0 30px 92px rgba(0,0,0,0.66), 0 0 42px rgba(214,175,111,0.10)"
+    },
+    mediterranean: {
+      surface: "linear-gradient(145deg, #FFFFFF 0%, #F1FAF8 100%)",
+      elevated: "#FFFFFF",
+      border: "rgba(64,99,112,0.16)",
+      shadow: "0 28px 78px rgba(64,99,112,0.24)"
+    }
+  }[theme.layout];
+
+  return {
+    "--accent": accent,
+    "--guide-accent": accent,
+    "--guide-app-bg": theme.css.appBackground,
+    "--guide-shell-bg": theme.css.shellBackground,
+    "--guide-hero-fallback": theme.css.heroFallback,
+    "--guide-hero-overlay": theme.css.heroOverlay,
+    "--guide-text": theme.css.text,
+    "--guide-muted": theme.css.muted,
+    "--guide-card-bg": theme.css.cardBackground,
+    "--guide-card-border": theme.css.cardBorder,
+    "--guide-elevated-bg": theme.css.elevatedBackground,
+    "--guide-icon-bg": theme.css.iconBackground,
+    "--guide-accent-soft": theme.css.accentSoft,
+    "--guide-card-inset-shadow": theme.css.cardInsetShadow,
+    "--guide-card-hover-shadow": theme.css.cardHoverShadow,
+    "--guide-card-backdrop": theme.css.cardBackdrop,
+    "--guide-hero-image-filter": theme.css.heroImageFilter,
+    "--guide-button-bg": theme.css.buttonBackground,
+    "--guide-button-text": theme.css.buttonText,
+    "--guide-chat-bg": chatSurfaceByLayout.surface,
+    "--guide-chat-elevated-bg": chatSurfaceByLayout.elevated,
+    "--guide-chat-border": chatSurfaceByLayout.border,
+    "--guide-chat-shadow": chatSurfaceByLayout.shadow,
+    "--guide-heading-font": headingFont,
+    "--guide-body-font": theme.css.bodyFont,
+    "--guide-hero-text": theme.css.heroTextColor,
+    "--guide-language-bg": theme.css.languageBackground,
+    "--guide-language-text": theme.css.languageText,
+    "--guide-language-icon-bg": theme.layout === "darkLuxury" ? "rgba(214,175,111,0.14)" : "#FFFFFF",
+    "--guide-language-icon-text": theme.layout === "darkLuxury" ? accent : theme.css.text,
+    "--guide-hero-height": theme.css.heroHeight,
+    "--guide-hero-radius": theme.css.heroRadius,
+    "--guide-menu-gap": theme.css.menuGap,
+    "--guide-menu-padding": theme.css.menuPadding,
+    "--guide-card-min-height": theme.css.cardMinHeight,
+    "--guide-card-padding": theme.css.cardPadding,
+    "--guide-icon-radius": theme.css.iconRadius,
+    "--guide-icon-shadow": theme.css.iconShadow,
+    "--guide-section-divider": theme.css.sectionDivider,
+    "--guide-card-radius": rounded ? theme.css.radiusCard : "14px",
+    "--guide-shell-radius": rounded ? theme.css.radiusShell : "20px",
+    "--guide-button-radius": rounded ? theme.css.radiusButton : "14px",
+    "--guide-card-shadow": theme.css.shadowCard,
+    "--guide-shell-shadow": theme.css.shadowShell
+  };
+}

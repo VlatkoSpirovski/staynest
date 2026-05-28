@@ -1,7 +1,16 @@
 import { Mail } from "lucide-react";
 import { requestPasswordReset } from "@/app/auth-actions";
+import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass, Panel } from "@/components/ui/panel";
+
+export const metadata = {
+  title: "Forgot password",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 type ForgotPasswordPageProps = {
   searchParams?: {
@@ -45,6 +54,7 @@ export default function ForgotPasswordPage({ searchParams }: ForgotPasswordPageP
         <Button href="/login" variant="ghost" className="mt-4 w-full">
           Back to login
         </Button>
+        <AppLegalLinks className="mt-6 border-t border-ink/10 pt-5" />
       </Panel>
     </main>
   );

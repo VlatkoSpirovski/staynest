@@ -9,13 +9,15 @@ export function SubmitButton({
   pendingText = "Saving...",
   variant = "primary",
   className,
-  form
+  form,
+  disabled = false
 }: {
   children: React.ReactNode;
   pendingText?: string;
   variant?: "primary" | "secondary";
   className?: string;
   form?: string;
+  disabled?: boolean;
 }) {
   const { pending } = useFormStatus();
   const variantClass =
@@ -27,7 +29,7 @@ export function SubmitButton({
     <button
       type="submit"
       form={form}
-      disabled={pending}
+      disabled={pending || disabled}
       className={cn(
         "focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
         variantClass,
