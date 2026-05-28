@@ -4,7 +4,6 @@ import { randomBytes, createHash } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getAppUrl } from "@/lib/utils";
 
 const sessionCookieName = "staynest_session";
 const sessionTtlDays = 30;
@@ -19,6 +18,11 @@ export function hashToken(token: string) {
 
 export function getSessionCookieName() {
   return sessionCookieName;
+}
+
+export function getCurrentSessionTokenHash() {
+  const token = cookies().get(sessionCookieName)?.value;
+  return token ? hashToken(token) : null;
 }
 
 export async function createSession(userId: string) {
@@ -44,11 +48,11 @@ export async function createSession(userId: string) {
 }
 
 export async function destroySession() {
-  const token = cookies().get(sessionCookieName)?.value;
-  if (token) {
+  const tokenHash = getCurrentSessionTokenHash();
+  if (tokenHash) {
     await prisma.session.deleteMany({
       where: {
-        tokenHash: hashToken(token)
+        tokenHash
       }
     });
   }
@@ -60,6 +64,22 @@ export async function destroySession() {
     domain: sessionCookieDomain(),
     path: "/",
     expires: new Date(0)
+  });
+}
+
+export async function destroyOtherSessions(userId: string) {
+  const currentTokenHash = getCurrentSessionTokenHash();
+  await prisma.session.deleteMany({
+    where: {
+      userId,
+      ...(currentTokenHash ? { tokenHash: { not: currentTokenHash } } : {})
+    }
+  });
+}
+
+export async function destroyAllUserSessions(userId: string) {
+  await prisma.session.deleteMany({
+    where: { userId }
   });
 }
 
@@ -105,7 +125,7 @@ export async function requireReadyUser() {
 export async function requireAdminUser() {
   const user = await requireReadyUser();
   if (user.role !== "ADMIN") {
-    redirect(`${getAppUrl()}/dashboard`);
+    redirect("/dashboard");
   }
 
   return user;

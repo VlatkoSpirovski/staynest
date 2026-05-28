@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { ReviewPlatform, UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireAdminUser } from "@/lib/auth";
+import { destroyAllUserSessions, requireAdminUser } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 import { passwordRulesText, validatePassword } from "@/lib/password-policy";
 import { publicGuideCacheTag } from "@/lib/public-guide-cache";
@@ -96,6 +96,10 @@ export async function updateUser(formData: FormData) {
     where: { id },
     data
   });
+
+  if (temporaryPassword) {
+    await destroyAllUserSessions(id);
+  }
 
   revalidatePath("/admin");
   revalidatePath("/dashboard");

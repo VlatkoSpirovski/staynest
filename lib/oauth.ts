@@ -193,6 +193,10 @@ export async function getAppleProfile(code: string, rawUser?: string | null): Pr
 }
 
 export async function signInWithOAuthProfile(profile: OAuthProfile) {
+  if (!profile.emailVerified) {
+    throw new Error("Your OAuth provider did not verify this email address.");
+  }
+
   const selectedPlan = consumeOAuthPlan();
   const existingAccount = await prisma.oAuthAccount.findUnique({
     where: {

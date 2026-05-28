@@ -3,7 +3,7 @@
 import { randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { createSession, destroySession, hashToken, requireCurrentUser } from "@/lib/auth";
+import { createSession, destroyAllUserSessions, destroyOtherSessions, destroySession, hashToken, requireCurrentUser } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { passwordRulesText, validatePassword } from "@/lib/password-policy";
@@ -25,22 +25,8 @@ function redirectWithError(path: string, message: string): never {
 }
 
 function safeRedirectTarget(value: string) {
-  if (value.startsWith("/")) return value;
-
-  try {
-    const url = new URL(value);
-    const allowedHosts = new Set([
-      "staynest.site",
-      "www.staynest.site",
-      "dashboard.staynest.site",
-      "admin.staynest.site",
-      "localhost",
-      "127.0.0.1"
-    ]);
-    return allowedHosts.has(url.hostname) ? url.toString() : "/dashboard";
-  } catch {
-    return "/dashboard";
-  }
+  if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/dashboard";
+  return value;
 }
 
 export async function registerOwner(formData: FormData) {
@@ -130,6 +116,8 @@ export async function changePassword(formData: FormData) {
     }
   });
 
+  await destroyOtherSessions(user.id);
+
   redirect("/dashboard");
 }
 
@@ -208,6 +196,7 @@ export async function resetPassword(formData: FormData) {
     }
   });
 
+  await destroyAllUserSessions(resetToken.userId);
   await prisma.passwordResetToken.deleteMany({ where: { userId: resetToken.userId } });
   redirect("/login?reset=1");
 }
