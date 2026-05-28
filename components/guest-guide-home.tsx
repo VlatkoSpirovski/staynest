@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Home, KeyRound, Map, Phone, Pill, ShieldAlert, Star, Utensils, Wifi } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { GuestLanguageMenu, GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
+import { GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
 import { GuestChatLauncher } from "@/components/guest-chat-launcher";
 import { MenuLink, PoweredByStayNest } from "@/app/stay/[slug]/guide-ui";
 import { GuestGuideSectionContent, type GuestGuideSectionProperty } from "@/components/guest-guide-section";
@@ -156,7 +156,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
     return (
       <main className="min-h-screen text-[var(--guide-text)]" style={{ ...themeStyle, background: "var(--guide-app-bg)" }}>
         <div className="mx-auto min-h-screen max-w-[430px] shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)", fontFamily: "var(--guide-body-font)" }}>
-          <header className="flex items-center justify-between gap-3 border-b border-[var(--guide-section-divider)] px-5 py-5">
+          <header className="flex items-center gap-3 border-b border-[var(--guide-section-divider)] px-5 py-5">
             <div className="flex min-w-0 items-center gap-3">
               <LogoMark soft />
               <div className="min-w-0">
@@ -164,7 +164,6 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
                 <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--guide-muted)]">{t.yourStaySimplified}</p>
               </div>
             </div>
-            <GuestLanguageMenu />
           </header>
 
           <section className="px-5 pb-4 pt-6">
@@ -191,9 +190,8 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
     return (
       <main className="min-h-screen text-[var(--guide-text)]" style={{ ...themeStyle, background: "var(--guide-app-bg)" }}>
         <div className="mx-auto min-h-screen max-w-[430px] px-4 py-4 shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)", fontFamily: "var(--guide-body-font)" }}>
-          <header className="mb-4 flex items-center justify-between gap-3 px-1">
+          <header className="mb-4 flex items-center gap-3 px-1">
             <LogoMark soft />
-            <GuestLanguageMenu />
           </header>
 
           <section className="relative overflow-hidden rounded-[var(--guide-hero-radius)] text-[var(--guide-hero-text)] shadow-[0_24px_70px_rgba(64,99,112,0.18)]">
@@ -223,7 +221,6 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
             <div className="relative flex min-h-[var(--guide-hero-height)] flex-col justify-between px-5 py-6">
               <div className="flex items-start justify-between gap-3">
                 <LogoMark />
-                <GuestLanguageMenu />
               </div>
               <div className="pb-3">
                 <p className="text-[11px] font-black uppercase tracking-[0.34em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
@@ -248,7 +245,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
         <section className="relative min-h-[var(--guide-hero-height)] overflow-hidden rounded-[var(--guide-hero-radius)] text-white shadow-[0_26px_74px_rgba(76,55,37,0.20)]">
           <HeroImage className="absolute inset-0" />
           <div className="relative flex min-h-[var(--guide-hero-height)] flex-col justify-between px-5 py-6">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <LogoMark />
                 <div className="min-w-0">
@@ -256,7 +253,6 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
                   <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.32em] text-white/80">{t.yourStaySimplified}</p>
                 </div>
               </div>
-              <GuestLanguageMenu />
             </div>
 
             <div className="pb-3">
