@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { hasBillingAccess, normalizePlanKey } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
+import { isTrustedAppRequest } from "@/lib/request-security";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -11,9 +12,16 @@ export const runtime = "nodejs";
  * In production, the webhook remains the authoritative source for subscriptionStatus.
  */
 export async function POST(request: Request) {
+  if (!isTrustedAppRequest(request)) {
+    return NextResponse.json({ error: "Untrusted request origin" }, { status: 403 });
+  }
+
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+  if (user.mustChangePassword) {
+    return NextResponse.json({ error: "Password change required" }, { status: 403 });
   }
 
   const body = (await request.json().catch(() => ({}))) as { plan?: string };
