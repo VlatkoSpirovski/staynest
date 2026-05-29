@@ -80,6 +80,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button href="/admin/preview-analytics" variant="secondary">
+              Preview analytics
+            </Button>
             <Button href={`${appUrl}/dashboard`} variant="secondary">
               Dashboard
             </Button>

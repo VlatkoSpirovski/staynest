@@ -78,19 +78,19 @@ function whatsappUrl(phone: string | null | undefined, propertyName: string, tem
   return `https://wa.me/${phone.replace(/[^\d+]/g, "").replace(/^\+/, "")}?text=${text}`;
 }
 
-export function GuestGuideSection({ property, section }: { property: GuestGuideSectionProperty; section: string }) {
+export function GuestGuideSection({ property, section, basePath }: { property: GuestGuideSectionProperty; section: string; basePath?: string }) {
   return (
     <GuestLanguageProvider>
-      <GuestGuideSectionContent property={property} section={section} />
+      <GuestGuideSectionContent property={property} section={section} basePath={basePath} />
     </GuestLanguageProvider>
   );
 }
 
-export function GuestGuideSectionContent({ property, section, onBack }: { property: GuestGuideSectionProperty; section: string; onBack?: () => void }) {
+export function GuestGuideSectionContent({ property, section, onBack, basePath }: { property: GuestGuideSectionProperty; section: string; onBack?: () => void; basePath?: string }) {
   const { t } = useGuestLanguage();
   const router = useRouter();
   const meta = t.sections[section as keyof typeof t.sections];
-  const backHref = `/stay/${property.slug}`;
+  const backHref = basePath || `/stay/${property.slug}`;
 
   useEffect(() => {
     router.prefetch(backHref);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireReadyUser } from "@/lib/auth";
 import { getPaymentUrl } from "@/lib/utils";
+import { isTrustedAppRequest } from "@/lib/request-security";
 
 function paypalBaseUrl() {
   return process.env.PAYPAL_ENV === "live" ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com";
@@ -12,6 +13,10 @@ function planIdFor(plan: string) {
 }
 
 export async function GET(request: Request) {
+  if (!isTrustedAppRequest(request)) {
+    return NextResponse.json({ error: "Untrusted request origin" }, { status: 403 });
+  }
+
   const user = await requireReadyUser();
   const plan = new URL(request.url).searchParams.get("plan") === "ai" ? "ai" : "basic";
   const clientId = process.env.PAYPAL_CLIENT_ID;

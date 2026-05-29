@@ -58,7 +58,7 @@ export function middleware(request: NextRequest) {
   const hasSession = Boolean(request.cookies.get("staynest_session")?.value);
   if (!hasSession) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", request.nextUrl.toString());
+    loginUrl.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
 

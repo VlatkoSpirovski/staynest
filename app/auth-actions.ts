@@ -3,12 +3,13 @@
 import { randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { createSession, destroySession, hashToken, requireCurrentUser } from "@/lib/auth";
+import { createSession, destroyAllUserSessions, destroyOtherSessions, destroySession, hashToken, requireCurrentUser } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { passwordRulesText, validatePassword } from "@/lib/password-policy";
 import { billingUrl, normalizePlanKey } from "@/lib/billing";
 import { getAppUrl } from "@/lib/utils";
+import { claimPropertyPreview } from "@/lib/property-preview";
 
 function stringValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -25,22 +26,8 @@ function redirectWithError(path: string, message: string): never {
 }
 
 function safeRedirectTarget(value: string) {
-  if (value.startsWith("/")) return value;
-
-  try {
-    const url = new URL(value);
-    const allowedHosts = new Set([
-      "staynest.site",
-      "www.staynest.site",
-      "dashboard.staynest.site",
-      "admin.staynest.site",
-      "localhost",
-      "127.0.0.1"
-    ]);
-    return allowedHosts.has(url.hostname) ? url.toString() : "/dashboard";
-  } catch {
-    return "/dashboard";
-  }
+  if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/dashboard";
+  return value;
 }
 
 export async function registerOwner(formData: FormData) {
@@ -49,7 +36,12 @@ export async function registerOwner(formData: FormData) {
   const password = stringValue(formData, "password");
   const confirmPassword = stringValue(formData, "confirmPassword");
   const planKey = normalizePlanKey(stringValue(formData, "plan"));
-  const registerPath = `/register?plan=${encodeURIComponent(planKey)}`;
+  const previewToken = stringValue(formData, "previewToken");
+  
+  const queryParams = new URLSearchParams({ plan: planKey });
+  if (previewToken) queryParams.set("previewToken", previewToken);
+  
+  const registerPath = `/register?${queryParams.toString()}`;
 
   if (!name || !email || !password) {
     redirectWithError(registerPath, "Please complete every required field.");
@@ -81,6 +73,14 @@ export async function registerOwner(formData: FormData) {
   });
 
   await createSession(user.id);
+  
+  if (previewToken) {
+    const claimedProperty = await claimPropertyPreview(previewToken, user.id);
+    if (claimedProperty) {
+      redirect("/dashboard?preview=claimed");
+    }
+  }
+
   redirect(billingUrl(planKey));
 }
 
@@ -129,6 +129,8 @@ export async function changePassword(formData: FormData) {
       mustChangePassword: false
     }
   });
+
+  await destroyOtherSessions(user.id);
 
   redirect("/dashboard");
 }
@@ -208,6 +210,7 @@ export async function resetPassword(formData: FormData) {
     }
   });
 
+  await destroyAllUserSessions(resetToken.userId);
   await prisma.passwordResetToken.deleteMany({ where: { userId: resetToken.userId } });
   redirect("/login?reset=1");
 }

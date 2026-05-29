@@ -203,3 +203,45 @@ model ReviewLink {
 
   @@unique([propertyId, platform])
 }
+
+model PropertyPreview {
+  id              String   @id @default(cuid())
+  token           String   @unique
+  listingUrl      String?
+
+  name            String?
+  description     String?          @db.Text
+  welcomeMessage  String?          @db.Text
+  coverImageUrl   String?
+  checkInInfo     String?          @db.Text
+  checkOutInfo    String?          @db.Text
+  parkingInfo     String?          @db.Text
+  houseRules      String?          @db.Text
+  facilities      String?          @db.Text
+  emergencyInfo   String?          @db.Text
+  hostContactName String?
+  aiKnowledge     String?          @db.Text
+  locationInfo    String?          @db.Text
+  recommendationsDraft String?     @db.Text
+  essentialsDraft String?          @db.Text
+
+  expiresAt       DateTime
+  claimedPropertyId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@index([claimedPropertyId])
+}
+
+model PreviewAnalyticsEvent {
+  id           String   @id @default(cuid())
+  eventName    String
+  previewToken String?
+  propertyId   String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  @@index([eventName, createdAt])
+  @@index([previewToken, createdAt])
+}

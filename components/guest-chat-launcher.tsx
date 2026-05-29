@@ -11,7 +11,7 @@ const GuestChat = dynamic(() => import("@/components/guest-chat").then((mod) => 
   ssr: false
 });
 
-export function GuestChatLauncher({ slug, propertyName, context }: { slug: string; propertyName: string; context?: GuestChatContext }) {
+export function GuestChatLauncher({ slug, propertyName, context, chatApiUrl }: { slug: string; propertyName: string; context?: GuestChatContext; chatApiUrl?: string }) {
   const { t } = useGuestLanguage();
   const [started, setStarted] = useState(false);
   const askLabel = useMemo(
@@ -20,7 +20,7 @@ export function GuestChatLauncher({ slug, propertyName, context }: { slug: strin
   );
 
   if (started) {
-    return <GuestChat slug={slug} propertyName={propertyName} context={context} initialOpen />;
+    return <GuestChat slug={slug} propertyName={propertyName} context={context} chatApiUrl={chatApiUrl} initialOpen />;
   }
 
   return (

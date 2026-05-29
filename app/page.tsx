@@ -7,7 +7,10 @@ import {
   Home,
   Import,
   KeyRound,
+  LayoutGrid,
+  Link2,
   Menu,
+  Palette,
   MessageCircle,
   QrCode,
   Sparkles,
@@ -17,6 +20,7 @@ import {
 
 import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
+import { PreviewForm } from "@/components/preview-form";
 import { getAppUrl } from "@/lib/utils";
 
 export const metadata = {
@@ -65,6 +69,51 @@ const steps = [
     title: "Let AI help guests",
     text: "Guests ask questions 24/7 and get answers trained only on your property.",
     icon: Bot
+  }
+];
+
+const hostDashboardPanels = [
+  {
+    label: "Smart prefill",
+    title: "Import from Booking or Airbnb",
+    text: "Paste a listing link. StayNest pulls the public details it can read.",
+    icon: Import
+  },
+  {
+    label: "Modules",
+    title: "Wi-Fi, rules and check-in",
+    text: "Turn on essentials and add more modules whenever you need them.",
+    icon: LayoutGrid
+  },
+  {
+    label: "Design",
+    title: "Choose your guide style",
+    text: "Preview the mobile guest guide and match it to your property.",
+    icon: Palette
+  },
+  {
+    label: "QR code",
+    title: "Ready to share",
+    text: "Copy the guest link, download the QR, or open the live preview.",
+    icon: QrCode
+  }
+];
+
+const hostDashboardHighlights = [
+  {
+    title: "Import from Booking or Airbnb",
+    text: "Save hours of manual work.",
+    icon: Link2
+  },
+  {
+    title: "All modules in one place",
+    text: "Wi-Fi, rules, tips, reviews and more.",
+    icon: LayoutGrid
+  },
+  {
+    title: "One QR code, always live",
+    text: "Update anytime. Guests always see it.",
+    icon: QrCode
   }
 ];
 
@@ -133,6 +182,83 @@ function Logo() {
       <img src="/staynest-logo.png" alt="StayNest" className="h-12 w-12 object-contain drop-shadow-sm sm:h-14 sm:w-14" />
       <span className="hidden text-lg font-semibold tracking-tight text-[#172033] sm:inline">StayNest</span>
     </a>
+  );
+}
+
+function HostDashboardShowcase() {
+  return (
+    <div className="mx-auto mt-16 max-w-5xl lg:mt-20">
+      <div className="hidden md:block">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/landing-dashboard-for-hosts.png"
+          alt="StayNest host dashboard: import listings, manage guide modules, customize design, and share with QR"
+          className="h-auto w-full"
+          width={1024}
+          height={576}
+          loading="lazy"
+        />
+      </div>
+
+      <div className="md:hidden">
+        <div className="text-center">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Built for hosts</p>
+          <h3 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033]">Everything you need in one dashboard</h3>
+          <p className="mx-auto mt-4 max-w-md text-sm font-medium leading-7 text-[#172033]/56">
+            Manage your guide, content and AI concierge from one simple dashboard.
+          </p>
+        </div>
+
+        {/* Horizontal screenshot carousel */}
+        <div className="-mx-5 mt-10 overflow-x-auto px-5 pb-4 scrollbar-hide" style={{ WebkitOverflowScrolling: "touch" }}>
+          <div className="flex gap-4" style={{ width: "max-content" }}>
+            {[
+              { src: "/landing-mobile-modules.png", label: "Modules", caption: "Build your guide fast" },
+              { src: "/landing-mobile-settings.png", label: "Settings", caption: "Share link and QR code" },
+              { src: "/landing-mobile-ai.png", label: "AI Chat", caption: "Train your AI assistant" }
+            ].map((screen) => (
+              <div key={screen.label} className="w-[220px] shrink-0 sm:w-[260px]">
+                <div className="overflow-hidden rounded-[24px] border border-[#172033]/10 bg-[#172033] p-[5px] shadow-[0_20px_60px_rgba(23,32,51,0.18)]">
+                  <div className="overflow-hidden rounded-[20px]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={screen.src}
+                      alt={`StayNest host app – ${screen.caption}`}
+                      className="block h-auto w-full"
+                      width={520}
+                      height={1000}
+                      loading="lazy"
+                      style={{ imageRendering: "auto" }}
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#6F9287]">{screen.label}</p>
+                  <p className="mt-1 text-sm font-semibold text-[#172033]">{screen.caption}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-10 space-y-7 border-t border-[#D8D1C4]/45 pt-10">
+          {hostDashboardHighlights.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div key={item.title} className="flex items-start gap-4">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[15px] border border-[#C9D8D2] bg-[#F1F5F1] text-[#6F9287]">
+                  <Icon size={20} />
+                </div>
+                <div>
+                  <h4 className="text-base font-semibold text-[#172033]">{item.title}</h4>
+                  <p className="mt-1.5 text-sm font-medium leading-6 text-[#172033]/56">{item.text}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -261,8 +387,8 @@ export default function LandingPage() {
             <p className="inline-flex rounded-full border border-[#C9D8D2] bg-white/82 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6F9287] shadow-[0_10px_26px_rgba(23,32,51,0.035)]">
               Built for modern hosts
             </p>
-            <h1 className="mt-6 max-w-4xl font-serif text-[3rem] font-semibold leading-[1.02] tracking-tight text-[#172033] sm:text-6xl lg:text-[4.7rem]">
-              A mobile concierge for <span className="text-[#6F9287]">every guest</span>
+            <h1 className="mt-6 max-w-4xl font-serif text-[3rem] font-semibold leading-[1.02] tracking-tight text-[#172033] sm:text-5xl lg:text-[4rem]">
+              Digital Guest Guide & AI Concierge for <span className="text-[#6F9287]">Airbnb</span>,<span className="text-[#6F9287]"> Booking.com </span>and vacation rentals.
             </h1>
             <p className="mt-6 max-w-2xl text-base font-medium leading-8 text-[#172033]/62 sm:text-lg sm:leading-9">
               Give guests a beautiful QR guide with arrival details, Wi-Fi, house rules, local tips, reviews and an AI chat trained only on your property.
@@ -287,6 +413,8 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
+
+            <PreviewForm />
           </div>
 
           <PhoneMockup />
@@ -337,6 +465,8 @@ export default function LandingPage() {
               );
             })}
           </div>
+
+          <HostDashboardShowcase />
         </div>
       </section>
 
