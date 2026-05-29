@@ -9,6 +9,7 @@ import { hashPassword, verifyPassword } from "@/lib/password";
 import { passwordRulesText, validatePassword } from "@/lib/password-policy";
 import { billingUrl, normalizePlanKey } from "@/lib/billing";
 import { getAppUrl } from "@/lib/utils";
+import { claimPropertyPreview } from "@/lib/property-preview";
 
 function stringValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -35,7 +36,12 @@ export async function registerOwner(formData: FormData) {
   const password = stringValue(formData, "password");
   const confirmPassword = stringValue(formData, "confirmPassword");
   const planKey = normalizePlanKey(stringValue(formData, "plan"));
-  const registerPath = `/register?plan=${encodeURIComponent(planKey)}`;
+  const previewToken = stringValue(formData, "previewToken");
+  
+  const queryParams = new URLSearchParams({ plan: planKey });
+  if (previewToken) queryParams.set("previewToken", previewToken);
+  
+  const registerPath = `/register?${queryParams.toString()}`;
 
   if (!name || !email || !password) {
     redirectWithError(registerPath, "Please complete every required field.");
@@ -67,6 +73,14 @@ export async function registerOwner(formData: FormData) {
   });
 
   await createSession(user.id);
+  
+  if (previewToken) {
+    const claimedProperty = await claimPropertyPreview(previewToken, user.id);
+    if (claimedProperty) {
+      redirect("/dashboard?preview=claimed");
+    }
+  }
+
   redirect(billingUrl(planKey));
 }
 

@@ -160,7 +160,7 @@ function localAnswer(message: string, propertyName: string, context?: GuestChatC
   return "";
 }
 
-export function GuestChat({ slug, propertyName, context, initialOpen = false }: { slug: string; propertyName: string; context?: GuestChatContext; initialOpen?: boolean }) {
+export function GuestChat({ slug, propertyName, context, chatApiUrl, initialOpen = false }: { slug: string; propertyName: string; context?: GuestChatContext; chatApiUrl?: string; initialOpen?: boolean }) {
   const { t } = useGuestLanguage();
   const botLabel = useMemo(() => t.chat.propertyBot(propertyName.trim() || "house"), [propertyName, t]);
   const askLabel = propertyName.trim() ? t.chat.askProperty(propertyName.trim()) : t.chat.askYourHost;
@@ -197,7 +197,7 @@ export function GuestChat({ slug, propertyName, context, initialOpen = false }: 
 
     startTransition(async () => {
       try {
-        const response = await fetch(`/api/stay/${slug}/chat`, {
+        const response = await fetch(chatApiUrl || `/api/stay/${slug}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: trimmed })

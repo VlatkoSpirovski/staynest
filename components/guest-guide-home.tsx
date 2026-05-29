@@ -21,19 +21,19 @@ type GuestProperty = GuestGuideSectionProperty & {
   designRounded: boolean;
 };
 
-export function GuestGuideHome({ property }: { property: GuestProperty }) {
+export function GuestGuideHome({ property, basePath }: { property: GuestProperty; basePath?: string }) {
   return (
     <GuestLanguageProvider>
-      <GuestGuideHomeContent property={property} />
+      <GuestGuideHomeContent property={property} basePath={basePath} />
     </GuestLanguageProvider>
   );
 }
 
-function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
+function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty; basePath?: string }) {
   const { t } = useGuestLanguage();
   const router = useRouter();
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
-  const baseHref = `/stay/${property.slug}`;
+  const baseHref = basePath || `/stay/${property.slug}`;
   const theme = getGuideTheme(property.templateId);
   const layout = theme.layout;
   const themeStyle = guideThemeStyle(theme, {
@@ -180,7 +180,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
 
           <MenuGrid />
           <Footer />
-          <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} />
+          <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} chatApiUrl={basePath ? `/api/preview/${property.slug}/chat` : undefined} />
         </div>
       </main>
     );
@@ -205,7 +205,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
 
           <MenuGrid />
           <Footer />
-          <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} />
+          <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} chatApiUrl={basePath ? `/api/preview/${property.slug}/chat` : undefined} />
         </div>
       </main>
     );
@@ -232,7 +232,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
 
           <MenuGrid />
           <Footer />
-          <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} />
+          <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} chatApiUrl={basePath ? `/api/preview/${property.slug}/chat` : undefined} />
         </div>
       </main>
     );
@@ -268,7 +268,7 @@ function GuestGuideHomeContent({ property }: { property: GuestProperty }) {
 
         <Footer />
 
-        <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} />
+        <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} chatApiUrl={basePath ? `/api/preview/${property.slug}/chat` : undefined} />
       </div>
     </main>
   );

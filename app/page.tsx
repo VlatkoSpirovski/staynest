@@ -20,6 +20,7 @@ import {
 
 import { AppLegalLinks } from "@/components/app-legal-links";
 import { Button } from "@/components/ui/button";
+import { PreviewForm } from "@/components/preview-form";
 import { getAppUrl } from "@/lib/utils";
 
 export const metadata = {
@@ -412,6 +413,8 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
+
+            <PreviewForm />
           </div>
 
           <PhoneMockup />

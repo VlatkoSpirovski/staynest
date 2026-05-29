@@ -36,11 +36,13 @@ type RegisterPageProps = {
   searchParams?: {
     plan?: string;
     error?: string;
+    previewToken?: string;
   };
 };
 
 export default function RegisterPage({ searchParams }: RegisterPageProps) {
   const selectedPlan = normalizePlanKey(searchParams?.plan);
+  const previewToken = searchParams?.previewToken;
   const selectedOption = planOption(selectedPlan);
   const selectedTier = selectedOption.tier;
   const plan = plans[selectedTier];
@@ -70,7 +72,7 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
           </div>
 
           <LoadingLink
-            href={`/auth/google?plan=${selectedPlan}`}
+            href={`/auth/google?plan=${selectedPlan}${previewToken ? `&previewToken=${previewToken}` : ""}`}
             loadingText="Opening Google..."
             className="focus-ring inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80"
           >
@@ -88,6 +90,7 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
 
           <form action={registerOwner} className="grid gap-4">
             <input type="hidden" name="plan" value={selectedPlan} />
+            {previewToken && <input type="hidden" name="previewToken" value={previewToken} />}
             <Field label="Full name">
               <input name="name" className={inputClass} autoComplete="name" required />
             </Field>
@@ -144,18 +147,18 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
             ))}
           </div>
           <div className="mt-6 grid grid-cols-2 gap-3">
-            <Button href={`/register?plan=${selectedOption.interval === "yearly" ? "basic-yearly" : "basic-monthly"}`} variant={selectedTier === "basic" ? "secondary" : "ghost"} className="bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15">
+            <Button href={`/register?plan=${selectedOption.interval === "yearly" ? "basic-yearly" : "basic-monthly"}${previewToken ? `&previewToken=${previewToken}` : ""}`} variant={selectedTier === "basic" ? "secondary" : "ghost"} className="bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15">
               Basic
             </Button>
-            <Button href={`/register?plan=${selectedOption.interval === "yearly" ? "ai-yearly" : "ai-monthly"}`} variant={selectedTier === "ai" ? "secondary" : "ghost"} className="bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15">
+            <Button href={`/register?plan=${selectedOption.interval === "yearly" ? "ai-yearly" : "ai-monthly"}${previewToken ? `&previewToken=${previewToken}` : ""}`} variant={selectedTier === "ai" ? "secondary" : "ghost"} className="bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15">
               Full AI
             </Button>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <Button href={`/register?plan=${selectedTier === "ai" ? "ai-monthly" : "basic-monthly"}`} variant={selectedOption.interval === "monthly" ? "secondary" : "ghost"} className="bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15">
+            <Button href={`/register?plan=${selectedTier === "ai" ? "ai-monthly" : "basic-monthly"}${previewToken ? `&previewToken=${previewToken}` : ""}`} variant={selectedOption.interval === "monthly" ? "secondary" : "ghost"} className="bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15">
               Monthly
             </Button>
-            <Button href={`/register?plan=${selectedTier === "ai" ? "ai-yearly" : "basic-yearly"}`} variant={selectedOption.interval === "yearly" ? "secondary" : "ghost"} className="bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15">
+            <Button href={`/register?plan=${selectedTier === "ai" ? "ai-yearly" : "basic-yearly"}${previewToken ? `&previewToken=${previewToken}` : ""}`} variant={selectedOption.interval === "yearly" ? "secondary" : "ghost"} className="bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15">
               Yearly
             </Button>
           </div>

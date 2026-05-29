@@ -10,6 +10,7 @@ import { getAppUrl } from "@/lib/utils";
 
 const oauthStateCookie = "staynest_oauth_state";
 const oauthPlanCookie = "staynest_oauth_plan";
+const oauthPreviewTokenCookie = "staynest_oauth_preview_token";
 
 type OAuthProfile = {
   provider: OAuthProvider;
@@ -52,6 +53,26 @@ function consumeOAuthPlan() {
   const selectedPlan = value ? normalizePlanKey(value) : null;
   cookies().delete(oauthPlanCookie);
   return selectedPlan;
+}
+
+export function setOAuthPreviewToken(token: string | null) {
+  if (!token) {
+    cookies().delete(oauthPreviewTokenCookie);
+    return;
+  }
+  cookies().set(oauthPreviewTokenCookie, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 10 * 60
+  });
+}
+
+export function consumeOAuthPreviewToken() {
+  const value = cookies().get(oauthPreviewTokenCookie)?.value;
+  cookies().delete(oauthPreviewTokenCookie);
+  return value || null;
 }
 
 export function verifyOAuthState(state: string | null) {

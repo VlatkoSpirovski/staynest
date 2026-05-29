@@ -2,7 +2,6 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import { isIP } from "node:net";
 import { GuideSectionType, ReviewPlatform } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireReadyUser } from "@/lib/auth";
@@ -11,6 +10,22 @@ import { publicGuideCacheTag } from "@/lib/public-guide-cache";
 import { createUniqueSecureSlug, hasSecureSlugSuffix } from "@/lib/secure-slug";
 import { normalizeSlug } from "@/lib/utils";
 import { curatedAccentForTheme, getGuideTheme, isGuideThemeId } from "@/themes";
+import {
+  extractResponseText,
+  fallbackImportedListing,
+  fetchListingText,
+  fetchReaderText,
+  hasUsableImport,
+  importListingJsonSchema,
+  isPrivateHostname,
+  isThinOrBlockedText,
+  joinKnowledge,
+  openAiErrorMessage,
+  openAiModel,
+  parsedImportedListing,
+  titleFromListingUrl,
+  type ImportedListing
+} from "@/lib/listing-import";
 
 function stringValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -82,319 +97,7 @@ function inlineActionError(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-function openAiModel() {
-  const model = process.env.OPENAI_MODEL?.trim();
-  return model && model !== "gpt-5.4-mini" ? model : "gpt-5-mini";
-}
-
-async function openAiErrorMessage(response: Response) {
-  const body = (await response.json().catch(() => null)) as { error?: { message?: string; code?: string; type?: string } } | null;
-  const message = body?.error?.message || `${response.status} ${response.statusText}`;
-  if (/billing|quota|credit|insufficient/i.test(message)) {
-    return "OpenAI billing or credits are not active for this API key.";
-  }
-  if (/model/i.test(message)) {
-    return `OpenAI model error: ${message}`;
-  }
-  if (/api key|authentication|invalid/i.test(message)) {
-    return "OpenAI API key is invalid or not active.";
-  }
-  return `OpenAI error: ${message}`;
-}
-
-function isPrivateHostname(hostname: string) {
-  const host = hostname.toLowerCase();
-  if (host === "localhost" || host.endsWith(".localhost")) return true;
-
-  const ipVersion = isIP(host);
-  if (!ipVersion) return false;
-
-  if (ipVersion === 6) {
-    return host === "::1" || host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80:");
-  }
-
-  const parts = host.split(".").map(Number);
-  const [first, second] = parts;
-  return (
-    first === 10 ||
-    first === 127 ||
-    (first === 169 && second === 254) ||
-    (first === 172 && second >= 16 && second <= 31) ||
-    (first === 192 && second === 168)
-  );
-}
-
-function safeString(value: unknown, maxLength = 1600) {
-  return typeof value === "string" ? value.trim().slice(0, maxLength) : undefined;
-}
-
-function extractResponseText(data: unknown) {
-  if (!data || typeof data !== "object") return "";
-  if ("output_text" in data && typeof data.output_text === "string") return data.output_text;
-
-  const output = "output" in data ? data.output : null;
-  if (!Array.isArray(output)) return "";
-
-  return output
-    .flatMap((item) => {
-      if (!item || typeof item !== "object" || !("content" in item) || !Array.isArray(item.content)) return [];
-      return item.content.map((content: unknown) => {
-        if (!content || typeof content !== "object") return "";
-        if ("text" in content && typeof content.text === "string") return content.text;
-        return "";
-      });
-    })
-    .filter(Boolean)
-    .join("\n")
-    .trim();
-}
-
-function decodeHtml(value: string) {
-  return value
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function metaContent(html: string, attribute: "name" | "property", value: string) {
-  const tag = html.match(new RegExp(`<meta[^>]+${attribute}=["']${value}["'][^>]*>`, "i"))?.[0];
-  return decodeHtml(tag?.match(/content=["']([^"']+)["']/i)?.[1] || "");
-}
-
-function allMetaContent(html: string) {
-  const wanted = [
-    ["property", "og:title"],
-    ["property", "og:description"],
-    ["property", "og:image"],
-    ["property", "og:site_name"],
-    ["property", "og:locale"],
-    ["name", "description"],
-    ["name", "twitter:title"],
-    ["name", "twitter:description"],
-    ["name", "twitter:image"],
-    ["name", "keywords"]
-  ] as const;
-
-  return wanted
-    .map(([attribute, value]) => {
-      const content = metaContent(html, attribute, value);
-      return content ? `${value}: ${content}` : "";
-    })
-    .filter(Boolean)
-    .join("\n");
-}
-
-function imageCandidates(html: string, pageUrl: string) {
-  const urls = [
-    ...[...html.matchAll(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["'][^>]*>/gi)].map((match) => match[1]),
-    ...[...html.matchAll(/<img[^>]+(?:src|data-src|data-original|data-lazy-src)=["']([^"']+)["'][^>]*>/gi)].map((match) => match[1])
-  ];
-
-  return Array.from(new Set(urls))
-    .map((src) => {
-      try {
-        return new URL(decodeHtml(src), pageUrl).toString();
-      } catch {
-        return "";
-      }
-    })
-    .filter((src) => /^https?:\/\//i.test(src))
-    .filter((src) => !/sprite|icon|logo|avatar|placeholder|blank|transparent/i.test(src))
-    .slice(0, 12)
-    .join("\n");
-}
-
-function cleanPageText(html: string, pageUrl: string) {
-  const jsonLd = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
-    .map((match) => match[1]?.trim())
-    .filter(Boolean)
-    .join("\n");
-  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "";
-  const visibleText = html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ");
-
-  return `
-Page URL: ${pageUrl}
-Title: ${decodeHtml(title)}
-
-Metadata:
-${allMetaContent(html)}
-
-Image candidates:
-${imageCandidates(html, pageUrl)}
-
-JSON-LD:
-${jsonLd}
-
-Visible listing text:
-${decodeHtml(visibleText)}
-`.slice(0, 28000);
-}
-
-function titleFromListingUrl(url: URL | null) {
-  if (!url) return "Imported Property";
-  const lastPathPart = url.pathname
-    .split("/")
-    .filter(Boolean)
-    .pop()
-    ?.replace(/\.(html?|php)$/i, "");
-  const source = lastPathPart || url.hostname.replace(/^www\./, "");
-  return source
-    .replace(/[-_]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\b\w/g, (letter) => letter.toUpperCase())
-    .slice(0, 120);
-}
-
-function isThinOrBlockedText(text: string) {
-  const compactText = text.toLowerCase();
-  return (
-    text.replace(/\s+/g, " ").trim().length < 700 ||
-    /captcha|access denied|enable javascript|are you a robot|sign in to continue|cookie settings|unusual traffic/i.test(compactText)
-  );
-}
-
-async function fetchListingText(url: string) {
-  const response = await fetch(url, {
-    headers: {
-      "user-agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36",
-      accept: "text/html,application/xhtml+xml",
-      "accept-language": "en-US,en;q=0.9"
-    },
-    cache: "no-store",
-    signal: AbortSignal.timeout(12000)
-  });
-
-  if (!response.ok) {
-    throw new Error("Could not read that listing URL. The site may be blocking automated access.");
-  }
-
-  const contentType = response.headers.get("content-type") || "";
-  if (!contentType.includes("text/html")) {
-    throw new Error("That link did not return a readable property page.");
-  }
-
-  return cleanPageText(await response.text(), url);
-}
-
-async function fetchReaderText(url: string) {
-  const response = await fetch(`https://r.jina.ai/${url}`, {
-    headers: {
-      accept: "text/plain"
-    },
-    cache: "no-store",
-    signal: AbortSignal.timeout(16000)
-  });
-
-  if (!response.ok) {
-    throw new Error("Reader import failed.");
-  }
-
-  return (await response.text()).replace(/\s+\n/g, "\n").trim().slice(0, 28000);
-}
-
-type ImportedListing = {
-  name?: string;
-  welcomeMessage?: string;
-  coverImageUrl?: string;
-  checkInInfo?: string;
-  checkOutInfo?: string;
-  parkingInfo?: string;
-  houseRules?: string;
-  facilities?: string;
-  emergencyInfo?: string;
-  hostContactName?: string;
-  aiKnowledge?: string;
-};
-
-const nullableString = {
-  anyOf: [{ type: "string" }, { type: "null" }]
-};
-
-const listingImportSchema = {
-  type: "object",
-  additionalProperties: false,
-  required: [
-    "name",
-    "welcomeMessage",
-    "coverImageUrl",
-    "checkInInfo",
-    "checkOutInfo",
-    "parkingInfo",
-    "houseRules",
-    "facilities",
-    "emergencyInfo",
-    "hostContactName",
-    "aiKnowledge"
-  ],
-  properties: {
-    name: nullableString,
-    welcomeMessage: nullableString,
-    coverImageUrl: nullableString,
-    checkInInfo: nullableString,
-    checkOutInfo: nullableString,
-    parkingInfo: nullableString,
-    houseRules: nullableString,
-    facilities: nullableString,
-    emergencyInfo: nullableString,
-    hostContactName: nullableString,
-    aiKnowledge: nullableString
-  }
-};
-
-function parsedImportedListing(text: string): ImportedListing {
-  const json = text.match(/\{[\s\S]*\}/)?.[0] || text;
-  const parsed = JSON.parse(json) as ImportedListing;
-  if (!parsed || typeof parsed !== "object") return {};
-  return {
-    name: safeString(parsed.name, 120),
-    welcomeMessage: safeString(parsed.welcomeMessage, 1200),
-    coverImageUrl: safeString(parsed.coverImageUrl, 1000),
-    checkInInfo: safeString(parsed.checkInInfo, 1200),
-    checkOutInfo: safeString(parsed.checkOutInfo, 1200),
-    parkingInfo: safeString(parsed.parkingInfo, 1000),
-    houseRules: safeString(parsed.houseRules, 1600),
-    facilities: safeString(parsed.facilities, 1600),
-    emergencyInfo: safeString(parsed.emergencyInfo, 1000),
-    hostContactName: safeString(parsed.hostContactName, 120),
-    aiKnowledge: safeString(parsed.aiKnowledge, 2500)
-  };
-}
-
-function hasUsableImport(imported: ImportedListing) {
-  return Boolean(imported.name || imported.welcomeMessage || imported.houseRules || imported.parkingInfo || imported.facilities || imported.coverImageUrl);
-}
-
-function fallbackImportedListing(url: URL | null): ImportedListing {
-  const name = titleFromListingUrl(url);
-  return {
-    name,
-    welcomeMessage: `Welcome to ${name}. This guide was started from the public listing. Please review the details below and add any private arrival information before sharing with guests.`,
-    aiKnowledge: `Imported from ${url ? url.toString() : "pasted listing text"}. The source did not expose enough structured details, so the host should review and complete Wi-Fi, access, check-in, parking and house rules manually.`
-  };
-}
-
-function joinKnowledge(parts: Array<string | null | undefined>) {
-  return parts
-    .map((part) => part?.trim())
-    .filter((part): part is string => Boolean(part))
-    .join("\n\n")
-    .slice(0, 5000);
-}
-
-async function upsertImportedGuideSection({
+export async function upsertImportedGuideSection({
   propertyId,
   title,
   content,
@@ -503,14 +206,14 @@ export async function importListingFromUrl(formData: FormData) {
           type: "json_schema",
           name: "staynest_listing_import",
           strict: true,
-          schema: listingImportSchema
+          schema: importListingJsonSchema
         }
       },
       max_output_tokens: 2200,
       input: [
         {
           role: "user",
-          content: `Extract a StayNest guide draft from this source. Prefer host-pasted text over scraped page text. If the page is blocked, still extract the property name from the URL when possible and explain missing private details in aiKnowledge.\n\nReturn these fields:\n- name: property/listing name.\n- hostContactName: visible host/managed-by name only.\n- welcomeMessage: warm guest-facing intro from public listing facts.\n- coverImageUrl: best usable image URL from metadata/image candidates.\n- checkInInfo: public check-in time/window/policy if visible.\n- checkOutInfo: public checkout time/window/policy if visible.\n- parkingInfo: parking availability, type, reservation/cost notes if visible.\n- houseRules: visible public rules/policies: smoking, pets, parties, quiet hours, children, damage/deposit only if present.\n- facilities: major visible facilities/amenities, one per line or short grouped sentences.\n- emergencyInfo: only if public emergency/safety info is visible.\n- aiKnowledge: concise source summary and what still needs host review.\n\nListing URL: ${url?.toString() || "Not provided; host pasted text manually."}\n\nSource content:\n${listingText}`
+          content: `Extract a StayNest guide draft from this source. Prefer host-pasted text over scraped page text. If the page is blocked, still extract the property name from the URL when possible and explain missing private details in aiKnowledge.\n\nReturn these fields:\n- name: property/listing name.\n- hostContactName: visible host/managed-by name only.\n- welcomeMessage: warm guest-facing intro from public listing facts.\n- coverImageUrl: best usable image URL from metadata/image candidates.\n- checkInInfo: public check-in time/window/policy if visible.\n- checkOutInfo: public checkout time/window/policy if visible.\n- parkingInfo: parking availability, type, reservation/cost notes if visible.\n- houseRules: visible public rules/policies: smoking, pets, parties, quiet hours, children, damage/deposit only if present.\n- facilities: major visible facilities/amenities, one per line or short grouped sentences.\n- emergencyInfo: only if public emergency/safety info is visible.\n- locationInfo: public neighborhood, area, view, beach/city distance, transit or landmark context if visible.\n- recommendationsDraft: only public nearby places, activities, beaches, restaurants or area tips visible in the source; otherwise a concise host-to-complete draft.\n- essentialsDraft: public practical essentials visible in the source, such as parking, elevator, heating/cooling, kitchen, laundry, pharmacy/market notes; otherwise a concise host-to-complete draft.\n- aiKnowledge: concise source summary and what still needs host review.\n\nListing URL: ${url?.toString() || "Not provided; host pasted text manually."}\n\nSource content:\n${listingText}`
         }
       ]
     })
@@ -522,7 +225,8 @@ export async function importListingFromUrl(formData: FormData) {
 
   let imported: ImportedListing;
   try {
-    imported = parsedImportedListing(extractResponseText(await response.json()));
+    const json = await response.json();
+    imported = parsedImportedListing(extractResponseText(json));
   } catch {
     dashboardError("AI returned an unreadable import. Please try again.");
   }
@@ -543,7 +247,10 @@ export async function importListingFromUrl(formData: FormData) {
   const name = imported.name?.trim() || existingProperty?.name || "Imported Property";
   const aiKnowledge = joinKnowledge([
     imported.aiKnowledge,
+    imported.locationInfo ? `Location information visible on the listing:\n${imported.locationInfo}` : null,
     imported.facilities ? `Amenities and facilities visible on the listing:\n${imported.facilities}` : null,
+    imported.recommendationsDraft ? `Recommendations draft:\n${imported.recommendationsDraft}` : null,
+    imported.essentialsDraft ? `Essentials draft:\n${imported.essentialsDraft}` : null,
     url ? `Imported source: ${url.hostname} (${url.toString()})` : "Imported source: pasted listing text"
   ]);
   const data = {
@@ -594,6 +301,24 @@ export async function importListingFromUrl(formData: FormData) {
     title: "Amenities & facilities",
     content: imported.facilities,
     sortOrder: 5
+  });
+  await upsertImportedGuideSection({
+    propertyId: property.id,
+    title: "Location overview",
+    content: imported.locationInfo,
+    sortOrder: 6
+  });
+  await upsertImportedGuideSection({
+    propertyId: property.id,
+    title: "Recommendations draft",
+    content: imported.recommendationsDraft,
+    sortOrder: 7
+  });
+  await upsertImportedGuideSection({
+    propertyId: property.id,
+    title: "Essentials draft",
+    content: imported.essentialsDraft,
+    sortOrder: 8
   });
 
   revalidatePath("/dashboard");
