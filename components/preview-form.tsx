@@ -38,7 +38,7 @@ export function PreviewForm() {
           />
         </Field>
 
-        <SubmitButton pendingText="Generating Preview..." className="min-h-12 w-full rounded-[14px] text-sm shadow-[0_12px_28px_rgba(23,32,51,0.12)]">
+        <SubmitButton pendingText="Reading listing and building preview..." className="min-h-12 w-full rounded-[14px] text-sm shadow-[0_12px_28px_rgba(23,32,51,0.12)]">
           Generate Preview
         </SubmitButton>
 

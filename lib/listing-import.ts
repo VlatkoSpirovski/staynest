@@ -285,7 +285,80 @@ export function joinKnowledge(parts: Array<string | null | undefined>) {
     .slice(0, 5000);
 }
 
-export async function fetchListingText(url: string) {
+type ListingSourceResult = {
+  label: string;
+  ok: boolean;
+  durationMs: number;
+  text: string;
+  error?: string;
+};
+
+export type ListingSourceSummary = {
+  text: string;
+  durationMs: number;
+  direct: Omit<ListingSourceResult, "text">;
+  reader: Omit<ListingSourceResult, "text">;
+  contentChars: number;
+};
+
+function sourceErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
+async function timedListingSource(label: string, read: () => Promise<string>): Promise<ListingSourceResult> {
+  const startedAt = Date.now();
+  try {
+    return {
+      label,
+      ok: true,
+      durationMs: Date.now() - startedAt,
+      text: await read()
+    };
+  } catch (error) {
+    return {
+      label,
+      ok: false,
+      durationMs: Date.now() - startedAt,
+      text: "",
+      error: sourceErrorMessage(error, `${label} failed.`)
+    };
+  }
+}
+
+export async function collectListingSourceText(url: string): Promise<ListingSourceSummary> {
+  const startedAt = Date.now();
+  const [direct, reader] = await Promise.all([
+    timedListingSource("Direct page read", () => fetchListingText(url, { timeoutMs: 7_000 })),
+    timedListingSource("Clean reader read", () => fetchReaderText(url, { timeoutMs: 7_000 }))
+  ]);
+
+  const text = [
+    direct.ok ? `${direct.label}:\n${direct.text}` : `${direct.label} failed: ${direct.error}`,
+    reader.ok ? `${reader.label}:\n${reader.text}` : `${reader.label} failed: ${reader.error}`
+  ]
+    .join("\n\n")
+    .slice(0, 28000);
+
+  return {
+    text,
+    durationMs: Date.now() - startedAt,
+    direct: {
+      label: direct.label,
+      ok: direct.ok,
+      durationMs: direct.durationMs,
+      error: direct.error
+    },
+    reader: {
+      label: reader.label,
+      ok: reader.ok,
+      durationMs: reader.durationMs,
+      error: reader.error
+    },
+    contentChars: text.length
+  };
+}
+
+export async function fetchListingText(url: string, options: { timeoutMs?: number } = {}) {
   const response = await fetch(url, {
     headers: {
       "user-agent":
@@ -294,7 +367,7 @@ export async function fetchListingText(url: string) {
     },
     redirect: "follow",
     cache: "no-store",
-    signal: AbortSignal.timeout(12_000)
+    signal: AbortSignal.timeout(options.timeoutMs ?? 12_000)
   });
 
   if (!response.ok) {
@@ -309,14 +382,14 @@ export async function fetchListingText(url: string) {
   return cleanPageText(await response.text(), url);
 }
 
-export async function fetchReaderText(url: string) {
+export async function fetchReaderText(url: string, options: { timeoutMs?: number } = {}) {
   const response = await fetch(`https://r.jina.ai/${url}`, {
     headers: {
       accept: "text/plain"
     },
     redirect: "follow",
     cache: "no-store",
-    signal: AbortSignal.timeout(12_000)
+    signal: AbortSignal.timeout(options.timeoutMs ?? 12_000)
   });
 
   if (!response.ok) {

@@ -11,10 +11,9 @@ import { createUniqueSecureSlug, hasSecureSlugSuffix } from "@/lib/secure-slug";
 import { normalizeSlug } from "@/lib/utils";
 import { curatedAccentForTheme, getGuideTheme, isGuideThemeId } from "@/themes";
 import {
+  collectListingSourceText,
   extractResponseText,
   fallbackImportedListing,
-  fetchListingText,
-  fetchReaderText,
   hasUsableImport,
   importListingJsonSchema,
   isPrivateHostname,
@@ -171,20 +170,7 @@ export async function importListingFromUrl(formData: FormData) {
 
   let listingText = pastedText ? `Host pasted listing text:\n${pastedText}` : "";
   if (!listingText && url) {
-    const sourceParts: string[] = [];
-    try {
-      sourceParts.push(`Direct page read:\n${await fetchListingText(url.toString())}`);
-    } catch (error) {
-      sourceParts.push(`Direct page read failed: ${error instanceof Error ? error.message : "Could not read the listing URL."}`);
-    }
-
-    try {
-      sourceParts.push(`Clean reader read:\n${await fetchReaderText(url.toString())}`);
-    } catch {
-      sourceParts.push("Clean reader read failed.");
-    }
-
-    listingText = sourceParts.join("\n\n").slice(0, 28000);
+    listingText = (await collectListingSourceText(url.toString())).text;
   }
 
   if (url && isThinOrBlockedText(listingText)) {
