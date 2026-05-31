@@ -21,6 +21,17 @@ const funnelEvents = [
   "preview_expired"
 ];
 
+function metadataValue(metadata: unknown, key: string) {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return null;
+  const value = (metadata as Record<string, unknown>)[key];
+  return typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? value : null;
+}
+
+function seconds(value: unknown) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "-";
+  return `${(value / 1000).toFixed(1)}s`;
+}
+
 async function getPreviewAnalytics() {
   const [eventCounts, activePreviews, recentEvents] = await Promise.all([
     prisma.previewAnalyticsEvent.groupBy({
@@ -111,6 +122,9 @@ export default async function PreviewAnalyticsPage() {
                 <tr>
                   <th className="px-4 py-3">Event</th>
                   <th className="px-4 py-3">Preview</th>
+                  <th className="px-4 py-3">Source</th>
+                  <th className="px-4 py-3">AI</th>
+                  <th className="px-4 py-3">Chars</th>
                   <th className="px-4 py-3">Property</th>
                   <th className="px-4 py-3">Time</th>
                 </tr>
@@ -120,13 +134,16 @@ export default async function PreviewAnalyticsPage() {
                   <tr key={event.id}>
                     <td className="px-4 py-3 font-bold">{event.eventName}</td>
                     <td className="px-4 py-3 font-mono text-xs">{event.previewToken || "-"}</td>
+                    <td className="px-4 py-3">{seconds(metadataValue(event.metadata, "sourceDurationMs"))}</td>
+                    <td className="px-4 py-3">{seconds(metadataValue(event.metadata, "aiDurationMs"))}</td>
+                    <td className="px-4 py-3">{metadataValue(event.metadata, "contentChars") || "-"}</td>
                     <td className="px-4 py-3 font-mono text-xs">{event.propertyId || "-"}</td>
                     <td className="px-4 py-3">{event.createdAt.toLocaleString()}</td>
                   </tr>
                 ))}
                 {analytics.recentEvents.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-6 text-center font-semibold text-ink/50">
+                    <td colSpan={7} className="px-4 py-6 text-center font-semibold text-ink/50">
                       No preview events yet.
                     </td>
                   </tr>

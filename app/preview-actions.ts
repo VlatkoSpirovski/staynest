@@ -10,6 +10,7 @@ function stringValue(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 import {
+  collectListingSourceText,
   importListingJsonSchema,
   isPrivateHostname,
   isThinOrBlockedText,
@@ -20,8 +21,6 @@ import {
   titleFromListingUrl,
   joinKnowledge,
   fallbackImportedListing,
-  fetchListingText,
-  fetchReaderText,
   openAiErrorMessage,
   type ImportedListing
 } from "@/lib/listing-import";
@@ -57,25 +56,14 @@ export async function generatePreviewFromUrl(_state: PreviewFormState, formData:
     return { error: "AI import is currently unavailable." };
   }
 
-  const sourceParts: string[] = [];
-  try {
-    sourceParts.push(`Direct page read:\n${await fetchListingText(url.toString())}`);
-  } catch (error) {
-    sourceParts.push(`Direct page read failed: ${error instanceof Error ? error.message : "Could not read the listing URL."}`);
-  }
-
-  try {
-    sourceParts.push(`Clean reader read:\n${await fetchReaderText(url.toString())}`);
-  } catch {
-    sourceParts.push("Clean reader read failed.");
-  }
-
-  let listingText = sourceParts.join("\n\n").slice(0, 28000);
+  const sourceSummary = await collectListingSourceText(url.toString());
+  let listingText = sourceSummary.text;
 
   if (isThinOrBlockedText(listingText)) {
     listingText = `${listingText}\n\nURL-derived fallback name: ${titleFromListingUrl(url)}\nSource URL: ${url.toString()}`;
   }
 
+  const aiStartedAt = Date.now();
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -103,6 +91,7 @@ export async function generatePreviewFromUrl(_state: PreviewFormState, formData:
       ]
     })
   });
+  const aiDurationMs = Date.now() - aiStartedAt;
 
   if (!response.ok) {
     const errorMsg = await openAiErrorMessage(response);
@@ -163,7 +152,16 @@ export async function generatePreviewFromUrl(_state: PreviewFormState, formData:
     eventName: "preview_created",
     previewToken: token,
     metadata: {
-      hostname: url.hostname
+      hostname: url.hostname,
+      sourceDurationMs: sourceSummary.durationMs,
+      aiDurationMs,
+      directSourceOk: sourceSummary.direct.ok,
+      directSourceDurationMs: sourceSummary.direct.durationMs,
+      directSourceError: sourceSummary.direct.error || null,
+      readerSourceOk: sourceSummary.reader.ok,
+      readerSourceDurationMs: sourceSummary.reader.durationMs,
+      readerSourceError: sourceSummary.reader.error || null,
+      contentChars: sourceSummary.contentChars
     }
   });
 
