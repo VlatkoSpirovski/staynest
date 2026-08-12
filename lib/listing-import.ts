@@ -151,6 +151,22 @@ ${decodeHtml(visibleText)}
 `.slice(0, 28000);
 }
 
+/**
+ * Hosts the importer refuses outright.
+ *
+ * Airbnb serves listings behind bot protection and blocks automated fetching, so
+ * an "import" from an Airbnb URL either fails or yields a challenge page that the
+ * model then hallucinates around. Rejecting it up front with a clear message is
+ * more honest than silently producing a wrong guide.
+ */
+const unsupportedListingHosts = [
+  { match: /(^|\.)airbnb\.[a-z.]+$/i, name: "Airbnb" }
+];
+
+export function unsupportedListingHost(url: URL) {
+  return unsupportedListingHosts.find((entry) => entry.match.test(url.hostname))?.name ?? null;
+}
+
 export function titleFromListingUrl(url: URL | null) {
   if (!url) return "Imported Property";
   const lastPathPart = url.pathname

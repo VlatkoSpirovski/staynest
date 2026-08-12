@@ -17,7 +17,7 @@ export function PreviewForm() {
         </div>
         <div>
           <h3 className="text-lg font-semibold text-[#172033]">See your property inside StayNest</h3>
-          <p className="text-sm font-medium text-[#172033]/60">Generate a personalized guest guide using your Airbnb or Booking.com listing.</p>
+          <p className="text-sm font-medium text-[#172033]/60">Generate a personalized guest guide from your Booking.com listing.</p>
         </div>
       </div>
 
@@ -28,11 +28,11 @@ export function PreviewForm() {
           </div>
         ) : null}
 
-        <Field label="Airbnb or Booking.com URL">
+        <Field label="Booking.com listing URL">
           <input
             name="listingUrl"
             type="url"
-            placeholder="https://www.airbnb.com/rooms/12345"
+            placeholder="https://www.booking.com/hotel/..."
             className={inputClass}
             required
           />

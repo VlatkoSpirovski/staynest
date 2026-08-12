@@ -5,6 +5,7 @@ import { GoogleMark } from "@/components/google-mark";
 import { InAppBrowserNotice } from "@/components/in-app-browser-notice";
 import { LoadingLink } from "@/components/loading-link";
 import { SubmitButton } from "@/components/submit-button";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 import { Field, inputClass, Panel } from "@/components/ui/panel";
 import { registerOwner } from "@/app/auth-actions";
 import { normalizePlanKey, planOption } from "@/lib/billing";
@@ -28,7 +29,7 @@ const plans = {
     name: "Full AI",
     monthly: "€15/month",
     yearly: "€80/year",
-    items: ["Everything in Basic", "AI guest chat trained for the property", "Booking/Airbnb import support"]
+    items: ["Everything in Basic", "AI guest chat trained for the property", "Booking.com import support"]
   }
 };
 
@@ -103,6 +104,7 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
             <Field label="Confirm password">
               <input name="confirmPassword" className={inputClass} type="password" autoComplete="new-password" required />
             </Field>
+            <TurnstileWidget className="mt-1" />
             <SubmitButton pendingText="Creating account..." className="mt-2 min-h-12 rounded-[16px] font-black">
               Start free trial
             </SubmitButton>

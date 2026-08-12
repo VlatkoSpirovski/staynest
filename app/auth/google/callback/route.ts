@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { billingUrl } from "@/lib/billing";
 import { getGoogleProfile, signInWithOAuthProfile, verifyOAuthState, consumeOAuthPreviewToken } from "@/lib/oauth";
 import { claimPropertyPreview } from "@/lib/property-preview";
 
@@ -25,7 +24,7 @@ export async function GET(request: Request) {
     redirect(`/login?error=${encodeURIComponent(error instanceof Error ? error.message : "Google login failed.")}`);
   }
 
-  let redirectUrl = result.isNewUser ? billingUrl(result.selectedPlan) : "/dashboard";
+  let redirectUrl = result.isNewUser ? "/dashboard?welcome=1" : "/dashboard";
 
   const previewToken = consumeOAuthPreviewToken();
   if (previewToken) {

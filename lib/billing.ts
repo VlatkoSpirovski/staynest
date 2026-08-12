@@ -84,6 +84,26 @@ export function billingUrl(plan: string | null | undefined) {
   return `${getPaymentUrl()}/billing?plan=${encodeURIComponent(normalizePlanKey(plan))}`;
 }
 
+export const TRIAL_DAYS = 7;
+
+/**
+ * Fields that start a no-card trial. Applied at signup in every environment so a
+ * new owner can build and publish a guide before being asked for a payment method.
+ * Paddle webhooks remain authoritative afterwards and overwrite these.
+ */
+export function startTrial(days = TRIAL_DAYS) {
+  return {
+    subscriptionStatus: "TRIALING",
+    trialEndsAt: new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+  };
+}
+
+export function trialDaysRemaining(user: Pick<User, "trialEndsAt">) {
+  if (!user.trialEndsAt) return null;
+  const ms = user.trialEndsAt.getTime() - Date.now();
+  return ms <= 0 ? 0 : Math.ceil(ms / (24 * 60 * 60 * 1000));
+}
+
 export function hasBillingAccess(user: Pick<User, "subscriptionStatus" | "trialEndsAt">) {
   const status = user.subscriptionStatus?.toUpperCase();
   if (status === "ACTIVE") return true;

@@ -9,9 +9,9 @@ export const classicTheme: GuideTheme = {
   description: "Warm boutique-hotel styling with champagne surfaces, cinematic imagery and soft hospitality details.",
   bestFor: "Villas, mountain stays, boutique rentals",
   palette: ["#F7EFE3", "#FFFFFF", "#9B7C4B", "#2A2B28"],
-  accentOptions: ["#9B7C4B", "#B08B57", "#7C8A5A", "#5F7D78"],
+  accentOptions: ["#8A6C3E", "#8A6C45", "#69754D", "#57736E"],
   defaults: {
-    accentColor: "#9B7C4B",
+    accentColor: "#8A6C3E",
     serifHeading: true,
     roundedCards: true
   },
@@ -32,7 +32,7 @@ export const classicTheme: GuideTheme = {
     heroOverlay:
       "radial-gradient(circle at 50% 18%, rgba(255,232,190,0.14), transparent 30%), linear-gradient(180deg, rgba(32,27,22,0.18) 0%, rgba(32,27,22,0.48) 46%, rgba(24,22,19,0.88) 100%)",
     text: "#1F2326",
-    muted: "rgba(31,35,38,0.62)",
+    muted: "rgba(31,35,38,0.66)",
     cardBackground: "linear-gradient(145deg, rgba(255,250,241,0.86) 0%, rgba(239,224,201,0.70) 100%)",
     cardBorder: "rgba(255,255,255,0.74)",
     elevatedBackground: "linear-gradient(145deg, #FFFFFF 0%, #F8EFE1 100%)",

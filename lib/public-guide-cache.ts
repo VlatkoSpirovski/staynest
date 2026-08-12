@@ -134,16 +134,46 @@ export function getCachedPublicGuideSection(slug: string) {
   )();
 }
 
+export function publicCodeCacheTag(publicCode: string) {
+  return `public-code:${publicCode}`;
+}
+
+/**
+ * Resolves a short /g/<code> link to the underlying slug, so the guide routes can
+ * keep using slug-keyed caches. Cached separately and tagged by code so that
+ * rotating a link only invalidates that one entry.
+ */
+export function getCachedSlugForPublicCode(publicCode: string) {
+  return unstable_cache(
+    async () => {
+      if (publicCode === examplePublicGuide.publicCode) {
+        return examplePublicGuide.slug;
+      }
+
+      const property = await prisma.property.findUnique({
+        where: { publicCode },
+        select: { slug: true }
+      });
+      return property?.slug ?? null;
+    },
+    ["public-code-slug", PUBLIC_GUIDE_CACHE_VERSION, publicCode],
+    {
+      tags: [publicCodeCacheTag(publicCode)],
+      revalidate: PUBLIC_GUIDE_REVALIDATE_SECONDS
+    }
+  )();
+}
+
 export function getCachedPublicGuideRedirect(slug: string) {
   return unstable_cache(
     async () => {
       if (isExamplePublicGuide(slug)) {
-        return { slug: examplePublicGuide.slug };
+        return { slug: examplePublicGuide.slug, publicCode: examplePublicGuide.publicCode };
       }
 
       const property = await prisma.property.findUnique({
         where: { slug },
-        select: { slug: true }
+        select: { slug: true, publicCode: true }
       });
       return property;
     },

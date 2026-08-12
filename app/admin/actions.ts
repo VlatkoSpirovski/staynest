@@ -7,8 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { destroyAllUserSessions, requireAdminUser } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 import { passwordRulesText, validatePassword } from "@/lib/password-policy";
-import { publicGuideCacheTag } from "@/lib/public-guide-cache";
-import { createUniqueSecureSlug, hasSecureSlugSuffix } from "@/lib/secure-slug";
+import { publicCodeCacheTag, publicGuideCacheTag } from "@/lib/public-guide-cache";
+import { createUniquePublicCode, createUniqueSecureSlug, hasSecureSlugSuffix } from "@/lib/secure-slug";
 import { normalizeSlug } from "@/lib/utils";
 
 function stringValue(formData: FormData, key: string) {
@@ -134,6 +134,7 @@ export async function createAdminProperty(formData: FormData) {
       ownerId,
       name,
       slug,
+      publicCode: await createUniquePublicCode(),
       accentColor: stringValue(formData, "accentColor") || "#4a8a8f",
       logoUrl: optionalValue(formData, "logoUrl"),
       coverImageUrl: optionalValue(formData, "coverImageUrl"),
@@ -225,7 +226,7 @@ export async function rotateAdminPropertySlug(formData: FormData) {
 
   const property = await prisma.property.findUnique({
     where: { id },
-    select: { id: true, name: true, slug: true }
+    select: { id: true, name: true, slug: true, publicCode: true }
   });
 
   if (!property) {
@@ -233,14 +234,18 @@ export async function rotateAdminPropertySlug(formData: FormData) {
   }
 
   const slug = await createUniqueSecureSlug(property.name, property.id);
+  const publicCode = await createUniquePublicCode();
+  const previousPublicCode = property.publicCode;
   await prisma.property.update({
     where: { id: property.id },
-    data: { slug }
+    data: { slug, publicCode }
   });
 
   revalidatePath("/admin");
   revalidatePublicGuide(property.slug);
   revalidatePublicGuide(slug);
+  if (previousPublicCode) revalidateTag(publicCodeCacheTag(previousPublicCode));
+  revalidateTag(publicCodeCacheTag(publicCode));
   redirect("/admin");
 }
 

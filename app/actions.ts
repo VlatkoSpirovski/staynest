@@ -6,8 +6,8 @@ import { GuideSectionType, ReviewPlatform } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireReadyUser } from "@/lib/auth";
 import { uploadImage } from "@/lib/image-upload";
-import { publicGuideCacheTag } from "@/lib/public-guide-cache";
-import { createUniqueSecureSlug, hasSecureSlugSuffix } from "@/lib/secure-slug";
+import { publicCodeCacheTag, publicGuideCacheTag } from "@/lib/public-guide-cache";
+import { createUniquePublicCode, createUniqueSecureSlug, hasSecureSlugSuffix } from "@/lib/secure-slug";
 import { normalizeSlug } from "@/lib/utils";
 import { curatedAccentForTheme, getGuideTheme, isGuideThemeId } from "@/themes";
 import {
@@ -23,6 +23,7 @@ import {
   openAiModel,
   parsedImportedListing,
   titleFromListingUrl,
+  unsupportedListingHost,
   type ImportedListing
 } from "@/lib/listing-import";
 
@@ -67,11 +68,16 @@ function revalidatePublicGuide(slug: string) {
   revalidateTag(publicGuideCacheTag(slug));
 }
 
+function revalidatePublicCode(publicCode: string) {
+  revalidateTag(publicCodeCacheTag(publicCode));
+}
+
 const dashboardPropertyFieldsSelect = {
   id: true,
   ownerId: true,
   name: true,
   slug: true,
+  publicCode: true,
   logoUrl: true,
   coverImageUrl: true,
   accentColor: true,
@@ -160,6 +166,13 @@ export async function importListingFromUrl(formData: FormData) {
 
     if (isPrivateHostname(url.hostname)) {
       dashboardError("That listing URL is not allowed.");
+    }
+
+    const unsupportedHost = unsupportedListingHost(url);
+    if (unsupportedHost) {
+      dashboardError(
+        `${unsupportedHost} blocks automated imports. Paste your Booking.com link instead, or paste the listing text below.`
+      );
     }
   }
 
@@ -275,7 +288,7 @@ export async function importListingFromUrl(formData: FormData) {
         }
       })
     : await prisma.property.create({
-        data,
+        data: { ...data, publicCode: await createUniquePublicCode() },
         select: {
           id: true,
           slug: true
@@ -387,7 +400,7 @@ export async function saveProperty(formData: FormData) {
   const property = propertyId
     ? await updateAccessibleProperty(propertyId, user, data)
     : await prisma.property.create({
-        data,
+        data: { ...data, publicCode: await createUniquePublicCode() },
         select: {
           slug: true
         }
@@ -478,7 +491,7 @@ export async function savePropertyInline(formData: FormData) {
           select: dashboardPropertyFieldsSelect
         })
       : await prisma.property.create({
-          data,
+          data: { ...data, publicCode: await createUniquePublicCode() },
           select: dashboardPropertyFieldsSelect
         });
 
@@ -589,22 +602,28 @@ export async function rotatePropertySlug(formData: FormData) {
       id: propertyId,
       ...(user.role === "ADMIN" ? {} : { ownerId: user.id })
     },
-    select: { id: true, name: true, slug: true }
+    select: { id: true, name: true, slug: true, publicCode: true }
   });
 
   if (!property) {
     redirect("/dashboard");
   }
 
+  // Rotate both forms: leaving the old short code alive would defeat the point
+  // of regenerating the link.
   const slug = await createUniqueSecureSlug(property.name, property.id);
+  const publicCode = await createUniquePublicCode();
+  const previousPublicCode = property.publicCode;
   await prisma.property.update({
     where: { id: property.id },
-    data: { slug }
+    data: { slug, publicCode }
   });
 
   revalidatePath("/dashboard");
   revalidatePublicGuide(property.slug);
   revalidatePublicGuide(slug);
+  if (previousPublicCode) revalidatePublicCode(previousPublicCode);
+  revalidatePublicCode(publicCode);
   redirect("/dashboard?saved=property");
 }
 

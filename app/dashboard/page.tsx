@@ -9,8 +9,9 @@ import {
 } from "@/app/actions";
 import DashboardClient from "@/components/dashboard-client";
 import { requireReadyUser } from "@/lib/auth";
-import { billingUrl, hasBillingAccess, normalizePlanKey, planOption } from "@/lib/billing";
+import { billingUrl, hasBillingAccess, normalizePlanKey, planOption, trialDaysRemaining } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
+import { createUniquePublicCode } from "@/lib/secure-slug";
 import { getSiteUrl } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
@@ -28,6 +29,8 @@ type DashboardPageProps = {
   searchParams?: {
     saved?: string;
     error?: string;
+    welcome?: string;
+    preview?: string;
   };
 };
 
@@ -40,6 +43,7 @@ async function getDashboardProperty(ownerId: string) {
       ownerId: true,
       name: true,
       slug: true,
+      publicCode: true,
       logoUrl: true,
       coverImageUrl: true,
       accentColor: true,
@@ -115,8 +119,21 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     redirect(billingUrl(user.selectedPlan));
   }
 
-  const property = await getDashboardProperty(user.id);
-  const publicUrl = property ? `${getSiteUrl()}/stay/${property.slug}` : "";
+  let property = await getDashboardProperty(user.id);
+
+  // Properties created before short links existed have no code yet. Mint one on
+  // first view so every owner gets the short URL without a manual backfill.
+  if (property && !property.publicCode) {
+    const publicCode = await createUniquePublicCode();
+    await prisma.property.update({ where: { id: property.id }, data: { publicCode } });
+    property = { ...property, publicCode };
+  }
+
+  const publicUrl = property
+    ? property.publicCode
+      ? `${getSiteUrl()}/g/${property.publicCode}`
+      : `${getSiteUrl()}/stay/${property.slug}`
+    : "";
   const qrCode = publicUrl ? `/api/qr?text=${encodeURIComponent(publicUrl)}` : "";
   const selectedPlan = normalizePlanKey(user.selectedPlan);
   const currentPlan = planOption(selectedPlan);
@@ -136,6 +153,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       planName={planName}
       selectedPlan={selectedPlan}
       trialLabel={trialLabel}
+      trialDaysLeft={trialDaysRemaining(user)}
+      subscriptionStatus={user.subscriptionStatus}
+      isFirstVisit={searchParams?.welcome === "1"}
       logoutAction={logoutOwner}
       importListingAction={importListingFromUrl}
       savePropertyInlineAction={savePropertyInline}

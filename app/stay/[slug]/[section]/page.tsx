@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { GuestGuideSection } from "@/components/guest-guide-section";
 import { getCachedPublicGuideSection } from "@/lib/public-guide-cache";
+import { GUIDE_SECTION_IDS } from "@/lib/guide-sections";
 
 export const preferredRegion = "fra1";
 export const metadata = {
@@ -10,8 +11,6 @@ export const metadata = {
   }
 };
 
-const sectionIds = new Set(["wifi", "contact", "arrival", "house", "restaurants", "activities", "essentials", "reviews", "emergency"]);
-
 type PageProps = {
   params: {
     slug: string;
@@ -20,7 +19,7 @@ type PageProps = {
 };
 
 export default async function GuideSectionPage({ params }: PageProps) {
-  if (!sectionIds.has(params.section)) {
+  if (!GUIDE_SECTION_IDS.has(params.section)) {
     notFound();
   }
 

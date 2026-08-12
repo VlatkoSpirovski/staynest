@@ -1,5 +1,6 @@
 export const examplePublicGuide = {
   slug: "example-stay",
+  publicCode: "example",
   name: "Lakeview House",
   logoUrl: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=400&auto=format&fit=crop",
   coverImageUrl: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1600&auto=format&fit=crop",

@@ -5,7 +5,7 @@ import { OAuthProvider } from "@prisma/client";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
-import { normalizePlanKey } from "@/lib/billing";
+import { normalizePlanKey, startTrial } from "@/lib/billing";
 import { getAppUrl } from "@/lib/utils";
 
 const oauthStateCookie = "staynest_oauth_state";
@@ -253,7 +253,7 @@ export async function signInWithOAuthProfile(profile: OAuthProfile) {
       email: profile.email,
       emailVerifiedAt: profile.emailVerified ? new Date() : null,
       selectedPlan: selectedPlan ?? "basic-monthly",
-      subscriptionStatus: "PENDING",
+      ...startTrial(),
       oauthAccounts: {
         create: {
           provider: profile.provider,
