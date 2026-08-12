@@ -11,6 +11,7 @@ import DashboardClient from "@/components/dashboard-client";
 import { requireReadyUser } from "@/lib/auth";
 import { billingUrl, hasBillingAccess, normalizePlanKey, planOption, trialDaysRemaining } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
+import { reconcilePaddleStatus } from "@/lib/paddle-sync";
 import { createUniquePublicCode } from "@/lib/secure-slug";
 import { getSiteUrl } from "@/lib/utils";
 import { redirect } from "next/navigation";
@@ -115,7 +116,16 @@ function savedMessage(saved?: string) {
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const user = await requireReadyUser();
-  if (!hasBillingAccess(user)) {
+  // Before locking anyone out, confirm with Paddle. A paying owner whose webhook
+  // never arrived would otherwise be bounced to billing on every single visit
+  // with no way to reach the product they already paid for.
+  let access = hasBillingAccess(user);
+  if (!access) {
+    const reconciled = await reconcilePaddleStatus(user);
+    access = hasBillingAccess({ ...user, subscriptionStatus: reconciled.status });
+  }
+
+  if (!access) {
     redirect(billingUrl(user.selectedPlan));
   }
 

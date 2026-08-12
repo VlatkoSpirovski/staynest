@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { hasBillingAccess, normalizePlanKey } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
+import { reconcilePaddleStatus } from "@/lib/paddle-sync";
 import { isTrustedAppRequest } from "@/lib/request-security";
 
 export const dynamic = "force-dynamic";
@@ -34,8 +35,12 @@ export async function POST(request: Request) {
     data: { selectedPlan: selectedPlanKey }
   });
 
+  // Confirm the payment with Paddle directly rather than waiting on a webhook.
+  const reconciled = await reconcilePaddleStatus(updatedUser);
+  const current = reconciled.status ?? updatedUser.subscriptionStatus;
+
   return NextResponse.json({
-    status: updatedUser.subscriptionStatus,
-    ready: hasBillingAccess(updatedUser)
+    status: current,
+    ready: hasBillingAccess({ ...updatedUser, subscriptionStatus: current })
   });
 }

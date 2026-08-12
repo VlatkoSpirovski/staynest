@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireReadyUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { normalizePlanKey, planOption, priceIdForPlan } from "@/lib/billing";
 import { isTrustedAppRequest } from "@/lib/request-security";
 
@@ -87,6 +88,13 @@ export async function POST(request: Request) {
   if (!response.ok || !payload.data?.id) {
     return NextResponse.json({ error: paddleErrorMessage(response.status, payload) }, { status: 400 });
   }
+
+  // Store the transaction up front. If the webhook never lands, this is the
+  // handle reconcilePaddleStatus uses to confirm the payment directly.
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { paddleTransactionId: payload.data.id, selectedPlan: planKey }
+  });
 
   return NextResponse.json({ transactionId: payload.data.id });
 }
