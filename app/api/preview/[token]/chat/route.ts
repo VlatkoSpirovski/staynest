@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getGuestMessages } from "@/lib/guest-i18n";
 import { getPreviewGuideData } from "@/lib/preview-guide-data";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const preferredRegion = "fra1";
@@ -73,6 +74,22 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ answer: t.chat.askAnything }, { status: 400 });
   }
 
+  // Unclaimed previews are handed out to anonymous visitors, so the same caps as
+  // the public guide chat apply here.
+  const ip = clientIp(request);
+  const [guestLimit, previewLimit, globalLimit] = await Promise.all([
+    rateLimit(`preview-chat:ip:${ip}`, 15, 10 * 60),
+    rateLimit(`preview-chat:token:${params.token}`, 60, 24 * 60 * 60),
+    rateLimit("chat:global", 2000, 24 * 60 * 60)
+  ]);
+
+  if (!guestLimit.allowed || !previewLimit.allowed || !globalLimit.allowed) {
+    return NextResponse.json(
+      { answer: t.chat.errorNow },
+      { status: 429, headers: { "retry-after": String(guestLimit.retryAfterSeconds) } }
+    );
+  }
+
   const property = await getPreviewGuideData(params.token);
   if (!property) {
     return NextResponse.json({ answer: t.chat.errorAnswer }, { status: 404 });
@@ -96,7 +113,10 @@ export async function POST(request: Request, { params }: RouteContext) {
       model: openAiModel(),
       max_output_tokens: 220,
       instructions:
-        "You are StayNest's guest assistant. Answer only from the provided property context. Reply in English. Be concise, warm, and practical. If the answer is missing, say you do not have that detail and tell the guest to contact the host. Never invent codes, prices, policies, addresses, or emergency instructions.",
+        "You are StayNest's guest assistant. Answer only from the provided property context. " +
+        "Reply in the same language the guest wrote in; if that is unclear, use English. " +
+        "Be concise, warm, and practical. If the answer is missing, say you do not have that detail and tell the guest to contact the host. " +
+        "Never invent codes, prices, policies, addresses, or emergency instructions.",
       input: [
         {
           role: "user",

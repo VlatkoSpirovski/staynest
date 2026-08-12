@@ -27,19 +27,11 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { plan?: string };
   const selectedPlanKey = normalizePlanKey(body.plan);
 
-  const isDev = process.env.NODE_ENV !== "production";
-  const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  // Only records the plan the owner picked. The trial itself is granted at
+  // signup, and Paddle webhooks remain authoritative for paid status.
   const updatedUser = await prisma.user.update({
     where: { id: user.id },
-    data: {
-      selectedPlan: selectedPlanKey,
-      ...(isDev
-        ? {
-            subscriptionStatus: "TRIALING",
-            trialEndsAt
-          }
-        : {})
-    }
+    data: { selectedPlan: selectedPlanKey }
   });
 
   return NextResponse.json({

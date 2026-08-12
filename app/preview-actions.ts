@@ -22,6 +22,7 @@ import {
   joinKnowledge,
   fallbackImportedListing,
   openAiErrorMessage,
+  unsupportedListingHost,
   type ImportedListing
 } from "@/lib/listing-import";
 
@@ -49,6 +50,11 @@ export async function generatePreviewFromUrl(_state: PreviewFormState, formData:
 
   if (isPrivateHostname(url.hostname)) {
     return { error: "That listing URL is not allowed." };
+  }
+
+  const unsupportedHost = unsupportedListingHost(url);
+  if (unsupportedHost) {
+    return { error: `${unsupportedHost} blocks automated imports. Please paste your Booking.com listing link instead.` };
   }
 
   const apiKey = process.env.OPENAI_API_KEY;

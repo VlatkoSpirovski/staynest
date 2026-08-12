@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getGuestMessages } from "@/lib/guest-i18n";
 import { getCachedPublicGuideChatContext } from "@/lib/public-guide-cache";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const preferredRegion = "fra1";
@@ -55,6 +56,13 @@ ${reviews || "None"}
 `.trim();
 }
 
+/** First language tag from Accept-Language, used only as a fallback hint. */
+function browserLanguage(request: Request) {
+  const header = request.headers.get("accept-language");
+  if (!header) return "unknown";
+  return header.split(",")[0]?.trim().slice(0, 12) || "unknown";
+}
+
 function extractResponseText(data: unknown) {
   if (!data || typeof data !== "object") return "";
   if ("output_text" in data && typeof data.output_text === "string") return data.output_text;
@@ -85,6 +93,26 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ answer: t.chat.askAnything }, { status: 400 });
   }
 
+  // This endpoint is public and every call costs OpenAI credits, so it is capped
+  // three ways: per guest, per property, and globally as a circuit breaker.
+  const ip = clientIp(request);
+  const [guestLimit, propertyLimit, globalLimit] = await Promise.all([
+    rateLimit(`chat:ip:${ip}`, 20, 10 * 60),
+    rateLimit(`chat:property:${params.slug}`, 200, 24 * 60 * 60),
+    rateLimit("chat:global", 2000, 24 * 60 * 60)
+  ]);
+
+  if (!guestLimit.allowed) {
+    return NextResponse.json(
+      { answer: t.chat.errorNow },
+      { status: 429, headers: { "retry-after": String(guestLimit.retryAfterSeconds) } }
+    );
+  }
+
+  if (!propertyLimit.allowed || !globalLimit.allowed) {
+    return NextResponse.json({ answer: t.chat.errorNow }, { status: 429 });
+  }
+
   const property = await getCachedPublicGuideChatContext(params.slug);
   if (!property) {
     return NextResponse.json({ answer: t.chat.errorAnswer }, { status: 404 });
@@ -108,11 +136,14 @@ export async function POST(request: Request, { params }: RouteContext) {
       model: openAiModel(),
       max_output_tokens: 220,
       instructions:
-        "You are StayNest's guest assistant. Answer only from the provided property context. Reply in English. Be concise, warm, and practical. If the answer is missing, say you do not have that detail and tell the guest to contact the host. Never invent codes, prices, policies, addresses, or emergency instructions.",
+        "You are StayNest's guest assistant. Answer only from the provided property context. " +
+        "Reply in the same language the guest wrote in; if that is unclear, use the language hinted by the guest's browser, otherwise English. " +
+        "Be concise, warm, and practical. If the answer is missing, say you do not have that detail and tell the guest to contact the host. " +
+        "Never invent codes, prices, policies, addresses, or emergency instructions.",
       input: [
         {
           role: "user",
-          content: `Property context:\n${propertyContext}\n\nGuest question:\n${message}`
+          content: `Property context:\n${propertyContext}\n\nGuest browser language hint: ${browserLanguage(request)}\n\nGuest question:\n${message}`
         }
       ]
     })

@@ -2,6 +2,7 @@
 
 import { type FormEvent, useEffect, useMemo, useState, useTransition } from "react";
 import {
+  AlertCircle,
   BadgeCheck,
   BedDouble,
   Bot,
@@ -26,6 +27,7 @@ import {
   Save,
   Settings,
   ShieldAlert,
+  Sparkles,
   Star,
   Utensils,
   WandSparkles,
@@ -83,6 +85,7 @@ interface Property {
   ownerId: string;
   name: string;
   slug: string;
+  publicCode: string | null;
   logoUrl: string | null;
   coverImageUrl: string | null;
   accentColor: string;
@@ -123,6 +126,9 @@ interface DashboardClientProps {
   planName: string;
   selectedPlan: string;
   trialLabel: string | null;
+  trialDaysLeft: number | null;
+  subscriptionStatus: string | null;
+  isFirstVisit: boolean;
   logoutAction: any;
   importListingAction: any;
   savePropertyInlineAction: any;
@@ -266,6 +272,7 @@ function createBlankProperty(ownerId: string): Property {
     ownerId,
     name: "",
     slug: "",
+    publicCode: null,
     logoUrl: null,
     coverImageUrl: null,
     accentColor: "#5D9C9A",
@@ -503,6 +510,70 @@ function mergePropertyFields(current: Property, next: Partial<Property>): Proper
   };
 }
 
+/**
+ * Trial and billing state, shown above the workspace.
+ *
+ * Owners now reach the dashboard without entering a card, so this bar is the only
+ * place the trial is visible and the only prompt to subscribe. It escalates as the
+ * trial runs down and disappears entirely once a subscription is active.
+ */
+function TrialStatusBar({
+  subscriptionStatus,
+  trialDaysLeft,
+  trialLabel,
+  selectedPlan
+}: {
+  subscriptionStatus: string | null;
+  trialDaysLeft: number | null;
+  trialLabel: string | null;
+  selectedPlan: string;
+}) {
+  const status = subscriptionStatus?.toUpperCase();
+  if (status === "ACTIVE") return null;
+
+  const billingHref = `${BILLING_BASE_URL}/billing?plan=${encodeURIComponent(selectedPlan)}`;
+  const expired = status !== "TRIALING" || trialDaysLeft === null || trialDaysLeft <= 0;
+  const urgent = !expired && trialDaysLeft !== null && trialDaysLeft <= 3;
+
+  const tone = expired
+    ? "border-red-200 bg-red-50 text-red-800"
+    : urgent
+      ? "border-amber-200 bg-amber-50 text-amber-900"
+      : "border-[#172234]/10 bg-white text-[#111827]";
+
+  const headline = expired
+    ? "Your free trial has ended"
+    : trialDaysLeft === 1
+      ? "1 day left in your free trial"
+      : `${trialDaysLeft} days left in your free trial`;
+
+  const detail = expired
+    ? "Add a payment method to put your guide back online for guests."
+    : trialLabel
+      ? `Your guide stays live after ${trialLabel} once you add a payment method.`
+      : "Add a payment method whenever you are ready — nothing is charged until the trial ends.";
+
+  return (
+    <div className={`mb-4 flex flex-col gap-3 rounded-[18px] border px-4 py-3 shadow-[0_16px_42px_rgba(17,24,39,0.05)] sm:flex-row sm:items-center sm:justify-between ${tone}`}>
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 shrink-0">
+          {expired ? <AlertCircle size={18} /> : <Sparkles size={18} />}
+        </span>
+        <div>
+          <p className="text-sm font-black">{headline}</p>
+          <p className="mt-0.5 text-xs font-semibold opacity-80">{detail}</p>
+        </div>
+      </div>
+      <a
+        href={billingHref}
+        className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-[14px] bg-[#111827] px-4 text-sm font-black text-white transition hover:bg-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#111827]/40 focus:ring-offset-2"
+      >
+        {expired ? "Reactivate guide" : "Add payment method"}
+      </a>
+    </div>
+  );
+}
+
 function StayNestLogoMark() {
   return (
     <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-[18px] bg-[#F8F3EA] shadow-[0_16px_38px_rgba(17,24,39,0.14),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-[#172234]/8">
@@ -559,6 +630,10 @@ export default function DashboardClient(props: DashboardClientProps) {
     errorMessage,
     planName,
     selectedPlan,
+    trialLabel,
+    trialDaysLeft,
+    subscriptionStatus,
+    isFirstVisit,
     logoutAction,
     importListingAction,
     savePropertyInlineAction,
@@ -588,12 +663,18 @@ export default function DashboardClient(props: DashboardClientProps) {
   }, [errorMessage, successMessage]);
 
   const siteBaseUrl = useMemo(() => {
-    if (initialPublicUrl && initialProperty?.slug) {
-      return initialPublicUrl.replace(new RegExp(`/stay/${initialProperty.slug}$`), "");
+    // Recover the origin from whatever public URL the server rendered, whether
+    // that was the short /g/<code> form or the legacy /stay/<slug> one.
+    if (initialPublicUrl) {
+      return initialPublicUrl.replace(/\/(?:g|stay)\/[^/]+$/, "");
     }
     return "https://dashboard.staynest.site";
-  }, [initialProperty?.slug, initialPublicUrl]);
-  const publicUrl = property.slug ? `${siteBaseUrl}/stay/${property.slug}` : "";
+  }, [initialPublicUrl]);
+  const publicUrl = property.publicCode
+    ? `${siteBaseUrl}/g/${property.publicCode}`
+    : property.slug
+      ? `${siteBaseUrl}/stay/${property.slug}`
+      : "";
   const qrCode = publicUrl ? `/api/qr?text=${encodeURIComponent(publicUrl)}` : initialQrCode || "";
   const [activeTab, setActiveTab] = useState<TabId>("setup");
   const [activeModule, setActiveModule] = useState<ModuleId>("welcome");
@@ -603,17 +684,17 @@ export default function DashboardClient(props: DashboardClientProps) {
   const setupItems = useMemo(
     () => [
       { id: "welcome" as ModuleId, label: "Welcome", done: Boolean(property.name && property.welcomeMessage) },
-      { id: "photos" as ModuleId, label: "Photos", done: Boolean(property.logoUrl && property.coverImageUrl) },
       { id: "wifi" as ModuleId, label: "Wi-Fi", done: Boolean(property.wifiName && property.wifiPassword) },
       { id: "checkin" as ModuleId, label: "Check-in", done: Boolean(property.checkInInfo) },
+      { id: "reviews" as ModuleId, label: "Google reviews", done: Boolean(getReviewValue(property, "GOOGLE")) },
+      { id: "photos" as ModuleId, label: "Photos", done: Boolean(property.logoUrl && property.coverImageUrl) },
       { id: "rules" as ModuleId, label: "Rules", done: Boolean(property.houseRules || property.parkingInfo) },
       { id: "restaurants" as ModuleId, label: "Restaurants", done: restaurantItems(property).length >= 1 },
       { id: "activities" as ModuleId, label: "Activities", done: activityItems(property).length >= 1 },
       { id: "essentials" as ModuleId, label: "Essentials", done: essentialItems(property).length >= 2 },
       { id: "contact" as ModuleId, label: "Contact", done: Boolean(property.hostPhone && property.hostEmail) },
       { id: "emergency" as ModuleId, label: "Emergency", done: Boolean(property.emergencyInfo) },
-      { id: "ai" as ModuleId, label: "AI", done: Boolean(property.aiKnowledge) },
-      { id: "reviews" as ModuleId, label: "Google reviews", done: Boolean(getReviewValue(property, "GOOGLE")) }
+      { id: "ai" as ModuleId, label: "AI", done: Boolean(property.aiKnowledge) }
     ],
     [property]
   );
@@ -907,6 +988,22 @@ export default function DashboardClient(props: DashboardClientProps) {
       </header>
 
       <div className="mx-auto max-w-5xl px-4 pb-32 pt-5 lg:pb-32 lg:px-8">
+        <TrialStatusBar
+          subscriptionStatus={subscriptionStatus}
+          trialDaysLeft={trialDaysLeft}
+          trialLabel={trialLabel}
+          selectedPlan={selectedPlan}
+        />
+
+        {isFirstVisit ? (
+          <div className="mb-4 rounded-[18px] border border-[#76875D]/18 bg-[#76875D]/10 px-4 py-3 shadow-[0_16px_42px_rgba(17,24,39,0.05)]">
+            <p className="text-sm font-black text-[#4F5F3E]">Welcome to StayNest</p>
+            <p className="mt-0.5 text-xs font-semibold text-[#4F5F3E]/85">
+              Start with Welcome and Wi-Fi below — those two alone already give your guests something useful. You can share the QR code as soon as you are happy with it.
+            </p>
+          </div>
+        ) : null}
+
         {notice ? (
           <div
             className={`mb-4 rounded-[18px] px-4 py-3 text-sm font-bold shadow-[0_16px_42px_rgba(17,24,39,0.06)] ${
@@ -1005,6 +1102,16 @@ function SetupScreen({
   openModule: (id: ModuleId) => void;
   importListingAction: any;
 }) {
+  // The hero used to claim the guide was "almost ready" even at 0%, which read as
+  // broken to anyone who had just signed up. Derive the message from real state.
+  const stage = !property.name
+    ? { eyebrow: "First step", title: "Let\u2019s build your guest guide" }
+    : completion >= 100
+      ? { eyebrow: "Ready for guests", title: `${property.name} is good to go` }
+      : completion >= 50
+        ? { eyebrow: "Almost there", title: "Your guest guide is almost ready" }
+        : { eyebrow: "In progress", title: "Add the essentials your guests ask for" };
+
   return (
     <div className="space-y-4">
       <section className="overflow-hidden rounded-[24px] border border-white/55 bg-[#111827] text-white shadow-[0_34px_110px_rgba(17,24,39,0.30),inset_0_1px_0_rgba(255,255,255,0.10)]">
@@ -1017,8 +1124,8 @@ function SetupScreen({
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,transparent_0%,rgba(17,24,39,0.24)_43%,rgba(17,24,39,0.78)_100%)]" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#162033]/48 to-transparent" />
           <div className="absolute bottom-5 left-5 right-5">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-white/66">Good afternoon</p>
-            <h1 className="mt-2 max-w-xs text-3xl font-black leading-[1.04] tracking-tight">Your guest guide is almost ready</h1>
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-white/70">{stage.eyebrow}</p>
+            <h1 className="mt-2 max-w-sm text-3xl font-black leading-[1.04] tracking-tight">{stage.title}</h1>
           </div>
         </div>
       </section>
@@ -1029,7 +1136,7 @@ function SetupScreen({
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#B7DAD5]">Setup progress</p>
               <h2 className="mt-2 text-2xl font-black tracking-tight">{completion}% complete</h2>
-              <p className="mt-1 text-sm font-semibold leading-6 text-white/58">Finish the essentials in under 3 minutes.</p>
+              <p className="mt-1 text-sm font-semibold leading-6 text-white/70">{completion >= 100 ? "Every section is filled in. Share your QR code from Settings." : "Finish the essentials in under 3 minutes."}</p>
             </div>
             <div className="relative grid h-[72px] w-[72px] shrink-0 place-items-center">
               <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 72 72" aria-hidden>
@@ -1092,7 +1199,7 @@ function ImportListingCard({
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#5F9D99]">Smart prefill</p>
-            <h2 className="mt-1 text-2xl font-black tracking-tight">Import from Booking or Airbnb</h2>
+            <h2 className="mt-1 text-2xl font-black tracking-tight">Import from Booking.com</h2>
             <p className="mt-2 text-sm font-semibold leading-6 text-[#111827]/58">
               Paste a listing link. StayNest will pull the public details it can read: name, host name, check-in/out, parking, rules and facilities.
             </p>
@@ -1109,7 +1216,7 @@ function ImportListingCard({
                 name="listingUrl"
                 type="url"
                 className="min-h-11 min-w-0 flex-1 bg-transparent text-sm font-bold text-[#111827] outline-none placeholder:text-[#111827]/32"
-                placeholder="https://www.booking.com/hotel/... or Airbnb link"
+                placeholder="https://www.booking.com/hotel/..."
               />
             </span>
           </label>

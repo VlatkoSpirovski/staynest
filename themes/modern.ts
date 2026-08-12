@@ -9,7 +9,7 @@ export const modernTheme: GuideTheme = {
   description: "White minimal layout with clean typography, quiet spacing and a refined city-apartment feel.",
   bestFor: "City apartments, modern Airbnb, business stays",
   palette: ["#FFFFFF", "#F4F6F8", "#111827", "#7E8A96"],
-  accentOptions: ["#111827", "#65707C", "#4A8A8F", "#75808B"],
+  accentOptions: ["#111827", "#65707C", "#447F84", "#6C7680"],
   defaults: {
     accentColor: "#111827",
     serifHeading: false,
@@ -29,9 +29,13 @@ export const modernTheme: GuideTheme = {
       "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
     heroFallback:
       "radial-gradient(circle at 16% 18%, rgba(255,255,255,0.86), transparent 32%), linear-gradient(135deg, #F8FAFC 0%, #CDD5DE 54%, #8694A3 100%)",
-    heroOverlay: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(17,24,39,0.08) 42%, rgba(17,24,39,0.34) 100%)",
+    // Modern keeps dark hero text, so the scrim has to lighten the photo rather
+    // than darken it. A dark scrim here made the title unreadable (1:1) on any
+    // dark cover image; this keeps it above 13:1 on the worst-case photo.
+    heroOverlay:
+      "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.52) 46%, rgba(255,255,255,0.90) 100%)",
     text: "#111827",
-    muted: "rgba(17,24,39,0.56)",
+    muted: "rgba(17,24,39,0.62)",
     cardBackground: "linear-gradient(145deg, rgba(255,255,255,0.94) 0%, rgba(247,249,252,0.88) 100%)",
     cardBorder: "rgba(17,24,39,0.065)",
     elevatedBackground: "rgba(255,255,255,0.78)",

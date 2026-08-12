@@ -3,7 +3,7 @@ import "server-only";
 import { GuideSectionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { recordPreviewEvent } from "@/lib/preview-analytics";
-import { createUniqueSecureSlug } from "@/lib/secure-slug";
+import { createUniquePublicCode, createUniqueSecureSlug } from "@/lib/secure-slug";
 
 export async function claimPropertyPreview(previewToken: string, ownerId: string) {
   const preview = await prisma.propertyPreview.findUnique({ where: { token: previewToken } });
@@ -19,6 +19,7 @@ export async function claimPropertyPreview(previewToken: string, ownerId: string
       ownerId,
       name: propertyName,
       slug,
+      publicCode: await createUniquePublicCode(),
       welcomeMessage: preview.welcomeMessage || `Welcome to ${propertyName}.`,
       coverImageUrl: preview.coverImageUrl,
       checkInInfo: preview.checkInInfo,

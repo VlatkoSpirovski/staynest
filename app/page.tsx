@@ -24,16 +24,16 @@ import { PreviewForm } from "@/components/preview-form";
 import { getAppUrl } from "@/lib/utils";
 
 export const metadata = {
-  title: "Digital guest guides for Airbnb & Booking hosts",
+  title: "Get more 5-star reviews. Answer fewer guest questions.",
   description:
-    "For Airbnb hosts, Booking.com hosts and apartment hosts: create a beautiful QR guest guide with Wi‑Fi, check‑in, house rules, local recommendations and optional AI guest chat for guests. Set up in minutes.",
+    "StayNest gives Airbnb and Booking.com hosts a QR guest guide that answers arrival, Wi-Fi and checkout questions automatically, then asks happy guests for a review at the right moment. Build yours free in two minutes.",
   alternates: {
     canonical: "/"
   },
   openGraph: {
-    title: "StayNest · Digital guest guides for Airbnb & Booking hosts",
+    title: "StayNest · Get more 5-star reviews. Answer fewer guest questions.",
     description:
-      "For Airbnb hosts, Booking.com hosts and apartment hosts: create a beautiful QR guest guide with Wi‑Fi, check‑in, house rules, local recommendations and optional AI guest chat for guests. Set up in minutes.",
+      "A QR guest guide for Airbnb and Booking.com hosts that answers arrival, Wi-Fi and checkout questions automatically, then asks happy guests for a review at the right moment.",
     url: "/"
   }
 };
@@ -41,18 +41,18 @@ export const metadata = {
 const navItems = [
   { label: "Features", href: "#features" },
   { label: "Pricing", href: "#pricing" },
-  { label: "Example", href: "/stay/example-stay" },
+  { label: "Example", href: "/g/example" },
   { label: "For Hosts", href: "#for-hosts" }
 ];
 
-const heroHighlights = ["Set up in minutes", "AI guest assistant", "One QR, always live"];
+const heroHighlights = ["Live in under 5 minutes", "Answers in your guest's language", "No app for guests to install"];
 
 const hostNames = ["Villa Beti", "Cece's Home", "Villa Yeti"];
 
 const steps = [
   {
     title: "Import your listing",
-    text: "Paste your Booking or Airbnb link and prepare your guide faster.",
+    text: "Paste your Booking.com link and prepare your guide faster.",
     icon: Import
   },
   {
@@ -66,8 +66,8 @@ const steps = [
     icon: QrCode
   },
   {
-    title: "Let AI help guests",
-    text: "Guests ask questions 24/7 and get answers trained only on your property.",
+    title: "Stop repeating yourself",
+    text: "Guests ask at 2am and get an answer trained only on your property, in their own language.",
     icon: Bot
   }
 ];
@@ -75,7 +75,7 @@ const steps = [
 const hostDashboardPanels = [
   {
     label: "Smart prefill",
-    title: "Import from Booking or Airbnb",
+    title: "Import from Booking.com",
     text: "Paste a listing link. StayNest pulls the public details it can read.",
     icon: Import
   },
@@ -101,7 +101,7 @@ const hostDashboardPanels = [
 
 const hostDashboardHighlights = [
   {
-    title: "Import from Booking or Airbnb",
+    title: "Import from Booking.com",
     text: "Save hours of manual work.",
     icon: Link2
   },
@@ -130,7 +130,7 @@ const features = [
     icon: QrCode
   },
   {
-    title: "Booking/Airbnb import",
+    title: "Booking.com import",
     text: "Use a listing link to prepare the first version faster, then refine it for your guests.",
     icon: Import
   },
@@ -141,12 +141,12 @@ const features = [
   },
   {
     title: "Review reminders",
-    text: "Point happy guests to your Google, Booking or Airbnb review links at the right moment.",
+    text: "Prompt happy guests toward your Google, Booking or Airbnb review page at checkout, while the stay is still fresh.",
     icon: Star
   },
   {
     title: "Multi-language ready",
-    text: "A mobile-first guide experience designed for international guests.",
+    text: "Guests ask in German, Dutch, French or Polish and the assistant answers in the same language.",
     icon: Globe2
   }
 ];
@@ -168,7 +168,7 @@ const plans = [
     yearly: "€80",
     savings: "Save €100 yearly",
     text: "For premium stays that want guest chat and faster setup.",
-    items: ["Everything in Basic", "AI guest assistant", "Property knowledge training", "Booking/Airbnb import support"],
+    items: ["Everything in Basic", "AI guest assistant", "Property knowledge training", "Booking.com import support"],
     plan: "ai-yearly",
     cta: "Choose Full AI",
     popular: true
@@ -204,7 +204,7 @@ function HostDashboardShowcase() {
         <div className="text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Built for hosts</p>
           <h3 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033]">Everything you need in one dashboard</h3>
-          <p className="mx-auto mt-4 max-w-md text-sm font-medium leading-7 text-[#172033]/56">
+          <p className="mx-auto mt-4 max-w-md text-sm font-medium leading-7 text-[#172033]/72">
             Manage your guide, content and AI concierge from one simple dashboard.
           </p>
         </div>
@@ -251,7 +251,7 @@ function HostDashboardShowcase() {
                 </div>
                 <div>
                   <h4 className="text-base font-semibold text-[#172033]">{item.title}</h4>
-                  <p className="mt-1.5 text-sm font-medium leading-6 text-[#172033]/56">{item.text}</p>
+                  <p className="mt-1.5 text-sm font-medium leading-6 text-[#172033]/72">{item.text}</p>
                 </div>
               </div>
             );
@@ -303,7 +303,7 @@ function PhoneMockup() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold">AI Guest Chat</p>
-                  <p className="mt-0.5 text-xs font-medium text-[#172033]/50">Ask anything about the stay</p>
+                  <p className="mt-0.5 text-xs font-medium text-[#172033]/72">Ask anything about the stay</p>
                 </div>
               </div>
             </div>
@@ -317,7 +317,7 @@ function PhoneMockup() {
                       <Icon size={15} />
                     </div>
                     <span className="text-sm font-semibold text-[#172033]">{item.label}</span>
-                    <ArrowRight className="ml-auto text-[#172033]/24" size={15} />
+                    <ArrowRight className="ml-auto text-[#172033]/45" size={15} />
                   </div>
                 );
               })}
@@ -343,7 +343,7 @@ export default function LandingPage() {
 
           <nav className="hidden items-center gap-8 lg:flex" aria-label="Main navigation">
             {navItems.map((item) => (
-              <a key={item.label} href={item.href} className="text-sm font-semibold text-[#172033]/58 transition hover:text-[#172033]">
+              <a key={item.label} href={item.href} className="text-sm font-semibold text-[#172033]/72 transition hover:text-[#172033]">
                 {item.label}
               </a>
             ))}
@@ -385,27 +385,29 @@ export default function LandingPage() {
         <div className="mx-auto grid max-w-7xl gap-12 px-5 pb-16 pt-12 sm:pt-16 lg:grid-cols-[1.03fr_0.97fr] lg:items-center lg:px-8 lg:pb-24 lg:pt-20">
           <div>
             <p className="inline-flex rounded-full border border-[#C9D8D2] bg-white/82 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6F9287] shadow-[0_10px_26px_rgba(23,32,51,0.035)]">
-              Built for modern hosts
+              Built by hosts, for hosts
             </p>
-            <h1 className="mt-6 max-w-4xl font-serif text-[3rem] font-semibold leading-[1.02] tracking-tight text-[#172033] sm:text-5xl lg:text-[4rem]">
-              Digital Guest Guide & AI Concierge for <span className="text-[#6F9287]">Airbnb</span>,<span className="text-[#6F9287]"> Booking.com </span>and vacation rentals.
+            <h1 className="mt-6 max-w-4xl font-serif text-[2.75rem] font-semibold leading-[1.05] tracking-tight text-[#172033] sm:text-5xl lg:text-[3.75rem]">
+              Stop answering the same guest questions. Start collecting more <span className="text-[#5C8377]">5-star reviews</span>.
             </h1>
-            <p className="mt-6 max-w-2xl text-base font-medium leading-8 text-[#172033]/62 sm:text-lg sm:leading-9">
-              Give guests a beautiful QR guide with arrival details, Wi-Fi, house rules, local tips, reviews and an AI chat trained only on your property.
+            <p className="mt-6 max-w-2xl text-base font-medium leading-8 text-[#172033]/72 sm:text-lg sm:leading-9">
+              One QR code in your property answers Wi-Fi, check-in, parking and checkout questions around the clock — in your guest&rsquo;s own language — then points happy guests to your review page at exactly the right moment. Built for Airbnb and Booking.com hosts.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button href={startTrialHref} className="min-h-12 w-full gap-2 rounded-full px-6 text-sm shadow-[0_14px_34px_rgba(23,32,51,0.16)] sm:w-auto">
                 Start Free Trial <ArrowRight size={18} />
               </Button>
-              <Button href="/stay/example-stay" variant="secondary" className="min-h-12 w-full rounded-full border-[#D8D1C4]/70 px-6 text-sm shadow-[0_10px_24px_rgba(23,32,51,0.045)] sm:w-auto">
+              <Button href="/g/example" variant="secondary" className="min-h-12 w-full rounded-full border-[#D8D1C4]/70 px-6 text-sm shadow-[0_10px_24px_rgba(23,32,51,0.045)] sm:w-auto">
                 See Example Guide
               </Button>
             </div>
 
+            <PreviewForm />
+
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {heroHighlights.map((item) => (
-                <div key={item} className="flex items-center gap-2 text-sm font-semibold text-[#172033]/62">
+                <div key={item} className="flex items-center gap-2 text-sm font-semibold text-[#172033]/72">
                   <span className="grid h-7 w-7 place-items-center rounded-full border border-[#D8D1C4]/70 bg-white text-[#6F9287]">
                     <CheckCircle2 size={14} />
                   </span>
@@ -413,8 +415,6 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
-
-            <PreviewForm />
           </div>
 
           <PhoneMockup />
@@ -426,7 +426,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-5xl text-center">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Trusted by hosts in Mavrovo</p>
             <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl">Built by hosts, for hosts</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm font-medium leading-7 text-[#172033]/56 sm:text-base">
+            <p className="mx-auto mt-4 max-w-2xl text-sm font-medium leading-7 text-[#172033]/72 sm:text-base">
               StayNest was created from real short-term rental experience to make every guest stay easier.
             </p>
           </div>
@@ -460,7 +460,7 @@ export default function LandingPage() {
                     <span className="font-serif text-lg font-semibold text-[#B2A995]">0{index + 1}</span>
                   </div>
                   <h3 className="mt-6 text-lg font-semibold text-[#172033]">{step.title}</h3>
-                  <p className="mt-3 text-sm font-medium leading-7 text-[#172033]/56">{step.text}</p>
+                  <p className="mt-3 text-sm font-medium leading-7 text-[#172033]/72">{step.text}</p>
                 </article>
               );
             })}
@@ -477,7 +477,7 @@ export default function LandingPage() {
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Features</p>
               <h2 className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">Everything your guests need, all in one place</h2>
             </div>
-            <Button href="/stay/example-stay" variant="secondary" className="w-full rounded-full border-[#D8D1C4]/70 shadow-[0_10px_24px_rgba(23,32,51,0.045)] sm:w-fit">
+            <Button href="/g/example" variant="secondary" className="w-full rounded-full border-[#D8D1C4]/70 shadow-[0_10px_24px_rgba(23,32,51,0.045)] sm:w-fit">
               See Example Guide
             </Button>
           </div>
@@ -498,11 +498,11 @@ export default function LandingPage() {
                     <Icon size={20} />
                   </div>
                   <h3 className={`${feature.featured ? "mt-9 font-serif text-3xl font-semibold" : "mt-6 text-lg font-semibold"} tracking-tight`}>{feature.title}</h3>
-                  <p className={`${feature.featured ? "mt-4 text-base leading-8 text-[#172033]/62" : "mt-3 text-sm leading-7 text-[#172033]/56"} font-medium`}>{feature.text}</p>
+                  <p className={`${feature.featured ? "mt-4 text-base leading-8 text-[#172033]/72" : "mt-3 text-sm leading-7 text-[#172033]/72"} font-medium`}>{feature.text}</p>
                   {feature.featured ? (
                     <div className="mt-9 rounded-[20px] border border-[#D8D1C4]/55 bg-white/78 p-4">
                       <p className="text-sm font-semibold">Trained only on your property</p>
-                      <p className="mt-2 text-sm font-medium leading-6 text-[#172033]/54">Keep answers focused on your real house rules, contact details and local tips.</p>
+                      <p className="mt-2 text-sm font-medium leading-6 text-[#172033]/72">Keep answers focused on your real house rules, contact details and local tips.</p>
                     </div>
                   ) : null}
                 </article>
@@ -534,18 +534,18 @@ export default function LandingPage() {
                 ) : null}
                 <div className="pr-28">
                   <h3 className="font-serif text-3xl font-semibold text-[#172033]">{plan.name}</h3>
-                  <p className="mt-3 min-h-12 text-sm font-medium leading-6 text-[#172033]/56">{plan.text}</p>
+                  <p className="mt-3 min-h-12 text-sm font-medium leading-6 text-[#172033]/72">{plan.text}</p>
                 </div>
                 <div className="mt-7 flex items-end gap-2">
                   <span className="text-5xl font-semibold tracking-tight text-[#172033]">{plan.price}</span>
-                  <span className="pb-2 text-sm font-semibold text-[#172033]/42">/month</span>
+                  <span className="pb-2 text-sm font-semibold text-[#172033]/72">/month</span>
                 </div>
                 <p className="mt-4 inline-flex rounded-full bg-[#F1F5F1] px-3 py-1 text-xs font-semibold text-[#6F9287] ring-1 ring-[#C9D8D2]/70">
                   Yearly {plan.yearly} · {plan.savings}
                 </p>
                 <div className="mt-7 grid gap-3">
                   {plan.items.map((item) => (
-                    <div key={item} className="flex items-center gap-3 text-sm font-medium text-[#172033]/68">
+                    <div key={item} className="flex items-center gap-3 text-sm font-medium text-[#172033]/72">
                       <CheckCircle2 size={18} className="text-[#6F9287]" />
                       {item}
                     </div>
@@ -568,7 +568,7 @@ export default function LandingPage() {
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Start hosting smarter</p>
             <h2 className="mt-3 max-w-2xl font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">Ready to give every guest a better stay?</h2>
-            <p className="mt-4 max-w-2xl text-base font-medium leading-8 text-[#172033]/58">
+            <p className="mt-4 max-w-2xl text-base font-medium leading-8 text-[#172033]/72">
               Create your guide, print one QR code and let StayNest handle the repeated questions.
             </p>
           </div>
@@ -577,13 +577,13 @@ export default function LandingPage() {
             <Button href={startTrialHref} className="min-h-12 w-full rounded-full shadow-[0_14px_34px_rgba(23,32,51,0.14)] sm:w-auto">
               Start Free Trial
             </Button>
-            <Button href="/stay/example-stay" variant="secondary" className="min-h-12 w-full rounded-full border-[#D8D1C4]/70 shadow-[0_10px_24px_rgba(23,32,51,0.045)] sm:w-auto">
+            <Button href="/g/example" variant="secondary" className="min-h-12 w-full rounded-full border-[#D8D1C4]/70 shadow-[0_10px_24px_rgba(23,32,51,0.045)] sm:w-auto">
               See Example Guide
             </Button>
           </div>
         </div>
       </section>
-      <AppLegalLinks className="mx-auto max-w-7xl px-5 pb-10 text-[#172033]/50 lg:px-8" />
+      <AppLegalLinks className="mx-auto max-w-7xl px-5 pb-10 text-[#172033]/72 lg:px-8" />
     </main>
   );
 }

@@ -1,6 +1,6 @@
 # StayNest Agent Handoff
 
-Last deep scan: 2026-05-22.
+Last deep scan: 2026-08-12.
 
 This file is the high-signal repo map for future agents. Start here before opening files. Still spot-check the exact files you edit, but do not spend a fresh full scan on basic architecture.
 
@@ -11,11 +11,11 @@ StayNest is a Next.js App Router SaaS MVP for rental/villa owners. Owners create
 Current business flow:
 
 - Landing page sells Basic and Full AI plans.
-- Owners can register publicly, get a 7-day trial, then go to billing.
+- Owners register publicly and get a 7-day no-card trial, landing straight in `/dashboard`. Billing is prompted from the dashboard trial bar, not as a wall in front of the first visit.
 - Admins can also provision owners/admins and manage all properties.
 - Owners manage one main property from `/dashboard`.
-- Guests open public guides at `/stay/[slug]` or root aliases `/[slug]`.
-- Optional integrations: PostgreSQL, SMTP, Cloudinary, OpenAI Responses API, Google OAuth, PayPal subscriptions.
+- Guests open public guides at the short canonical `/g/[code]`; `/stay/[slug]` still renders and `/[slug]` permanently redirects to the short link.
+- Optional integrations: PostgreSQL, SMTP, Cloudinary, OpenAI Responses API, Google OAuth, Geoapify places, Paddle subscriptions, Cloudflare Turnstile.
 
 ## Stack
 
@@ -29,7 +29,8 @@ Current business flow:
 - `nodemailer` for email.
 - OpenAI Responses API via raw `fetch`.
 - Cloudinary upload via raw signed upload request.
-- PayPal subscription creation via raw API route.
+- Paddle subscriptions (webhook-authoritative). A legacy PayPal route still exists and is unused.
+- Postgres-backed fixed-window rate limiting in `lib/rate-limit.ts`.
 
 ## Commands
 
@@ -61,11 +62,23 @@ Notes:
 - `NEXT_PUBLIC_APP_URL`: canonical app URL for generated links and OAuth callbacks.
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`: optional email sending. If missing, emails are printed in the dev server terminal.
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `CLOUDINARY_UPLOAD_FOLDER`: optional image uploads. If missing, dashboard/admin can still store pasted image URLs.
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`: optional signup captcha. Both must be set to enable it; when unset the check is skipped so local dev keeps working.
 - `OPENAI_API_KEY`, `OPENAI_MODEL`: optional AI import and guest chat. Default model fallback is `gpt-5-mini`; code intentionally replaces env value `gpt-5.4-mini` with `gpt-5-mini`.
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: optional Google login.
 - `PAYPAL_ENV`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_BASIC_PLAN_ID`, `PAYPAL_AI_PLAN_ID`: optional PayPal subscription creation.
 
 Apple OAuth helper code exists in `lib/oauth.ts`, but the active Apple routes redirect with "disabled for MVP".
+
+## Recent Structural Changes (2026-08-12)
+
+- Trials are granted at signup in `lib/billing.ts` (`startTrial`). `/api/billing/activate` only records the chosen plan now; it no longer gates on `NODE_ENV`.
+- Signup abuse controls in `app/auth-actions.ts`: per-IP rate limits, Cloudflare Turnstile, disposable-domain blocking, auto-generated-name detection, and Gmail-dot/plus-alias canonicalisation via `lib/email-identity.ts` (`User.emailCanonical`).
+- Login and password reset are rate limited per IP and per canonical address.
+- Both AI chat routes are rate limited per IP, per property/token, and by a global daily circuit breaker, and now answer in the guest's own language.
+- `Property.publicCode` powers the canonical short guide link. `lib/secure-slug.ts` mints codes from an unambiguous base32 alphabet; `lib/guide-sections.ts` holds the shared section list plus the reserved-root-path guard that stops bot scans from reaching the database.
+- The listing importer rejects Airbnb URLs (`unsupportedListingHost`); Booking.com only. Airbnb review links and Airbnb marketing keywords are unchanged.
+- All four guide themes now meet WCAG AA for body, muted and accent text. Modern's hero scrim was inverted to light because dark hero text over a dark cover photo measured 1:1.
+- `prisma/purge-bot-accounts.ts` reports (and with `--delete` removes) the automated signups that predate these controls.
 
 ## Important Docs Drift
 
@@ -74,7 +87,7 @@ Apple OAuth helper code exists in `lib/oauth.ts`, but the active Apple routes re
 - It says public self-registration is disabled; the current app has public `/register` and `registerOwner`.
 - It says Google login is disabled; current Google OAuth routes are functional if env vars are configured.
 - Apple login is still disabled at the route level.
-- It says billing is lightweight and Stripe not integrated; current billing is PayPal subscription creation, still lightweight because there is no webhook reconciliation.
+- Billing is Paddle, not PayPal or Stripe. `app/api/paddle/webhook/route.ts` is the authoritative source for `subscriptionStatus`.
 - It mentions future AI placeholders; current app already has AI listing import and guest chat when `OPENAI_API_KEY` is configured.
 - Pricing in the app is Basic EUR 10/month and Full AI EUR 15/month.
 

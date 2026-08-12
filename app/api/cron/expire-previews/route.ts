@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { recordPreviewEvent } from "@/lib/preview-analytics";
+import { pruneRateLimits } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   }
+
+  // Piggyback the rate-limit sweep on the existing cron so closed windows do
+  // not accumulate forever.
+  const prunedRateLimits = await pruneRateLimits();
 
   const expiredPreviews = await prisma.propertyPreview.findMany({
     where: {
@@ -40,5 +45,5 @@ export async function GET(request: Request) {
     });
   }
 
-  return NextResponse.json({ expired: expiredPreviews.length });
+  return NextResponse.json({ expired: expiredPreviews.length, prunedRateLimits });
 }

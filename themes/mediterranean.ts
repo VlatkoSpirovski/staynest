@@ -9,9 +9,9 @@ export const mediterraneanTheme: GuideTheme = {
   description: "Airy ivory layout with sea-blue and sage accents for a calm coastal guest experience.",
   bestFor: "Sea apartments, Greece/Croatia rentals, vacation stays",
   palette: ["#FBFAF4", "#D8EEF2", "#6FA1AD", "#7B9A7A"],
-  accentOptions: ["#6FA1AD", "#7B9A7A", "#4F8793", "#8AA88A"],
+  accentOptions: ["#43707C", "#4E7A57", "#3D6875", "#5E7A4E"],
   defaults: {
-    accentColor: "#6FA1AD",
+    accentColor: "#43707C",
     serifHeading: true,
     roundedCards: true
   },
@@ -30,9 +30,9 @@ export const mediterraneanTheme: GuideTheme = {
     heroFallback:
       "radial-gradient(circle at 80% 12%, rgba(255,255,255,0.82), transparent 30%), linear-gradient(145deg, #CBEAF0 0%, #7FB2BF 46%, #F3EBDD 100%)",
     heroOverlay:
-      "radial-gradient(circle at 82% 8%, rgba(255,255,255,0.30), transparent 26%), linear-gradient(180deg, rgba(20,68,84,0.02) 0%, rgba(20,68,84,0.20) 42%, rgba(20,68,84,0.58) 100%)",
+      "radial-gradient(circle at 82% 8%, rgba(255,255,255,0.24), transparent 26%), linear-gradient(180deg, rgba(20,68,84,0.06) 0%, rgba(20,68,84,0.38) 42%, rgba(20,68,84,0.78) 100%)",
     text: "#18313A",
-    muted: "rgba(24,49,58,0.60)",
+    muted: "rgba(24,49,58,0.68)",
     cardBackground: "linear-gradient(145deg, rgba(255,255,255,0.82) 0%, rgba(239,248,247,0.70) 100%)",
     cardBorder: "rgba(111,161,173,0.18)",
     elevatedBackground: "linear-gradient(145deg, #FFFFFF 0%, #F3FAF8 100%)",
