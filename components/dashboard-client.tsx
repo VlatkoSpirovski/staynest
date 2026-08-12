@@ -1700,8 +1700,6 @@ function SettingsScreen({
   selectedPlan: string;
 }) {
   const currentPlan = planOption(selectedPlan);
-  const targetTier: PlanTier = currentPlan.tier === "ai" ? "basic" : "ai";
-  const recommendedTargetPlanKey = `${targetTier}-${currentPlan.interval}`;
 
   return (
     <div className="space-y-4">
@@ -1751,49 +1749,21 @@ function SettingsScreen({
         <div className="mt-3 rounded-[18px] border border-[#172234]/10 bg-[#F9FAFB] p-4">
           <p className="text-xs font-bold text-[#111827]/55">Current plan</p>
           <p className="mt-1 text-sm font-black text-[#111827]">
-            {planName} · {currentPlan.cadence === "yearly" ? "Yearly" : "Monthly"}
+            {planName} · {currentPlan.price} per year
           </p>
-          <p className="mt-1 text-xs font-semibold text-[#111827]/60">
-            {currentPlan.tier === "ai"
-              ? "AI guest chat knowledge is active for this account."
-              : "Essential guest guide features are active for this account."}
+          <p className="mt-1 text-xs font-semibold text-[#111827]/65">
+            Everything is included: the guest guide, the QR code, review links and AI guest chat.
           </p>
         </div>
         <div className="mt-4">
-          <p className="text-xs font-semibold text-[#111827]/55">
-            {targetTier === "ai" ? "Upgrade to Full AI" : "Switch to Basic"} (choose cadence)
-          </p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {[
-              planOption(`${targetTier}-monthly`),
-              planOption(`${targetTier}-yearly`)
-            ].map((option) => {
-              const isRecommended = option.key === recommendedTargetPlanKey;
-              return (
-                <a
-                  key={option.key}
-                  href={`${BILLING_BASE_URL}/billing?plan=${option.key}`}
-                  className={`rounded-[16px] border px-4 py-3 text-left transition ${
-                    isRecommended
-                      ? "border-[#111827]/35 bg-[#111827] text-white"
-                      : "border-[#172234]/10 bg-[#FFFFFF] text-[#111827] hover:border-[#111827]/25"
-                  }`}
-                >
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em]">
-                    {option.cadence === "yearly" ? "Yearly" : "Monthly"}
-                  </p>
-                  <p className="mt-1 text-sm font-black">{option.shortName}</p>
-                  <p className={`mt-1 text-xs font-semibold ${isRecommended ? "text-white/70" : "text-[#111827]/55"}`}>
-                    {option.price}
-                    {option.cadence === "yearly" ? "/year" : "/month"}
-                    {isRecommended ? " · Recommended" : ""}
-                  </p>
-                </a>
-              );
-            })}
-          </div>
-          <p className="mt-3 text-xs font-semibold text-[#111827]/45">
-            Paddle handles checkout securely; webhooks update your subscription automatically.
+          <a
+            href={`${BILLING_BASE_URL}/billing`}
+            className="inline-flex min-h-11 items-center justify-center rounded-[16px] bg-[#111827] px-4 text-sm font-black text-white transition hover:bg-[#1F2937]"
+          >
+            Manage billing
+          </a>
+          <p className="mt-3 text-xs font-semibold text-[#111827]/55">
+            Paddle handles checkout securely and updates your subscription automatically.
           </p>
         </div>
       </section>

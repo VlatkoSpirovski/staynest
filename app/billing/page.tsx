@@ -6,12 +6,10 @@ import { PaddleCheckoutButton } from "@/components/paddle-checkout-button";
 import { Panel } from "@/components/ui/panel";
 import { requireReadyUser } from "@/lib/auth";
 import {
-  billingUrl,
   hasBillingAccess,
   normalizePlanKey,
   planOption,
-  priceIdForPlan,
-  type PlanTier
+  priceIdForPlan
 } from "@/lib/billing";
 import { getAppUrl, getPaymentUrl } from "@/lib/utils";
 
@@ -45,26 +43,9 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const currentPlanKey = normalizePlanKey(user.selectedPlan);
   const currentPlan = planOption(currentPlanKey);
   const billingReady = hasBillingAccess(user);
+  const currentStatus = user.subscriptionStatus?.toUpperCase() ?? null;
 
-  const selectedPlanFromQuery = searchParams?.plan ? normalizePlanKey(searchParams.plan) : undefined;
-  const isSwitching = billingReady && Boolean(selectedPlanFromQuery) && selectedPlanFromQuery !== currentPlanKey;
-  const targetTier: PlanTier = isSwitching && selectedPlanFromQuery ? planOption(selectedPlanFromQuery).tier : currentPlan.tier;
-
-  const defaultSelectedPlanKey = `${targetTier}-${currentPlan.interval}`;
-
-  const selectedPlan = (() => {
-    if (!isSwitching) {
-      return selectedPlanFromQuery ?? normalizePlanKey(defaultSelectedPlanKey);
-    }
-
-    // While switching an active/trialing subscription, force the tier to the opposite.
-    const queryTier = selectedPlanFromQuery ? planOption(selectedPlanFromQuery).tier : targetTier;
-    if (queryTier === targetTier) return selectedPlanFromQuery ?? normalizePlanKey(defaultSelectedPlanKey);
-
-    const queryInterval = selectedPlanFromQuery ? planOption(selectedPlanFromQuery).interval : currentPlan.interval;
-    return normalizePlanKey(`${targetTier}-${queryInterval}`);
-  })();
-
+  const selectedPlan = currentPlanKey;
   const plan = planOption(selectedPlan);
   const trialDate = user.trialEndsAt?.toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -77,7 +58,6 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const paddleError = paddleConfigError({ clientToken, priceId, environment: paddleEnvironment });
   const successUrl = `${getPaymentUrl()}/billing/complete`;
   const dashboardUrl = `${getAppUrl()}/dashboard`;
-  const optionsTier: PlanTier = isSwitching ? targetTier : plan.tier;
   const isDev = process.env.NODE_ENV !== "production";
 
   return (
@@ -89,11 +69,10 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           </div>
           <div>
             <h1 className="text-xl font-bold">
-              {billingReady ? "Update your subscription" : "Start your 7-day trial"}
+              {currentStatus === "ACTIVE" ? "Your subscription" : "Keep your guide online"}
             </h1>
-            <p className="text-sm text-ink/60">
-              {isSwitching ? "Current plan" : "Selected plan"}: {currentPlan.shortName} ·{" "}
-              {currentPlan.cadence === "yearly" ? "Yearly" : "Monthly"}
+            <p className="text-sm text-ink/72">
+              {currentPlan.name} · {currentPlan.price} per year
             </p>
           </div>
         </div>
@@ -107,44 +86,20 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         <div className="mt-6 rounded-[8px] border border-ink/10 bg-white p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.16em] text-lagoon">
-                {isSwitching ? (targetTier === "ai" ? "Upgrade to Full AI" : "Switch to Basic") : "Choose your cadence"}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-ink/62">
-                {isSwitching
-                  ? "Switch your tier. We’ll keep your existing cadence by default, and you can change monthly/yearly below."
-                  : "Add your payment method with Paddle to activate the free trial. You will not be charged until the trial ends."}
+              <p className="text-sm font-bold uppercase tracking-[0.16em] text-lagoon">Everything included</p>
+              <p className="mt-2 text-sm leading-6 text-ink/72">
+                The guest guide, QR code, review links and AI guest chat, billed once a year. Your guide
+                stays live for the whole trial, and nothing is charged until it ends.
               </p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold">{plan.price}</p>
-              <p className="text-xs font-semibold text-ink/45">/{plan.cadence === "yearly" ? "year" : "month"}</p>
+              <p className="text-xs font-semibold text-ink/72">/year</p>
             </div>
-          </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {[
-              planOption(optionsTier === "ai" ? "ai-monthly" : "basic-monthly"),
-              planOption(optionsTier === "ai" ? "ai-yearly" : "basic-yearly")
-            ].map((option) => (
-              <a
-                key={option.key}
-                href={billingUrl(option.key)}
-                className={`rounded-[8px] border px-3 py-2 text-sm font-bold transition ${
-                  option.key === selectedPlan ? "border-ink bg-ink text-white" : "border-ink/10 bg-mist text-ink/70 hover:border-ink/25"
-                }`}
-              >
-                <span>{option.cadence === "yearly" ? "Yearly" : "Monthly"} · {option.price}</span>
-                {option.savings ? <span className={`ml-2 text-xs ${option.key === selectedPlan ? "text-white/70" : "text-olive"}`}>{option.savings}</span> : null}
-              </a>
-            ))}
           </div>
           <div className="mt-4 flex gap-3 rounded-[8px] bg-mist p-3 text-sm font-medium text-ink/70">
             <ShieldCheck className="mt-0.5 shrink-0 text-olive" size={18} />
-            {trialDate
-              ? `Trial runs until ${trialDate}.`
-              : isSwitching
-                ? "Paddle will update your subscription after checkout completes."
-                : `${plan.comparison ? `${plan.comparison}. ` : ""}Paddle starts the 7-day trial during checkout.`}
+            {trialDate ? `Your free trial runs until ${trialDate}.` : "Paddle will activate your subscription after checkout completes."}
           </div>
           <p className="mt-3 text-sm leading-6 text-ink/60">
             Paddle handles secure checkout, tax, invoicing and recurring billing on staynest.site. After
@@ -152,7 +107,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           </p>
         </div>
 
-        {billingReady && !isSwitching ? (
+        {billingReady && currentStatus === "ACTIVE" ? (
           <Button href={dashboardUrl} className="mt-6 w-full">
             Open dashboard
           </Button>

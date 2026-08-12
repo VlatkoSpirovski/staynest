@@ -5,11 +5,12 @@ import { getAppUrl } from "@/lib/utils";
 
 export default function BillingCompletePage() {
   const dashboardUrl = `${getAppUrl()}/dashboard`;
+  const loginUrl = `${getAppUrl()}/login?next=/dashboard`;
 
   return (
     <main className="grid min-h-screen place-items-center bg-mist px-5 py-10 text-ink">
       <Panel className="w-full max-w-md">
-        <BillingCompleteClient dashboardUrl={dashboardUrl} />
+        <BillingCompleteClient dashboardUrl={dashboardUrl} loginUrl={loginUrl} />
         <AppLegalLinks className="mt-6 border-t border-ink/10 pt-5" />
       </Panel>
     </main>

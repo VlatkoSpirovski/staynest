@@ -1,9 +1,20 @@
 import type { User } from "@prisma/client";
 import { getPaymentUrl } from "@/lib/utils";
 
-export type PlanTier = "basic" | "ai";
-export type BillingInterval = "monthly" | "yearly";
-export type PlanKey = "basic-monthly" | "basic-yearly" | "ai-monthly" | "ai-yearly";
+export type PlanTier = "ai";
+export type BillingInterval = "yearly";
+export type PlanKey = "annual";
+
+/**
+ * StayNest sells one plan: everything included, billed once a year.
+ *
+ * The single-plan shape is deliberate. Two tiers that were identical in code
+ * (the AI chat never checked the owner's tier) only added a choice to make before
+ * anyone had seen the product. `planOption` and `PlanKey` keep their old shape so
+ * existing call sites compile; legacy plan strings stored on users all normalise
+ * onto this one entry.
+ */
+export const ANNUAL_PRICE_EUR = 20;
 
 export const planOptions: Record<PlanKey, {
   key: PlanKey;
@@ -16,68 +27,37 @@ export const planOptions: Record<PlanKey, {
   savings?: string;
   comparison?: string;
 }> = {
-  "basic-monthly": {
-    key: "basic-monthly",
-    tier: "basic",
-    interval: "monthly",
-    name: "Basic Monthly",
-    shortName: "Basic",
-    price: "€10",
-    cadence: "monthly"
-  },
-  "basic-yearly": {
-    key: "basic-yearly",
-    tier: "basic",
-    interval: "yearly",
-    name: "Basic Yearly",
-    shortName: "Basic",
-    price: "€60",
-    cadence: "yearly",
-    savings: "Save €60",
-    comparison: "instead of €120/year"
-  },
-  "ai-monthly": {
-    key: "ai-monthly",
-    tier: "ai",
-    interval: "monthly",
-    name: "Full AI Monthly",
-    shortName: "Full AI",
-    price: "€15",
-    cadence: "monthly"
-  },
-  "ai-yearly": {
-    key: "ai-yearly",
+  annual: {
+    key: "annual",
     tier: "ai",
     interval: "yearly",
-    name: "Full AI Yearly",
-    shortName: "Full AI",
-    price: "€80",
-    cadence: "yearly",
-    savings: "Save €100",
-    comparison: "instead of €180/year"
+    name: "StayNest Annual",
+    shortName: "Annual",
+    price: `\u20ac${ANNUAL_PRICE_EUR}`,
+    cadence: "yearly"
   }
 };
 
-export function normalizeTier(value: string | null | undefined): PlanTier {
-  return value === "ai" || value === "ai-monthly" || value === "ai-yearly" ? "ai" : "basic";
+/** Every feature ships in the single plan, so there is only one tier. */
+export function normalizeTier(_value?: string | null): PlanTier {
+  return "ai";
 }
 
-export function normalizePlanKey(value: string | null | undefined): PlanKey {
-  if (value === "basic-yearly" || value === "ai-yearly" || value === "ai-monthly") return value;
-  if (value === "ai") return "ai-monthly";
-  return "basic-monthly";
+/** Collapses any legacy plan string ("basic-monthly", "ai-yearly", ...) onto the one plan. */
+export function normalizePlanKey(_value?: string | null): PlanKey {
+  return "annual";
 }
 
-export function planOption(value: string | null | undefined) {
-  return planOptions[normalizePlanKey(value)];
+export function planOption(_value?: string | null) {
+  return planOptions.annual;
 }
 
-export function priceIdForPlan(value: string | null | undefined) {
-  const plan = normalizePlanKey(value);
-  if (plan === "basic-yearly") return process.env.PADDLE_BASIC_YEARLY_PRICE_ID;
-  if (plan === "ai-yearly") return process.env.PADDLE_AI_YEARLY_PRICE_ID;
-  if (plan === "ai-monthly") return process.env.PADDLE_AI_MONTHLY_PRICE_ID || process.env.PADDLE_AI_PRICE_ID;
-  return process.env.PADDLE_BASIC_MONTHLY_PRICE_ID || process.env.PADDLE_BASIC_PRICE_ID;
+export function priceIdForPlan(_value?: string | null) {
+  return (
+    process.env.PADDLE_ANNUAL_PRICE_ID ||
+    process.env.PADDLE_AI_YEARLY_PRICE_ID ||
+    process.env.PADDLE_BASIC_YEARLY_PRICE_ID
+  );
 }
 
 export function billingUrl(plan: string | null | undefined) {

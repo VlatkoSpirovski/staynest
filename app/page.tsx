@@ -151,28 +151,14 @@ const features = [
   }
 ];
 
-const plans = [
-  {
-    name: "Basic",
-    price: "€10",
-    yearly: "€60",
-    savings: "Save €60 yearly",
-    text: "For owners who need a clean QR guest guide without AI.",
-    items: ["Mobile guest guide", "QR code and public link", "Wi-Fi, rules and recommendations", "Review links"],
-    plan: "basic-yearly",
-    cta: "Choose Basic"
-  },
-  {
-    name: "Full AI",
-    price: "€15",
-    yearly: "€80",
-    savings: "Save €100 yearly",
-    text: "For premium stays that want guest chat and faster setup.",
-    items: ["Everything in Basic", "AI guest assistant", "Property knowledge training", "Booking.com import support"],
-    plan: "ai-yearly",
-    cta: "Choose Full AI",
-    popular: true
-  }
+const planFeatures = [
+  "Mobile QR guest guide with your own branding",
+  "Wi-Fi, check-in, parking and house rules",
+  "Local recommendations and review links",
+  "AI guest chat trained on your property",
+  "Answers in your guest\u2019s own language",
+  "Booking.com listing import",
+  "Unlimited updates \u2014 the QR never changes"
 ];
 
 function Logo() {
@@ -519,46 +505,39 @@ export default function LandingPage() {
             <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">Simple plans with a 7-day free trial</h2>
           </div>
 
-          <div className="mx-auto mt-10 grid max-w-5xl gap-5 lg:grid-cols-2">
-            {plans.map((plan) => (
-              <article
-                key={plan.name}
-                className={`relative rounded-[28px] border p-6 shadow-[0_18px_54px_rgba(23,32,51,0.055)] sm:p-8 ${
-                  plan.popular ? "border-[#AFC8BD] bg-white ring-1 ring-[#AFC8BD]/60" : "border-[#D8D1C4]/55 bg-white/82"
-                }`}
-              >
-                {plan.popular ? (
-                  <p className="absolute right-6 top-6 rounded-full bg-[#EFF5F1] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#6F9287] ring-1 ring-[#C9D8D2]">
-                    Most popular
-                  </p>
-                ) : null}
-                <div className="pr-28">
-                  <h3 className="font-serif text-3xl font-semibold text-[#172033]">{plan.name}</h3>
-                  <p className="mt-3 min-h-12 text-sm font-medium leading-6 text-[#172033]/72">{plan.text}</p>
-                </div>
-                <div className="mt-7 flex items-end gap-2">
-                  <span className="text-5xl font-semibold tracking-tight text-[#172033]">{plan.price}</span>
-                  <span className="pb-2 text-sm font-semibold text-[#172033]/72">/month</span>
-                </div>
-                <p className="mt-4 inline-flex rounded-full bg-[#F1F5F1] px-3 py-1 text-xs font-semibold text-[#6F9287] ring-1 ring-[#C9D8D2]/70">
-                  Yearly {plan.yearly} · {plan.savings}
+          <div className="mx-auto mt-10 max-w-xl">
+            <article className="relative rounded-[28px] border border-[#AFC8BD] bg-white p-6 shadow-[0_18px_54px_rgba(23,32,51,0.07)] ring-1 ring-[#AFC8BD]/60 sm:p-8">
+              <p className="absolute right-6 top-6 rounded-full bg-[#EFF5F1] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#6F9287] ring-1 ring-[#C9D8D2]">
+                Everything included
+              </p>
+              <div className="pr-32">
+                <h3 className="font-serif text-3xl font-semibold text-[#172033]">StayNest Annual</h3>
+                <p className="mt-3 text-sm font-medium leading-6 text-[#172033]/72">
+                  One plan, one price, billed once a year. No add-ons and nothing held back for a higher tier.
                 </p>
-                <div className="mt-7 grid gap-3">
-                  {plan.items.map((item) => (
-                    <div key={item} className="flex items-center gap-3 text-sm font-medium text-[#172033]/72">
-                      <CheckCircle2 size={18} className="text-[#6F9287]" />
-                      {item}
-                    </div>
-                  ))}
-                </div>
-                <Button href={`${appUrl}/register?plan=${plan.plan}`} className="mt-8 w-full rounded-full shadow-[0_14px_34px_rgba(23,32,51,0.14)]">
-                  {plan.cta} yearly
-                </Button>
-                <Button href={`${appUrl}/register?plan=${plan.plan.replace("yearly", "monthly")}`} variant="secondary" className="mt-3 w-full rounded-full">
-                  Monthly option
-                </Button>
-              </article>
-            ))}
+              </div>
+              <div className="mt-7 flex items-end gap-2">
+                <span className="text-5xl font-semibold tracking-tight text-[#172033]">€20</span>
+                <span className="pb-2 text-sm font-semibold text-[#172033]/72">/year</span>
+              </div>
+              <p className="mt-4 inline-flex rounded-full bg-[#F1F5F1] px-3 py-1 text-xs font-semibold text-[#6F9287] ring-1 ring-[#C9D8D2]/70">
+                Less than one night&rsquo;s cleaning fee
+              </p>
+              <div className="mt-7 grid gap-3">
+                {planFeatures.map((item) => (
+                  <div key={item} className="flex items-center gap-3 text-sm font-medium text-[#172033]/72">
+                    <CheckCircle2 size={18} className="shrink-0 text-[#6F9287]" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <Button href={`${appUrl}/register`} className="mt-8 w-full rounded-full shadow-[0_14px_34px_rgba(23,32,51,0.14)]">
+                Start 7 days free
+              </Button>
+              <p className="mt-3 text-center text-xs font-semibold text-[#172033]/72">
+                No card needed to start. Cancel any time.
+              </p>
+            </article>
           </div>
         </div>
       </section>

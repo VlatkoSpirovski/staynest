@@ -18,20 +18,14 @@ export const metadata = {
   }
 };
 
-const plans = {
-  basic: {
-    name: "Basic",
-    monthly: "€10/month",
-    yearly: "€60/year",
-    items: ["Mobile QR guest guide", "Wi-Fi, check-in and house rules", "Recommendations and review links"]
-  },
-  ai: {
-    name: "Full AI",
-    monthly: "€15/month",
-    yearly: "€80/year",
-    items: ["Everything in Basic", "AI guest chat trained for the property", "Booking.com import support"]
-  }
-};
+const planFeatures = [
+  "Mobile QR guest guide",
+  "Wi-Fi, check-in, parking and house rules",
+  "Local recommendations and review links",
+  "AI guest chat trained on your property",
+  "Answers in your guest\u2019s own language",
+  "Booking.com listing import"
+];
 
 type RegisterPageProps = {
   searchParams?: {
@@ -46,7 +40,6 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
   const previewToken = searchParams?.previewToken;
   const selectedOption = planOption(selectedPlan);
   const selectedTier = selectedOption.tier;
-  const plan = plans[selectedTier];
 
   return (
     <main className="min-h-screen bg-mist px-5 py-8 text-ink">
@@ -125,14 +118,14 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
           </p>
           <div className="mt-5 flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-3xl font-extrabold">{plan.name}</h2>
+              <h2 className="text-3xl font-extrabold">{selectedOption.name}</h2>
               <p className="mt-2 text-white/65">
-                7-day free trial, then {selectedOption.price}/{selectedOption.cadence === "yearly" ? "year" : "month"}.
+                7 days free, then {selectedOption.price} per year. Cancel any time.
               </p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold">{selectedOption.price}</p>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/50">{selectedOption.cadence}</p>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/60">per year</p>
             </div>
           </div>
           {selectedOption.savings ? (
@@ -141,28 +134,12 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
             </p>
           ) : null}
           <div className="mt-6 grid gap-3">
-            {plan.items.map((item) => (
+            {planFeatures.map((item) => (
               <div key={item} className="flex gap-3 rounded-[8px] bg-white/8 p-3 text-sm font-medium text-white/82">
                 <CheckCircle2 className="mt-0.5 shrink-0 text-white" size={17} />
                 {item}
               </div>
             ))}
-          </div>
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <Button href={`/register?plan=${selectedOption.interval === "yearly" ? "basic-yearly" : "basic-monthly"}${previewToken ? `&previewToken=${previewToken}` : ""}`} variant={selectedTier === "basic" ? "secondary" : "ghost"} className="bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15">
-              Basic
-            </Button>
-            <Button href={`/register?plan=${selectedOption.interval === "yearly" ? "ai-yearly" : "ai-monthly"}${previewToken ? `&previewToken=${previewToken}` : ""}`} variant={selectedTier === "ai" ? "secondary" : "ghost"} className="bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15">
-              Full AI
-            </Button>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <Button href={`/register?plan=${selectedTier === "ai" ? "ai-monthly" : "basic-monthly"}${previewToken ? `&previewToken=${previewToken}` : ""}`} variant={selectedOption.interval === "monthly" ? "secondary" : "ghost"} className="bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15">
-              Monthly
-            </Button>
-            <Button href={`/register?plan=${selectedTier === "ai" ? "ai-yearly" : "basic-yearly"}${previewToken ? `&previewToken=${previewToken}` : ""}`} variant={selectedOption.interval === "yearly" ? "secondary" : "ghost"} className="bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15">
-              Yearly
-            </Button>
           </div>
         </Panel>
       </div>
