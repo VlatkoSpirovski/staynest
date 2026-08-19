@@ -319,7 +319,6 @@ function HostDashboardShowcase() {
             ))}
           </div>
         </div>
-
         <div className="mt-10 space-y-7 border-t border-[#D8D1C4]/45 pt-10">
           {hostDashboardHighlights.map((item) => {
             const Icon = item.icon;
