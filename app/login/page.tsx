@@ -9,7 +9,7 @@ import { Field, inputClass, Panel } from "@/components/ui/panel";
 import { loginOwner } from "@/app/auth-actions";
 
 export const metadata = {
-  title: "Login",
+  title: "Owner login",
   robots: {
     index: false,
     follow: false
@@ -34,7 +34,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
           </div>
           <div>
             <h1 className="text-xl font-bold">StayNest</h1>
-            <p className="text-sm text-ink/60">Owner login</p>
+            <p className="text-sm text-ink/60">Manage your review-ready guest guide.</p>
           </div>
         </div>
         {searchParams?.error ? (
@@ -51,6 +51,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
         <LoadingLink
           href="/auth/google"
           loadingText="Opening Google..."
+          eventName="login_google_started"
           className="focus-ring mb-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80"
         >
           <span className="grid h-6 w-6 place-items-center rounded-full bg-white">
@@ -79,9 +80,9 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
           Forgot password?
         </Button>
         <p className="mt-5 text-sm leading-6 text-ink/55">
-          New owner?{" "}
-          <a href="/register?plan=basic" className="font-semibold text-lagoon">
-            Start a 7-day free trial.
+          New host?{" "}
+          <a href="/register?plan=annual" className="font-semibold text-lagoon">
+            Start a review-ready guide.
           </a>
         </p>
         <AppLegalLinks className="mt-6 border-t border-ink/10 pt-5" />

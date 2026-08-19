@@ -189,10 +189,7 @@ Recommended production flow:
    - `PADDLE_ENV=production`
    - `PADDLE_API_KEY`
    - `PADDLE_CLIENT_TOKEN`
-   - `PADDLE_BASIC_MONTHLY_PRICE_ID` (or legacy `PADDLE_BASIC_PRICE_ID`)
-   - `PADDLE_AI_MONTHLY_PRICE_ID` (or legacy `PADDLE_AI_PRICE_ID`)
-   - `PADDLE_BASIC_YEARLY_PRICE_ID`
-   - `PADDLE_AI_YEARLY_PRICE_ID`
+   - `PADDLE_ANNUAL_PRICE_ID` for the single EUR 20/year plan
    - `PADDLE_WEBHOOK_SECRET`
 4. Run Prisma migration against production from a secure terminal:
 

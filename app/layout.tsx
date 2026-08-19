@@ -15,9 +15,13 @@ export const metadata: Metadata = {
     default: "StayNest",
     template: "%s · StayNest"
   },
-  description: "Digital guest guides for villas, apartments and rentals. One QR code, always up to date.",
+  description: "QR guest guides that help Airbnb and Booking.com hosts answer questions and collect more 5-star reviews.",
   alternates: {
     canonical: "/"
+  },
+  icons: {
+    icon: [{ url: "/staynest-logo.png", type: "image/png" }],
+    apple: [{ url: "/staynest-logo.png", type: "image/png" }]
   },
   robots: {
     index: true,
@@ -27,12 +31,12 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "StayNest",
     title: "StayNest",
-    description: "Digital guest guides for villas, apartments and rentals. One QR code, always up to date."
+    description: "QR guest guides that help Airbnb and Booking.com hosts answer questions and collect more 5-star reviews."
   },
   twitter: {
     card: "summary_large_image",
     title: "StayNest",
-    description: "Digital guest guides for villas, apartments and rentals. One QR code, always up to date."
+    description: "QR guest guides that help Airbnb and Booking.com hosts answer questions and collect more 5-star reviews."
   }
 };
 

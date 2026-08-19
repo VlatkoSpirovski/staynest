@@ -3,7 +3,7 @@ import { getAppUrl, getPaymentUrl } from "@/lib/utils";
 
 export const metadata = {
   title: "Contact",
-  description: "Contact StayNest support for account, billing, refunds, privacy, or product help.",
+  description: "Contact StayNest support for your QR guest guide, review links, account, billing, privacy, or product help.",
   alternates: {
     canonical: "/contact"
   }
@@ -16,7 +16,7 @@ export default function ContactPage() {
   return (
     <LegalPage eyebrow="Contact" title="Contact StayNest">
       <p>
-        StayNest is a digital guest guide and AI concierge SaaS for rental hosts, available at{" "}
+        StayNest is a review-ready digital guest guide and AI concierge for Airbnb, Booking.com, and villa hosts, available at{" "}
         <a href={appUrl} className="font-bold text-lagoon">
           dashboard.staynest.site
         </a>
@@ -32,7 +32,7 @@ export default function ContactPage() {
       </p>
       <h2 className="text-xl font-bold text-ink">Billing</h2>
       <p>
-        StayNest subscriptions are billed monthly or yearly after any free trial. Payments, tax calculation, invoicing, and
+        StayNest subscriptions are billed yearly after any free trial. Payments, tax calculation, invoicing, and
         recurring billing are processed securely by Paddle.com, the Merchant of Record for StayNest orders.
       </p>
       <h2 className="text-xl font-bold text-ink">Response Times &amp; Complaints</h2>

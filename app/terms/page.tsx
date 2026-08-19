@@ -47,7 +47,7 @@ export default function TermsPage() {
         invoicing and returns.
       </p>
       <p>
-        Paid plans are billed on a recurring monthly or yearly basis after any free trial period. Plan features and prices are
+        The paid plan is billed yearly after any free trial period. Plan features and prices are
         listed on our{" "}
         <a href={`${paymentUrl}/pricing`} className="font-bold text-lagoon">
           pricing page

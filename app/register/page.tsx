@@ -11,7 +11,9 @@ import { registerOwner } from "@/app/auth-actions";
 import { normalizePlanKey, planOption } from "@/lib/billing";
 
 export const metadata = {
-  title: "Register",
+  title: "Start getting more 5-star reviews",
+  description:
+    "Create a StayNest owner account and build a QR guest guide with AI answers, Google review links, Booking.com review links and Airbnb review links.",
   robots: {
     index: false,
     follow: false
@@ -19,9 +21,11 @@ export const metadata = {
 };
 
 const planFeatures = [
+  "Google, Booking.com and Airbnb review links",
+  "Checkout prompts for happy guests",
   "Mobile QR guest guide",
   "Wi-Fi, check-in, parking and house rules",
-  "Local recommendations and review links",
+  "Local recommendations that improve each stay",
   "AI guest chat trained on your property",
   "Answers in your guest\u2019s own language",
   "Booking.com listing import"
@@ -51,7 +55,7 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
             </div>
             <div>
               <h1 className="text-xl font-bold">Create your owner account</h1>
-              <p className="text-sm text-ink/60">Start with 7 days free.</p>
+              <p className="text-sm text-ink/60">Start building a review-ready guide free.</p>
             </div>
           </div>
 
@@ -68,6 +72,8 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
           <LoadingLink
             href={`/auth/google?plan=${selectedPlan}${previewToken ? `&previewToken=${previewToken}` : ""}`}
             loadingText="Opening Google..."
+            eventName="register_google_started"
+            eventParams={{ plan: selectedPlan, preview: Boolean(previewToken) }}
             className="focus-ring inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80"
           >
             <span className="grid h-6 w-6 place-items-center rounded-full bg-white">
@@ -99,7 +105,7 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
             </Field>
             <TurnstileWidget className="mt-1" />
             <SubmitButton pendingText="Creating account..." className="mt-2 min-h-12 rounded-[16px] font-black">
-              Start free trial
+              Start my review-ready guide
             </SubmitButton>
           </form>
 
@@ -114,13 +120,13 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
 
         <Panel className="order-1 bg-ink text-white lg:order-2">
           <p className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-white/70">
-            Selected plan
+            Review growth plan
           </p>
           <div className="mt-5 flex items-end justify-between gap-4">
             <div>
               <h2 className="text-3xl font-extrabold">{selectedOption.name}</h2>
               <p className="mt-2 text-white/65">
-                7 days free, then {selectedOption.price} per year. Cancel any time.
+                7 days free, then {selectedOption.price} per year to keep your QR guide, AI answers and review links live.
               </p>
             </div>
             <div className="text-right">

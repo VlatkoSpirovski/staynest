@@ -1,8 +1,10 @@
 import {
   ArrowRight,
+  BadgeCheck,
   Bot,
+  CalendarCheck,
   CheckCircle2,
-  FileText,
+  ClipboardCheck,
   Globe2,
   Home,
   Import,
@@ -12,9 +14,11 @@ import {
   Menu,
   Palette,
   MessageCircle,
+  MapPinned,
   QrCode,
   Sparkles,
   Star,
+  Trophy,
   Wifi
 } from "lucide-react";
 
@@ -24,30 +28,80 @@ import { PreviewForm } from "@/components/preview-form";
 import { getAppUrl } from "@/lib/utils";
 
 export const metadata = {
-  title: "Get more 5-star reviews. Answer fewer guest questions.",
+  title: "Get more 5-star reviews from every stay.",
   description:
-    "StayNest gives Airbnb and Booking.com hosts a QR guest guide that answers arrival, Wi-Fi and checkout questions automatically, then asks happy guests for a review at the right moment. Build yours free in two minutes.",
+    "StayNest helps Airbnb, Booking.com and villa hosts get more 5-star reviews with a QR guest guide, AI guest answers, Google review links, checkout reminders and a review-ready guest experience.",
+  keywords: [
+    "get more 5-star reviews",
+    "Airbnb 5-star reviews",
+    "Booking.com guest reviews",
+    "Google reviews for rentals",
+    "vacation rental guest guide",
+    "Airbnb guest guide QR code",
+    "Booking.com host tools",
+    "villa guest guide",
+    "AI guest chat for rentals",
+    "QR code guest guide",
+    "review links for hosts"
+  ],
   alternates: {
     canonical: "/"
   },
   openGraph: {
-    title: "StayNest · Get more 5-star reviews. Answer fewer guest questions.",
+    title: "StayNest · Get more 5-star reviews from every stay.",
     description:
-      "A QR guest guide for Airbnb and Booking.com hosts that answers arrival, Wi-Fi and checkout questions automatically, then asks happy guests for a review at the right moment.",
+      "A QR guest guide for Airbnb, Booking.com and villa hosts that answers guest questions automatically, improves the stay, and sends happy guests to your Google, Booking.com or Airbnb review page.",
     url: "/"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Get more 5-star reviews from every stay",
+    description:
+      "Give guests one QR guide for Wi-Fi, check-in, checkout, AI answers and review links, then turn smoother stays into better reviews."
   }
 };
 
 const navItems = [
-  { label: "Features", href: "#features" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Reviews", href: "#reviews" },
+  { label: "Hosts", href: "#hosts" },
   { label: "Example", href: "/g/example" },
-  { label: "For Hosts", href: "#for-hosts" }
+  { label: "Pricing", href: "#pricing" }
 ];
 
-const heroHighlights = ["Live in under 5 minutes", "Answers in your guest's language", "No app for guests to install"];
+const heroHighlights = ["Google review link built in", "Guide live in under 5 minutes", "No app for guests to install"];
+
+const heroStats = [
+  { value: "1 QR", label: "for guide, support and reviews" },
+  { value: "24/7", label: "answers before small issues become bad ratings" },
+  { value: "5-star", label: "review path for happy guests" }
+];
 
 const hostNames = ["Villa Beti", "Cece's Home", "Villa Yeti"];
+
+const platformCards = [
+  {
+    title: "Airbnb hosts",
+    text: "Reduce repeated messages, keep check-in clean, and guide happy guests to your Airbnb review flow.",
+    icon: Home
+  },
+  {
+    title: "Booking.com owners",
+    text: "Import your listing faster, polish the stay experience, and collect reviews while guests still remember the good parts.",
+    icon: Import
+  },
+  {
+    title: "Villa & apartment managers",
+    text: "Use one QR guide per property for arrival, Wi-Fi, local recommendations, checkout and review links.",
+    icon: MapPinned
+  }
+];
+
+const conversionReasons = [
+  "Guests find the Wi-Fi password without messaging you",
+  "Arrival details stay clear even when plans change",
+  "Review links sit in the guide guests already trust",
+  "AI answers in the guest's language using your property facts"
+];
 
 const steps = [
   {
@@ -58,7 +112,7 @@ const steps = [
   {
     title: "Customize the guide",
     text: "Add Wi-Fi, check-in, house rules, recommendations and review links.",
-    icon: FileText
+    icon: ClipboardCheck
   },
   {
     title: "Print one QR code",
@@ -66,7 +120,12 @@ const steps = [
     icon: QrCode
   },
   {
-    title: "Stop repeating yourself",
+    title: "Collect reviews while the stay is fresh",
+    text: "Send happy guests straight to your Google, Booking.com or Airbnb review page.",
+    icon: CalendarCheck
+  },
+  {
+    title: "Answer questions automatically",
     text: "Guests ask at 2am and get an answer trained only on your property, in their own language.",
     icon: Bot
   }
@@ -114,15 +173,48 @@ const hostDashboardHighlights = [
     title: "One QR code, always live",
     text: "Update anytime. Guests always see it.",
     icon: QrCode
+  },
+  {
+    title: "Reviews built into checkout",
+    text: "Add your Google review link once and keep pointing guests there.",
+    icon: Star
+  }
+];
+
+const reviewFunnel = [
+  {
+    title: "Guests get answers first",
+    text: "Wi-Fi, arrival, parking, house rules and checkout details are clear before guests need to message you.",
+    icon: MessageCircle
+  },
+  {
+    title: "Small problems get handled",
+    text: "The AI concierge answers in the guest's own language using only your property information.",
+    icon: Bot
+  },
+  {
+    title: "Happy guests find the review link",
+    text: "Your Google, Booking.com or Airbnb review page sits inside the guide when the stay is still fresh.",
+    icon: Star
+  },
+  {
+    title: "More stays become review opportunities",
+    text: "Every QR scan becomes a chance to reduce friction, protect the rating and ask at the right time.",
+    icon: Trophy
   }
 ];
 
 const features = [
   {
+    title: "More 5-star review moments",
+    text: "Put your review link where satisfied guests already look: inside the same guide they used for Wi-Fi, check-in, checkout and local tips.",
+    icon: Star,
+    featured: true
+  },
+  {
     title: "AI guest chat",
     text: "Give guests instant answers about arrival, Wi-Fi, checkout, parking and local recommendations using only your property knowledge.",
-    icon: Bot,
-    featured: true
+    icon: Bot
   },
   {
     title: "QR guide",
@@ -141,7 +233,7 @@ const features = [
   },
   {
     title: "Review reminders",
-    text: "Prompt happy guests toward your Google, Booking or Airbnb review page at checkout, while the stay is still fresh.",
+    text: "Prompt happy guests toward your Google, Booking.com or Airbnb review page at checkout, while the stay is still fresh.",
     icon: Star
   },
   {
@@ -152,9 +244,10 @@ const features = [
 ];
 
 const planFeatures = [
+  "Review links designed to collect more 5-star reviews",
   "Mobile QR guest guide with your own branding",
   "Wi-Fi, check-in, parking and house rules",
-  "Local recommendations and review links",
+  "Local recommendations guests can actually use",
   "AI guest chat trained on your property",
   "Answers in your guest\u2019s own language",
   "Booking.com listing import",
@@ -294,6 +387,18 @@ function PhoneMockup() {
               </div>
             </div>
 
+            <div className="mt-3 rounded-[20px] border border-[#E7D7A6] bg-[#FFF8DF] p-3.5 text-[#172033] shadow-[0_12px_32px_rgba(23,32,51,0.045)]">
+              <div className="flex items-center gap-3">
+                <div className="grid h-9 w-9 place-items-center rounded-[13px] bg-white text-[#B98A18]">
+                  <Star size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Enjoyed your stay?</p>
+                  <p className="mt-0.5 text-xs font-medium text-[#172033]/72">Leave a Google review</p>
+                </div>
+              </div>
+            </div>
+
             <div className="mt-3 grid gap-2">
               {guideItems.slice(1).map((item) => {
                 const Icon = item.icon;
@@ -371,18 +476,21 @@ export default function LandingPage() {
         <div className="mx-auto grid max-w-7xl gap-12 px-5 pb-16 pt-12 sm:pt-16 lg:grid-cols-[1.03fr_0.97fr] lg:items-center lg:px-8 lg:pb-24 lg:pt-20">
           <div>
             <p className="inline-flex rounded-full border border-[#C9D8D2] bg-white/82 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6F9287] shadow-[0_10px_26px_rgba(23,32,51,0.035)]">
-              Built by hosts, for hosts
+              Google reviews, Booking.com reviews, Airbnb reviews
             </p>
             <h1 className="mt-6 max-w-4xl font-serif text-[2.75rem] font-semibold leading-[1.05] tracking-tight text-[#172033] sm:text-5xl lg:text-[3.75rem]">
-              Stop answering the same guest questions. Start collecting more <span className="text-[#5C8377]">5-star reviews</span>.
+              Get more <span className="text-[#5C8377]">5-star reviews</span> from guests who had a smoother stay.
             </h1>
             <p className="mt-6 max-w-2xl text-base font-medium leading-8 text-[#172033]/72 sm:text-lg sm:leading-9">
-              One QR code in your property answers Wi-Fi, check-in, parking and checkout questions around the clock — in your guest&rsquo;s own language — then points happy guests to your review page at exactly the right moment. Built for Airbnb and Booking.com hosts.
+              StayNest gives every guest one QR code for Wi-Fi, check-in, parking, house rules, checkout, local tips, AI help and your review links. Fewer unanswered questions means fewer avoidable complaints, better guest experience, and more chances to collect Google, Booking.com and Airbnb reviews.
+            </p>
+            <p className="mt-4 max-w-2xl text-sm font-bold leading-7 text-[#172033]/82">
+              Built for rental owners who want more reviews without awkward messages, paper binders or repeated WhatsApp replies.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button href={startTrialHref} className="min-h-12 w-full gap-2 rounded-full px-6 text-sm shadow-[0_14px_34px_rgba(23,32,51,0.16)] sm:w-auto">
-                Start Free Trial <ArrowRight size={18} />
+                Start collecting better reviews <ArrowRight size={18} />
               </Button>
               <Button href="/g/example" variant="secondary" className="min-h-12 w-full rounded-full border-[#D8D1C4]/70 px-6 text-sm shadow-[0_10px_24px_rgba(23,32,51,0.045)] sm:w-auto">
                 See Example Guide
@@ -390,6 +498,15 @@ export default function LandingPage() {
             </div>
 
             <PreviewForm />
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              {heroStats.map((item) => (
+                <div key={item.value} className="rounded-[18px] border border-[#D8D1C4]/65 bg-white/86 p-4 shadow-[0_12px_32px_rgba(23,32,51,0.04)]">
+                  <p className="font-serif text-2xl font-semibold text-[#5C8377]">{item.value}</p>
+                  <p className="mt-1 text-xs font-bold leading-5 text-[#172033]/68">{item.label}</p>
+                </div>
+              ))}
+            </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {heroHighlights.map((item) => (
@@ -407,13 +524,42 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="for-hosts" className="border-y border-[#D8D1C4]/45 bg-white/64 py-14 lg:py-[72px]">
+      <section id="reviews" className="border-y border-[#D8D1C4]/45 bg-[#F1F5F1] py-16 lg:py-20">
+        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Review growth system</p>
+            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">
+              More 5-star reviews start before checkout day
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm font-medium leading-7 text-[#172033]/72 sm:text-base">
+              Guests review the whole stay: how easy arrival felt, how quickly they found Wi-Fi, whether the rules were clear, and whether small questions became stress. StayNest improves those moments, then makes the review link easy to find.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {reviewFunnel.map((item) => {
+              const Icon = item.icon;
+              return (
+                <article key={item.title} className="rounded-[24px] border border-[#C9D8D2] bg-white p-5 shadow-[0_14px_42px_rgba(23,32,51,0.045)]">
+                  <div className="grid h-11 w-11 place-items-center rounded-[15px] bg-[#172033] text-white">
+                    <Icon size={19} />
+                  </div>
+                  <h3 className="mt-6 text-lg font-semibold tracking-tight text-[#172033]">{item.title}</h3>
+                  <p className="mt-3 text-sm font-medium leading-7 text-[#172033]/72">{item.text}</p>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section id="hosts" className="border-y border-[#D8D1C4]/45 bg-white/64 py-14 lg:py-[72px]">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Trusted by hosts in Mavrovo</p>
-            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl">Built by hosts, for hosts</h2>
+            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl">Built for hosts who live by reviews</h2>
             <p className="mx-auto mt-4 max-w-2xl text-sm font-medium leading-7 text-[#172033]/72 sm:text-base">
-              StayNest was created from real short-term rental experience to make every guest stay easier.
+              StayNest was created from real short-term rental experience: fewer repeated questions, clearer stays, and an easier path for happy guests to leave a review.
             </p>
           </div>
 
@@ -425,6 +571,43 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+
+          <div className="mt-10 grid gap-4 lg:grid-cols-3">
+            {platformCards.map((item) => {
+              const Icon = item.icon;
+              return (
+                <article key={item.title} className="rounded-[24px] border border-[#D8D1C4]/55 bg-[#FBFAF6] p-6 shadow-[0_14px_42px_rgba(23,32,51,0.045)]">
+                  <div className="grid h-12 w-12 place-items-center rounded-[16px] bg-[#172033] text-white">
+                    <Icon size={20} />
+                  </div>
+                  <h3 className="mt-6 text-xl font-semibold tracking-tight text-[#172033]">{item.title}</h3>
+                  <p className="mt-3 text-sm font-medium leading-7 text-[#172033]/72">{item.text}</p>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#172033] py-16 text-white lg:py-24">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:px-8">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#AFC8BD]">Why reviews improve</p>
+            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
+              Better ratings come from fewer tiny guest frustrations.
+            </h2>
+            <p className="mt-5 text-base font-medium leading-8 text-white/72">
+              Most bad reviews are not about one disaster. They are about small moments: unclear arrival, missing Wi-Fi, no checkout instructions, slow replies, or guests not knowing where to leave feedback. StayNest makes those moments calmer.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {conversionReasons.map((item) => (
+              <div key={item} className="flex min-h-24 items-start gap-3 rounded-[20px] border border-white/10 bg-white/[0.07] p-4">
+                <BadgeCheck className="mt-0.5 shrink-0 text-[#AFC8BD]" size={20} />
+                <p className="text-sm font-semibold leading-6 text-white/84">{item}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -432,7 +615,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">How it works</p>
-            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">From listing to live guest guide in minutes</h2>
+            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">From listing to review-ready guest guide in minutes</h2>
           </div>
           <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {steps.map((step, index) => {
@@ -461,7 +644,7 @@ export default function LandingPage() {
           <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Features</p>
-              <h2 className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">Everything your guests need, all in one place</h2>
+              <h2 className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">Everything guests need before they decide what to rate you</h2>
             </div>
             <Button href="/g/example" variant="secondary" className="w-full rounded-full border-[#D8D1C4]/70 shadow-[0_10px_24px_rgba(23,32,51,0.045)] sm:w-fit">
               See Example Guide
@@ -487,8 +670,8 @@ export default function LandingPage() {
                   <p className={`${feature.featured ? "mt-4 text-base leading-8 text-[#172033]/72" : "mt-3 text-sm leading-7 text-[#172033]/72"} font-medium`}>{feature.text}</p>
                   {feature.featured ? (
                     <div className="mt-9 rounded-[20px] border border-[#D8D1C4]/55 bg-white/78 p-4">
-                      <p className="text-sm font-semibold">Trained only on your property</p>
-                      <p className="mt-2 text-sm font-medium leading-6 text-[#172033]/72">Keep answers focused on your real house rules, contact details and local tips.</p>
+                      <p className="text-sm font-semibold">Reviews without awkward follow-up</p>
+                      <p className="mt-2 text-sm font-medium leading-6 text-[#172033]/72">Guests get helped first, then find the review link naturally when they are ready to check out.</p>
                     </div>
                   ) : null}
                 </article>
@@ -502,7 +685,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Pricing</p>
-            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">Simple plans with a 7-day free trial</h2>
+            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">A tiny yearly cost for more review opportunities</h2>
           </div>
 
           <div className="mx-auto mt-10 max-w-xl">
@@ -513,7 +696,7 @@ export default function LandingPage() {
               <div className="pr-32">
                 <h3 className="font-serif text-3xl font-semibold text-[#172033]">StayNest Annual</h3>
                 <p className="mt-3 text-sm font-medium leading-6 text-[#172033]/72">
-                  One plan, one price, billed once a year. No add-ons and nothing held back for a higher tier.
+                  One plan, one price, billed once a year. Review links, QR guide and AI guest chat are all included.
                 </p>
               </div>
               <div className="mt-7 flex items-end gap-2">
@@ -546,9 +729,9 @@ export default function LandingPage() {
         <div className="mx-auto grid max-w-7xl gap-8 overflow-hidden rounded-[32px] border border-[#D8D1C4]/55 bg-white p-6 shadow-[0_22px_70px_rgba(23,32,51,0.06)] sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Start hosting smarter</p>
-            <h2 className="mt-3 max-w-2xl font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">Ready to give every guest a better stay?</h2>
+            <h2 className="mt-3 max-w-2xl font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">Ready to turn better stays into better reviews?</h2>
             <p className="mt-4 max-w-2xl text-base font-medium leading-8 text-[#172033]/72">
-              Create your guide, print one QR code and let StayNest handle the repeated questions.
+              Create your guide, print one QR code and give every happy guest a clear path to your review page.
             </p>
           </div>
 

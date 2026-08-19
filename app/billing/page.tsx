@@ -15,7 +15,7 @@ import { getAppUrl, getPaymentUrl } from "@/lib/utils";
 
 export const preferredRegion = "fra1";
 export const metadata = {
-  title: "Billing",
+  title: "Keep collecting guest reviews",
   robots: {
     index: false,
     follow: false
@@ -69,7 +69,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           </div>
           <div>
             <h1 className="text-xl font-bold">
-              {currentStatus === "ACTIVE" ? "Your subscription" : "Keep your guide online"}
+              {currentStatus === "ACTIVE" ? "Your review growth plan" : "Keep your review-ready guide online"}
             </h1>
             <p className="text-sm text-ink/72">
               {currentPlan.name} · {currentPlan.price} per year
@@ -86,10 +86,9 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         <div className="mt-6 rounded-[8px] border border-ink/10 bg-white p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.16em] text-lagoon">Everything included</p>
+              <p className="text-sm font-bold uppercase tracking-[0.16em] text-lagoon">Everything for better guest reviews</p>
               <p className="mt-2 text-sm leading-6 text-ink/72">
-                The guest guide, QR code, review links and AI guest chat, billed once a year. Your guide
-                stays live for the whole trial, and nothing is charged until it ends.
+                The QR guest guide, Google/Booking/Airbnb review links and AI guest chat, billed once a year. Your guide stays live for the whole trial, and nothing is charged until it ends.
               </p>
             </div>
             <div className="text-right">
@@ -102,8 +101,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
             {trialDate ? `Your free trial runs until ${trialDate}.` : "Paddle will activate your subscription after checkout completes."}
           </div>
           <p className="mt-3 text-sm leading-6 text-ink/60">
-            Paddle handles secure checkout, tax, invoicing and recurring billing on staynest.site. After
-            checkout, webhooks update your StayNest subscription status.
+            Paddle handles secure checkout, tax, invoicing and recurring billing on staynest.site. After checkout, your review-ready guide stays live for guests.
           </p>
         </div>
 

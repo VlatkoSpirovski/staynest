@@ -17,7 +17,7 @@ export function PreviewForm() {
         </div>
         <div>
           <h3 className="text-lg font-semibold text-[#172033]">See your property inside StayNest</h3>
-          <p className="text-sm font-medium text-[#172033]/60">Generate a personalized guest guide from your Booking.com listing.</p>
+          <p className="text-sm font-medium text-[#172033]/60">Preview a review-ready guest guide from your Booking.com listing.</p>
         </div>
       </div>
 
@@ -39,7 +39,7 @@ export function PreviewForm() {
         </Field>
 
         <SubmitButton pendingText="Reading listing and building preview..." className="min-h-12 w-full rounded-[14px] text-sm shadow-[0_12px_28px_rgba(23,32,51,0.12)]">
-          Generate Preview
+          Generate review-ready preview
         </SubmitButton>
 
         <p className="text-center text-xs font-semibold text-[#172033]/45 uppercase tracking-wider mt-1">

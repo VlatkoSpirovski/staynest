@@ -2,6 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 
 type PaddleCheckoutButtonProps = {
   clientToken: string;
@@ -94,6 +95,7 @@ export function PaddleCheckoutButton({
           token: clientToken,
           eventCallback: (event) => {
             if (event.name === "checkout.completed" || event.event === "checkout.completed") {
+              trackEvent("checkout_completed", { plan });
               fetch("/api/billing/activate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -131,6 +133,7 @@ export function PaddleCheckoutButton({
         }
         setBusy(true);
         setError("");
+        trackEvent("checkout_started", { plan });
         fetch("/api/paddle/checkout", {
           method: "POST",
           headers: {
@@ -144,6 +147,7 @@ export function PaddleCheckoutButton({
               throw new Error(payload.error || "Could not create Paddle checkout.");
             }
 
+            trackEvent("checkout_created", { plan });
             paddle.Checkout.open({
               settings: {
                 displayMode: "overlay",
@@ -153,9 +157,12 @@ export function PaddleCheckoutButton({
               },
               transactionId: payload.transactionId
             });
+            trackEvent("checkout_opened", { plan });
           })
           .catch((checkoutError) => {
-            setError(checkoutError instanceof Error ? checkoutError.message : "Could not create Paddle checkout.");
+            const message = checkoutError instanceof Error ? checkoutError.message : "Could not create Paddle checkout.";
+            trackEvent("checkout_failed", { plan, message });
+            setError(message);
           })
           .finally(() => {
             setTimeout(() => setBusy(false), 800);

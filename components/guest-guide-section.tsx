@@ -218,7 +218,7 @@ export function GuestGuideSectionContent({ property, section, onBack, basePath }
               <div className="mt-4 grid gap-2">
                 {property.reviewLinks.map((link) => (
                   <a key={link.id} href={link.url} className="rounded-[var(--guide-button-radius)] bg-[var(--guide-button-bg)] px-4 py-3 text-center text-sm font-bold text-[var(--guide-button-text)]">
-                    {link.platform.charAt(0) + link.platform.slice(1).toLowerCase()}
+                    Leave a {link.platform.charAt(0) + link.platform.slice(1).toLowerCase()} review
                   </a>
                 ))}
               </div>
