@@ -67,9 +67,8 @@ export function billingUrl(plan: string | null | undefined) {
 export const TRIAL_DAYS = 7;
 
 /**
- * Fields that start a no-card trial. Applied at signup in every environment so a
- * new owner can build and publish a guide before being asked for a payment method.
- * Paddle webhooks remain authoritative afterwards and overwrite these.
+ * Fields for subscription access after Paddle confirms checkout. Signups start
+ * as PENDING; the card-required trial starts from Paddle checkout/webhooks.
  */
 export function startTrial(days = TRIAL_DAYS) {
   return {

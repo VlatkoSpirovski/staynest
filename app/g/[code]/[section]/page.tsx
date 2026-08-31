@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { GuestGuideSection } from "@/components/guest-guide-section";
+import { canServePublicGuide } from "@/lib/public-guide-access";
 import { getCachedPublicGuideSection, getCachedSlugForPublicCode } from "@/lib/public-guide-cache";
 import { isPublicCodeShape } from "@/lib/secure-slug";
 import { examplePublicGuide } from "@/lib/example-public-guide";
@@ -28,6 +29,10 @@ export default async function ShortGuideSectionPage({ params }: PageProps) {
   }
 
   if (!isPublicCodeShape(code) && code !== examplePublicGuide.publicCode) {
+    notFound();
+  }
+
+  if (!(await canServePublicGuide({ publicCode: code }))) {
     notFound();
   }
 

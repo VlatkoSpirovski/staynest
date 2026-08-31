@@ -116,16 +116,20 @@ function savedMessage(saved?: string) {
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const user = await requireReadyUser();
-  // Before locking anyone out, confirm with Paddle. A paying owner whose webhook
-  // never arrived would otherwise be bounced to billing on every single visit
-  // with no way to reach the product they already paid for.
+  // Before deciding access, confirm with Paddle. A paying owner whose webhook
+  // never arrived would otherwise be bounced to billing despite having checked out.
   let access = hasBillingAccess(user);
+  let subscriptionStatus = user.subscriptionStatus;
   if (!access) {
     const reconciled = await reconcilePaddleStatus(user);
-    access = hasBillingAccess({ ...user, subscriptionStatus: reconciled.status });
+    subscriptionStatus = reconciled.status ?? user.subscriptionStatus;
+    access = hasBillingAccess({ ...user, subscriptionStatus });
   }
 
-  if (!access) {
+  const trialDaysLeft = trialDaysRemaining(user);
+  const expiredTrial = subscriptionStatus?.toUpperCase() === "TRIALING" && trialDaysLeft === 0;
+
+  if (!access && !expiredTrial) {
     redirect(billingUrl(user.selectedPlan));
   }
 
@@ -163,8 +167,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       planName={planName}
       selectedPlan={selectedPlan}
       trialLabel={trialLabel}
-      trialDaysLeft={trialDaysRemaining(user)}
-      subscriptionStatus={user.subscriptionStatus}
+      trialDaysLeft={trialDaysLeft}
+      subscriptionStatus={subscriptionStatus}
+      billingAccess={access}
       isFirstVisit={searchParams?.welcome === "1"}
       logoutAction={logoutOwner}
       importListingAction={importListingFromUrl}

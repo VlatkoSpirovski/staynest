@@ -93,9 +93,9 @@ Open:
 
 ## Account Creation
 
-Owners can self-register from `/register?plan=basic` or `/register?plan=ai`. New accounts start as `PENDING`, then go
-to Paddle checkout on `staynest.site/billing` to activate the 7-day trial. Dashboard access opens once Paddle marks the
-subscription `TRIALING` or `ACTIVE`.
+Owners can self-register from `/register?plan=annual`. New accounts start as `PENDING`, then go to Paddle checkout on
+`staynest.site/billing` to add a payment method and activate the 7-day trial. Dashboard access opens once Paddle marks
+the subscription `TRIALING` or `ACTIVE`.
 
 A platform admin can also create owner accounts from `/admin` with:
 
@@ -169,6 +169,16 @@ Hosts and admins can add extra AI assistant knowledge per property. The assistan
 Google login is supported when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are configured. Apple login is still
 disabled and redirects back to login with a clear message.
 
+For Google OAuth, add the exact callback URL to the Google Cloud OAuth client's authorized redirect URIs:
+
+```text
+http://localhost:3000/auth/google/callback
+https://dashboard.staynest.site/auth/google/callback
+```
+
+By default StayNest sends `NEXT_PUBLIC_APP_URL + /auth/google/callback`. If your OAuth client requires a different
+exact callback, set `GOOGLE_REDIRECT_URI` to that full URL and use the same value in Google Cloud.
+
 ## Online PostgreSQL Setup
 
 StayNest uses Prisma with PostgreSQL. For production, use a hosted PostgreSQL database and a pooled connection string when the provider offers one, especially on serverless hosting.
@@ -223,3 +233,6 @@ Paddle is the production billing provider and merchant of record. Keep `staynest
 and make sure the terms, privacy, refund, contact and pricing pages are publicly reachable on that domain. Set every
 Paddle price quantity minimum and maximum to `1` so checkout cannot show quantity steppers or let customers buy multiple
 subscriptions at once.
+
+Configure the annual Paddle price with a 7-day trial period and `requires_payment_method=true`. That makes checkout
+collect the card up front while Paddle waits until the trial ends before charging.

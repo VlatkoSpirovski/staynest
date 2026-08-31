@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { GuestGuideSection } from "@/components/guest-guide-section";
+import { canServePublicGuide } from "@/lib/public-guide-access";
 import { getCachedPublicGuideSection } from "@/lib/public-guide-cache";
 import { GUIDE_SECTION_IDS } from "@/lib/guide-sections";
 
@@ -20,6 +21,10 @@ type PageProps = {
 
 export default async function GuideSectionPage({ params }: PageProps) {
   if (!GUIDE_SECTION_IDS.has(params.section)) {
+    notFound();
+  }
+
+  if (!(await canServePublicGuide({ slug: params.slug }))) {
     notFound();
   }
 

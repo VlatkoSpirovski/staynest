@@ -12,7 +12,7 @@ import { createSession, destroyAllUserSessions, destroyOtherSessions, destroySes
 import { sendEmail } from "@/lib/email";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { passwordRulesText, validatePassword } from "@/lib/password-policy";
-import { normalizePlanKey, startTrial } from "@/lib/billing";
+import { billingUrl, normalizePlanKey } from "@/lib/billing";
 import { getAppUrl } from "@/lib/utils";
 import { claimPropertyPreview } from "@/lib/property-preview";
 
@@ -109,7 +109,7 @@ export async function registerOwner(formData: FormData) {
       emailCanonical,
       passwordHash: hashPassword(password),
       selectedPlan: planKey,
-      ...startTrial()
+      subscriptionStatus: "PENDING"
     }
   });
 
@@ -122,13 +122,13 @@ export async function registerOwner(formData: FormData) {
   if (previewToken) {
     const claimedProperty = await claimPropertyPreview(previewToken, user.id);
     if (claimedProperty) {
-      redirect("/dashboard?preview=claimed");
+      redirect(billingUrl(planKey));
     }
   }
 
-  // Owners land in the product on their trial. Billing is prompted from the
-  // dashboard as the trial runs down, not as a wall in front of the first visit.
-  redirect("/dashboard?welcome=1");
+  // Owners add a payment method up front. Paddle starts the subscription in a
+  // 7-day trial, so the first charge happens only after the trial ends.
+  redirect(billingUrl(planKey));
 }
 
 export async function loginOwner(formData: FormData) {

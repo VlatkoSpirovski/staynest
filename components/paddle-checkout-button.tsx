@@ -171,7 +171,7 @@ export function PaddleCheckoutButton({
         className="focus-ring inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white shadow-soft transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {!ready || busy ? <Loader2 className="animate-spin" size={16} /> : null}
-        {ready ? "Continue to secure checkout" : "Loading checkout..."}
+        {ready ? "Add card and start 7-day trial" : "Loading checkout..."}
       </button>
     </div>
   );

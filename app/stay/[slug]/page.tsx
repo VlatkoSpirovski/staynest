@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { GuestGuideHome } from "@/components/guest-guide-home";
+import { canServePublicGuide } from "@/lib/public-guide-access";
 import { getCachedPublicGuideSection } from "@/lib/public-guide-cache";
 
 export const preferredRegion = "fra1";
@@ -17,6 +18,10 @@ type PageProps = {
 };
 
 export default async function PublicGuidePage({ params }: PageProps) {
+  if (!(await canServePublicGuide({ slug: params.slug }))) {
+    notFound();
+  }
+
   const property = await getCachedPublicGuideSection(params.slug);
 
   if (!property) {

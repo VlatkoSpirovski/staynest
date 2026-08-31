@@ -9,8 +9,9 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
- * Stores the selected plan key right after client-side checkout completes.
- * In production, the webhook remains the authoritative source for subscriptionStatus.
+ * Stores the selected plan key right after client-side checkout completes, then
+ * asks Paddle for the latest status. Webhooks remain the normal authoritative
+ * path, but this avoids stranding a just-checked-out owner if delivery is slow.
  */
 export async function POST(request: Request) {
   if (!isTrustedAppRequest(request)) {
@@ -28,8 +29,8 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { plan?: string };
   const selectedPlanKey = normalizePlanKey(body.plan);
 
-  // Only records the plan the owner picked. The trial itself is granted at
-  // signup, and Paddle webhooks remain authoritative for paid status.
+  // Only records the plan the owner picked. Trial access starts after Paddle
+  // confirms checkout as TRIALING or ACTIVE.
   const updatedUser = await prisma.user.update({
     where: { id: user.id },
     data: { selectedPlan: selectedPlanKey }

@@ -78,7 +78,8 @@ export async function POST(request: Request) {
         userId: user.id,
         plan: plan.tier,
         planKey,
-        billingInterval: plan.interval
+        billingInterval: plan.interval,
+        checkoutMode: "card-required-trial"
       }
     })
   });

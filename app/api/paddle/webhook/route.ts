@@ -20,6 +20,7 @@ type PaddleWebhook = {
       plan?: string;
       planKey?: string;
       billingInterval?: string;
+      checkoutMode?: string;
     } | null;
   };
 };
@@ -49,8 +50,10 @@ function verifyPaddleSignature(rawBody: string, signatureHeader: string | null, 
   return expectedBuffer.length === signatureBuffer.length && timingSafeEqual(expectedBuffer, signatureBuffer);
 }
 
-function subscriptionStatus(eventType: string, paddleStatus?: string | null) {
-  if (eventType === "transaction.completed") return "ACTIVE";
+function subscriptionStatus(eventType: string, paddleStatus?: string | null, checkoutMode?: string | null) {
+  if (eventType === "transaction.completed") {
+    return checkoutMode === "card-required-trial" ? "TRIALING" : "ACTIVE";
+  }
   if (eventType === "transaction.payment_failed") return "PAST_DUE";
   if (eventType === "subscription.trialing") return "TRIALING";
   if (eventType === "subscription.activated" || eventType === "subscription.resumed") return "ACTIVE";
@@ -88,7 +91,7 @@ export async function POST(request: Request) {
   const customerId = data.customer_id || undefined;
   const subscriptionId = eventType.startsWith("subscription.") ? data.id : data.subscription_id || undefined;
   const transactionId = eventType.startsWith("transaction.") ? data.id : undefined;
-  const status = subscriptionStatus(eventType, data.status);
+  const status = subscriptionStatus(eventType, data.status, data.custom_data?.checkoutMode);
   const trialEndsAt = status === "TRIALING" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : undefined;
 
   console.log("[paddle-webhook] Received", { eventType, userId, customerId, subscriptionId, transactionId, status, selectedPlanKey });

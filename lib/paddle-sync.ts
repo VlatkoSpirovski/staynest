@@ -1,5 +1,6 @@
 import "server-only";
 
+import { TRIAL_DAYS } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -84,6 +85,7 @@ export async function reconcilePaddleStatus(user: {
   id: string;
   email: string;
   subscriptionStatus: string | null;
+  trialEndsAt: Date | null;
   paddleCustomerId: string | null;
   paddleSubscriptionId: string | null;
   paddleTransactionId: string | null;
@@ -110,14 +112,16 @@ export async function reconcilePaddleStatus(user: {
     subscriptionId = result?.data?.subscription_id ?? subscriptionId;
     customerId = result?.data?.customer_id ?? customerId;
 
-    if (txStatus === "completed" || txStatus === "paid") {
-      status = "ACTIVE";
-    }
-
-    // A completed transaction usually points at a subscription; prefer its status.
-    if (subscriptionId && !status) {
+    // A completed trial checkout usually points at a subscription. Prefer the
+    // subscription's own status so card-required trials stay TRIALING until the
+    // first paid billing period starts.
+    if (subscriptionId) {
       const sub = await paddleGet<PaddleSubscription>(`/subscriptions/${subscriptionId}`);
       status = mapSubscriptionStatus(sub?.data?.status);
+    }
+
+    if (!status && (txStatus === "completed" || txStatus === "paid")) {
+      status = "TRIALING";
     }
   }
 
@@ -146,6 +150,9 @@ export async function reconcilePaddleStatus(user: {
     where: { id: user.id },
     data: {
       subscriptionStatus: status,
+      ...(status === "TRIALING" && !user.trialEndsAt
+        ? { trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000) }
+        : {}),
       ...(subscriptionId ? { paddleSubscriptionId: subscriptionId } : {}),
       ...(customerId ? { paddleCustomerId: customerId } : {})
     }

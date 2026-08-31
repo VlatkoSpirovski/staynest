@@ -13,11 +13,10 @@ type Phase = "checking" | "confirmed" | "pending" | "signedOut";
 /**
  * Post-checkout confirmation.
  *
- * Paddle's webhook is the only thing that can flip subscriptionStatus to ACTIVE,
- * so this page cannot treat "not yet ACTIVE" as failure — webhook delivery is
- * asynchronous and may be delayed or misconfigured. It polls briefly for the
- * confirmation, then resolves to a reassuring state either way. The owner already
- * has access through their trial, so there is nothing to gate on here.
+ * Paddle's webhook or reconciliation flips subscriptionStatus to TRIALING for a
+ * card-required trial, then ACTIVE after the first paid billing period starts.
+ * Webhook delivery is asynchronous, so this polls briefly before falling back to
+ * a reassuring pending state.
  */
 export function BillingCompleteClient({ dashboardUrl, loginUrl }: BillingCompleteClientProps) {
   const [phase, setPhase] = useState<Phase>("checking");
@@ -50,7 +49,7 @@ export function BillingCompleteClient({ dashboardUrl, loginUrl }: BillingComplet
 
         if (response.ok) {
           const data = (await response.json()) as { status?: string | null };
-          if (data.status?.toUpperCase() === "ACTIVE" && mounted) {
+          if ((data.status?.toUpperCase() === "ACTIVE" || data.status?.toUpperCase() === "TRIALING") && mounted) {
             setPhase("confirmed");
             return;
           }
@@ -79,21 +78,21 @@ export function BillingCompleteClient({ dashboardUrl, loginUrl }: BillingComplet
 
   const copy = {
     checking: {
-      title: "Confirming your subscription…",
-      body: "Paddle is processing your payment. This usually takes a few seconds."
+      title: "Starting your trial...",
+      body: "Paddle is saving your payment method and activating your 7-day trial."
     },
     confirmed: {
       title: "You're all set!",
-      body: "Your subscription is active. Redirecting to the dashboard…"
+      body: "Your trial is active. Your first charge is after the trial ends. Redirecting to the dashboard..."
     },
     pending: {
-      title: "Payment received",
+      title: "Card saved",
       body:
-        "Paddle has your payment and your subscription is being activated in the background. Your guide stays live the whole time — open the dashboard and carry on."
+        "Paddle has your payment method and your trial is being activated in the background. Open the dashboard and carry on."
     },
     signedOut: {
-      title: "Payment received",
-      body: "Your payment went through. Sign in again to pick up where you left off."
+      title: "Card saved",
+      body: "Your checkout went through. Sign in again to pick up where you left off."
     }
   }[phase];
 

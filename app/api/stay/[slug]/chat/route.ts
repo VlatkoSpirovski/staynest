@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getGuestMessages } from "@/lib/guest-i18n";
+import { canServePublicGuide } from "@/lib/public-guide-access";
 import { getCachedPublicGuideChatContext } from "@/lib/public-guide-cache";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
@@ -91,6 +92,10 @@ export async function POST(request: Request, { params }: RouteContext) {
 
   if (!message) {
     return NextResponse.json({ answer: t.chat.askAnything }, { status: 400 });
+  }
+
+  if (!(await canServePublicGuide({ slug: params.slug }))) {
+    return NextResponse.json({ answer: t.chat.errorAnswer }, { status: 404 });
   }
 
   // This endpoint is public and every call costs OpenAI credits, so it is capped

@@ -128,6 +128,7 @@ interface DashboardClientProps {
   trialLabel: string | null;
   trialDaysLeft: number | null;
   subscriptionStatus: string | null;
+  billingAccess: boolean;
   isFirstVisit: boolean;
   logoutAction: any;
   importListingAction: any;
@@ -513,9 +514,9 @@ function mergePropertyFields(current: Property, next: Partial<Property>): Proper
 /**
  * Trial and billing state, shown above the workspace.
  *
- * Owners now reach the dashboard without entering a card, so this bar is the only
- * place the trial is visible and the only prompt to subscribe. It escalates as the
- * trial runs down and disappears entirely once a subscription is active.
+ * Owners add a card before entering the product. This bar confirms the trial is
+ * active, shows when the first charge starts, and becomes a recovery prompt if
+ * the trial has ended without an active subscription.
  */
 function TrialStatusBar({
   subscriptionStatus,
@@ -533,7 +534,7 @@ function TrialStatusBar({
 
   const billingHref = `${BILLING_BASE_URL}/billing?plan=${encodeURIComponent(selectedPlan)}`;
   const expired = status !== "TRIALING" || trialDaysLeft === null || trialDaysLeft <= 0;
-  const urgent = !expired && trialDaysLeft !== null && trialDaysLeft <= 3;
+  const urgent = !expired && trialDaysLeft !== null && trialDaysLeft <= 1;
 
   const tone = expired
     ? "border-red-200 bg-red-50 text-red-800"
@@ -542,16 +543,16 @@ function TrialStatusBar({
       : "border-[#172234]/10 bg-white text-[#111827]";
 
   const headline = expired
-    ? "Your free trial has ended"
+    ? "Your trial has ended"
     : trialDaysLeft === 1
-      ? "1 day left in your free trial"
-      : `${trialDaysLeft} days left in your free trial`;
+      ? "Trial active: first charge tomorrow"
+      : `Trial active: ${trialDaysLeft} days until first charge`;
 
   const detail = expired
-    ? "Add a payment method to put your guide back online for guests."
+    ? "Update your payment method to put your guide back online for guests."
     : trialLabel
-      ? `Your guide stays live after ${trialLabel} once you add a payment method.`
-      : "Add a payment method whenever you are ready — nothing is charged until the trial ends.";
+      ? `Your card is on file. Paddle starts yearly billing after ${trialLabel}.`
+      : "Your card is on file. Paddle starts yearly billing after the trial.";
 
   return (
     <div className={`mb-4 flex flex-col gap-3 rounded-[18px] border px-4 py-3 shadow-[0_16px_42px_rgba(17,24,39,0.05)] sm:flex-row sm:items-center sm:justify-between ${tone}`}>
@@ -568,7 +569,7 @@ function TrialStatusBar({
         href={billingHref}
         className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-[14px] bg-[#111827] px-4 text-sm font-black text-white transition hover:bg-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#111827]/40 focus:ring-offset-2"
       >
-        {expired ? "Reactivate guide" : "Add payment method"}
+        {expired ? "Update payment" : "Manage billing"}
       </a>
     </div>
   );
@@ -633,6 +634,7 @@ export default function DashboardClient(props: DashboardClientProps) {
     trialLabel,
     trialDaysLeft,
     subscriptionStatus,
+    billingAccess,
     isFirstVisit,
     logoutAction,
     importListingAction,
@@ -1049,7 +1051,14 @@ export default function DashboardClient(props: DashboardClientProps) {
         ) : null}
 
         {activeTab === "settings" ? (
-          <SettingsScreen property={property} publicUrl={publicUrl} qrCode={qrCode} planName={planName} selectedPlan={selectedPlan} />
+          <SettingsScreen
+            property={property}
+            publicUrl={publicUrl}
+            qrCode={qrCode}
+            planName={planName}
+            selectedPlan={selectedPlan}
+            billingAccess={billingAccess}
+          />
         ) : null}
       </div>
 
@@ -1691,15 +1700,18 @@ function SettingsScreen({
   publicUrl,
   qrCode,
   planName,
-  selectedPlan
+  selectedPlan,
+  billingAccess
 }: {
   property: Property;
   publicUrl: string;
   qrCode: string;
   planName: string;
   selectedPlan: string;
+  billingAccess: boolean;
 }) {
   const currentPlan = planOption(selectedPlan);
+  const billingHref = `${BILLING_BASE_URL}/billing?plan=${encodeURIComponent(selectedPlan)}`;
 
   return (
     <div className="space-y-4">
@@ -1709,9 +1721,17 @@ function SettingsScreen({
       </div>
 
       <section className="rounded-[24px] border border-white/12 bg-[#111827] bg-[radial-gradient(circle_at_82%_0%,rgba(95,157,153,0.22),transparent_34%),linear-gradient(145deg,#111827_0%,#162033_100%)] p-5 text-white shadow-[0_36px_116px_rgba(17,24,39,0.34),inset_0_1px_0_rgba(255,255,255,0.10)]">
-        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#B7DAD5]">Your guide is live</p>
-        <h1 className="mt-2 text-3xl font-black leading-tight tracking-tight">Ready for the next guest</h1>
-        <p className="mt-2 text-sm font-semibold leading-6 text-white/66">Share the link, print the QR, or open the guest view.</p>
+        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#B7DAD5]">
+          {billingAccess ? "Your guide is live" : "Your guide is paused"}
+        </p>
+        <h1 className="mt-2 text-3xl font-black leading-tight tracking-tight">
+          {billingAccess ? "Ready for the next guest" : "Add payment to go live"}
+        </h1>
+        <p className="mt-2 text-sm font-semibold leading-6 text-white/66">
+          {billingAccess
+            ? "Share the link, print the QR, or open the guest view."
+            : "Your setup is saved. Add a payment method to restore guest access."}
+        </p>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-[160px_1fr]">
           <div className="grid place-items-center rounded-[20px] bg-[#FFFFFF] p-4 shadow-[0_18px_46px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.92)]">
@@ -1723,8 +1743,14 @@ function SettingsScreen({
               <p className="mt-1 break-all text-xs font-black leading-5">{publicUrl}</p>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
-              <CopyButton value={publicUrl} label="Share link" copiedLabel="Copied" className="rounded-[16px] border border-[#172234]/10 bg-[#FFFFFF] text-[#111827] shadow-[0_14px_34px_rgba(17,24,39,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] hover:bg-white" />
-              {qrCode ? (
+              {billingAccess ? (
+                <CopyButton value={publicUrl} label="Share link" copiedLabel="Copied" className="rounded-[16px] border border-[#172234]/10 bg-[#FFFFFF] text-[#111827] shadow-[0_14px_34px_rgba(17,24,39,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] hover:bg-white" />
+              ) : (
+                <a href={billingHref} className="inline-flex min-h-12 items-center justify-center rounded-[16px] border border-[#172234]/10 bg-[#FFFFFF] px-4 text-sm font-black text-[#111827] shadow-[0_14px_34px_rgba(17,24,39,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] transition hover:-translate-y-0.5 hover:bg-white">
+                  Add payment
+                </a>
+              )}
+              {qrCode && billingAccess ? (
                 <a
                   href={qrCode}
                   download={`staynest-${property.slug}-qr.png`}
@@ -1734,10 +1760,12 @@ function SettingsScreen({
                   <Download size={15} />
                 </a>
               ) : null}
-              <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[16px] bg-[#5F9D99] px-4 text-sm font-black text-white shadow-[0_18px_48px_rgba(95,157,153,0.30),inset_0_1px_0_rgba(255,255,255,0.16)] transition hover:-translate-y-0.5 hover:bg-[#558F8B] focus:outline-none focus:ring-2 focus:ring-[#B7DAD5]/60 focus:ring-offset-2 focus:ring-offset-[#111827]">
-                <span>Open preview</span>
-                <ExternalLink size={15} />
-              </a>
+              {billingAccess ? (
+                <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[16px] bg-[#5F9D99] px-4 text-sm font-black text-white shadow-[0_18px_48px_rgba(95,157,153,0.30),inset_0_1px_0_rgba(255,255,255,0.16)] transition hover:-translate-y-0.5 hover:bg-[#558F8B] focus:outline-none focus:ring-2 focus:ring-[#B7DAD5]/60 focus:ring-offset-2 focus:ring-offset-[#111827]">
+                  <span>Open preview</span>
+                  <ExternalLink size={15} />
+                </a>
+              ) : null}
             </div>
           </div>
         </div>

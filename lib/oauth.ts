@@ -5,7 +5,7 @@ import { OAuthProvider } from "@prisma/client";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
-import { normalizePlanKey, startTrial } from "@/lib/billing";
+import { normalizePlanKey } from "@/lib/billing";
 import { getAppUrl } from "@/lib/utils";
 
 const oauthStateCookie = "staynest_oauth_state";
@@ -19,6 +19,10 @@ type OAuthProfile = {
   name: string;
   emailVerified: boolean;
 };
+
+function getGoogleRedirectUri() {
+  return process.env.GOOGLE_REDIRECT_URI?.replace(/\/$/, "") || `${getAppUrl()}/auth/google/callback`;
+}
 
 export function createOAuthState() {
   const state = randomBytes(24).toString("base64url");
@@ -89,7 +93,7 @@ export function getGoogleAuthorizationUrl() {
 
   const params = new URLSearchParams({
     client_id: clientId,
-    redirect_uri: `${getAppUrl()}/auth/google/callback`,
+    redirect_uri: getGoogleRedirectUri(),
     response_type: "code",
     scope: "openid email profile",
     prompt: "select_account",
@@ -131,7 +135,7 @@ export async function getGoogleProfile(code: string): Promise<OAuthProfile> {
       code,
       client_id: clientId,
       client_secret: clientSecret,
-      redirect_uri: `${getAppUrl()}/auth/google/callback`,
+      redirect_uri: getGoogleRedirectUri(),
       grant_type: "authorization_code"
     })
   });
@@ -252,8 +256,8 @@ export async function signInWithOAuthProfile(profile: OAuthProfile) {
       name: profile.name,
       email: profile.email,
       emailVerifiedAt: profile.emailVerified ? new Date() : null,
-      selectedPlan: selectedPlan ?? "basic-monthly",
-      ...startTrial(),
+      selectedPlan: selectedPlan ?? "annual",
+      subscriptionStatus: "PENDING",
       oauthAccounts: {
         create: {
           provider: profile.provider,
@@ -264,7 +268,7 @@ export async function signInWithOAuthProfile(profile: OAuthProfile) {
   });
 
   await createSession(user.id);
-  return { user, isNewUser: true, selectedPlan: selectedPlan ?? "basic-monthly" };
+  return { user, isNewUser: true, selectedPlan: selectedPlan ?? "annual" };
 }
 
 function createAppleClientSecret() {

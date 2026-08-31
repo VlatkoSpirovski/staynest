@@ -42,11 +42,11 @@ const features = [
 const faqs = [
   {
     q: "Do I need a card to start?",
-    a: "No. The 7-day trial starts as soon as you register and you can build and publish your guide without entering payment details."
+    a: "Yes. Add a card to start the 7-day trial, but you are not charged until the trial ends."
   },
   {
     q: "What happens after the trial?",
-    a: "Add a payment method to keep your guide online. If you do nothing, the guide simply goes offline — nothing is charged automatically."
+    a: "Paddle starts the yearly subscription automatically after the 7-day trial unless you cancel during the trial."
   },
   {
     q: "Is there a cheaper plan without AI?",
