@@ -9,11 +9,16 @@ type PublicGuideLookup =
   | { slug?: never; publicCode: string };
 
 export async function canServePublicGuide(lookup: PublicGuideLookup) {
-  if ("slug" in lookup && isExamplePublicGuide(lookup.slug)) return true;
-  if ("publicCode" in lookup && lookup.publicCode === examplePublicGuide.publicCode) return true;
+  const slug = "slug" in lookup ? lookup.slug : undefined;
+  const publicCode = "publicCode" in lookup ? lookup.publicCode : undefined;
+
+  if (slug && isExamplePublicGuide(slug)) return true;
+  if (publicCode === examplePublicGuide.publicCode) return true;
+
+  if (!slug && !publicCode) return false;
 
   const property = await prisma.property.findFirst({
-    where: "slug" in lookup ? { slug: lookup.slug } : { publicCode: lookup.publicCode },
+    where: slug ? { slug } : { publicCode },
     select: {
       owner: {
         select: {
