@@ -18,7 +18,9 @@ function pagePath(pathname: string) {
 }
 
 export function GoogleAnalytics() {
-  const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+  const measurementId =
+    process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ||
+    (process.env.NODE_ENV === "production" ? "G-GBKCWG08GL" : undefined);
   const pathname = usePathname();
 
   useEffect(() => {
