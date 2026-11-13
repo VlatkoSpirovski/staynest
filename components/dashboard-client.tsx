@@ -129,6 +129,7 @@ interface DashboardClientProps {
   trialDaysLeft: number | null;
   subscriptionStatus: string | null;
   billingAccess: boolean;
+  cardOnFile: boolean;
   isFirstVisit: boolean;
   logoutAction: any;
   importListingAction: any;
@@ -511,30 +512,25 @@ function mergePropertyFields(current: Property, next: Partial<Property>): Proper
   };
 }
 
-/**
- * Trial and billing state, shown above the workspace.
- *
- * Owners add a card before entering the product. This bar confirms the trial is
- * active, shows when the first charge starts, and becomes a recovery prompt if
- * the trial has ended without an active subscription.
- */
 function TrialStatusBar({
   subscriptionStatus,
   trialDaysLeft,
   trialLabel,
-  selectedPlan
+  selectedPlan,
+  cardOnFile
 }: {
   subscriptionStatus: string | null;
   trialDaysLeft: number | null;
   trialLabel: string | null;
   selectedPlan: string;
+  cardOnFile: boolean;
 }) {
   const status = subscriptionStatus?.toUpperCase();
   if (status === "ACTIVE") return null;
 
   const billingHref = `${BILLING_BASE_URL}/billing?plan=${encodeURIComponent(selectedPlan)}`;
   const expired = status !== "TRIALING" || trialDaysLeft === null || trialDaysLeft <= 0;
-  const urgent = !expired && trialDaysLeft !== null && trialDaysLeft <= 1;
+  const urgent = !expired && trialDaysLeft !== null && trialDaysLeft <= 2;
 
   const tone = expired
     ? "border-red-200 bg-red-50 text-red-800"
@@ -542,17 +538,26 @@ function TrialStatusBar({
       ? "border-amber-200 bg-amber-50 text-amber-900"
       : "border-[#172234]/10 bg-white text-[#111827]";
 
+  const daysText = trialDaysLeft === 1 ? "1 day" : `${trialDaysLeft} days`;
   const headline = expired
-    ? "Your trial has ended"
-    : trialDaysLeft === 1
-      ? "Trial active: first charge tomorrow"
-      : `Trial active: ${trialDaysLeft} days until first charge`;
+    ? "Your free trial has ended"
+    : cardOnFile
+      ? trialDaysLeft === 1
+        ? "Trial active: first charge tomorrow"
+        : `Trial active: ${daysText} until first charge`
+      : `Free trial: ${daysText} left`;
 
   const detail = expired
-    ? "Update your payment method to put your guide back online for guests."
-    : trialLabel
-      ? `Your card is on file. Paddle starts yearly billing after ${trialLabel}.`
-      : "Your card is on file. Paddle starts yearly billing after the trial.";
+    ? "Your guide is offline for guests. Subscribe to put it back online; everything you set up is saved."
+    : cardOnFile
+      ? trialLabel
+        ? `Your card is on file. Paddle starts yearly billing after ${trialLabel}.`
+        : "Your card is on file. Paddle starts yearly billing after the trial."
+      : trialLabel
+        ? `Your guide is live for guests until ${trialLabel}. Subscribe any time to keep it live after that.`
+        : "Your guide is live for guests during the trial. Subscribe any time to keep it live.";
+
+  const action = expired ? "Subscribe to go live" : cardOnFile ? "Manage billing" : "Keep my guide live";
 
   return (
     <div className={`mb-4 flex flex-col gap-3 rounded-[18px] border px-4 py-3 shadow-[0_16px_42px_rgba(17,24,39,0.05)] sm:flex-row sm:items-center sm:justify-between ${tone}`}>
@@ -569,9 +574,61 @@ function TrialStatusBar({
         href={billingHref}
         className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-[14px] bg-[#111827] px-4 text-sm font-black text-white transition hover:bg-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#111827]/40 focus:ring-offset-2"
       >
-        {expired ? "Update payment" : "Manage billing"}
+        {action}
       </a>
     </div>
+  );
+}
+
+const HOST_STEPS = [
+  {
+    title: "Fill in your guide",
+    text: "Paste your Booking.com or Airbnb link to import the basics, or type Wi-Fi, check-in, parking and house rules yourself."
+  },
+  {
+    title: "Add tips and review links",
+    text: "Add your favourite restaurants, beaches and essentials, plus your Google, Booking.com and Airbnb review links."
+  },
+  {
+    title: "Check it like a guest",
+    text: "In Settings, tap Open preview or scan the QR code with your phone to see exactly what guests see."
+  },
+  {
+    title: "Download and print the QR code",
+    text: "In Settings, tap Download QR. Print it on a card or A5 sheet, about 6 cm or larger, ideally laminated or framed."
+  },
+  {
+    title: "Place it where guests look",
+    text: "Put it by the entrance, on the fridge or next to the Wi-Fi router, and send the guide link in your booking message before arrival."
+  },
+  {
+    title: "Keep it up to date",
+    text: "Edit any time: changes go live instantly and the QR code never changes. Guests ask the AI chat, and happy guests find your review links."
+  }
+];
+
+function HostStepsGuide({ defaultOpen }: { defaultOpen: boolean }) {
+  return (
+    <details open={defaultOpen} className="group mb-4 rounded-[18px] border border-[#172234]/10 bg-white px-4 py-3 shadow-[0_16px_42px_rgba(17,24,39,0.05)]">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-[#111827] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5F9D99]/50 [&::-webkit-details-marker]:hidden">
+        <span className="inline-flex items-center gap-2">
+          <QrCode size={17} className="text-[#5F9D99]" />
+          How to use StayNest in 6 steps
+        </span>
+        <ChevronDown size={17} className="shrink-0 transition group-open:rotate-180" aria-hidden="true" />
+      </summary>
+      <ol className="mt-3 grid gap-3 pb-1 sm:grid-cols-2">
+        {HOST_STEPS.map((step, index) => (
+          <li key={step.title} className="flex gap-3">
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#5F9D99]/12 text-xs font-black text-[#3F7F7B]">{index + 1}</span>
+            <div>
+              <p className="text-sm font-black text-[#111827]">{step.title}</p>
+              <p className="mt-0.5 text-xs font-semibold leading-5 text-[#111827]/68">{step.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </details>
   );
 }
 
@@ -635,6 +692,7 @@ export default function DashboardClient(props: DashboardClientProps) {
     trialDaysLeft,
     subscriptionStatus,
     billingAccess,
+    cardOnFile,
     isFirstVisit,
     logoutAction,
     importListingAction,
@@ -995,16 +1053,10 @@ export default function DashboardClient(props: DashboardClientProps) {
           trialDaysLeft={trialDaysLeft}
           trialLabel={trialLabel}
           selectedPlan={selectedPlan}
+          cardOnFile={cardOnFile}
         />
 
-        {isFirstVisit ? (
-          <div className="mb-4 rounded-[18px] border border-[#76875D]/18 bg-[#76875D]/10 px-4 py-3 shadow-[0_16px_42px_rgba(17,24,39,0.05)]">
-            <p className="text-sm font-black text-[#4F5F3E]">Welcome to StayNest</p>
-            <p className="mt-0.5 text-xs font-semibold text-[#4F5F3E]/85">
-              Start with Welcome and Wi-Fi below — those two alone already give your guests something useful. You can share the QR code as soon as you are happy with it.
-            </p>
-          </div>
-        ) : null}
+        {activeTab === "setup" ? <HostStepsGuide defaultOpen={isFirstVisit} /> : null}
 
         {notice ? (
           <div
@@ -1725,12 +1777,12 @@ function SettingsScreen({
           {billingAccess ? "Your guide is live" : "Your guide is paused"}
         </p>
         <h1 className="mt-2 text-3xl font-black leading-tight tracking-tight">
-          {billingAccess ? "Ready for the next guest" : "Add payment to go live"}
+          {billingAccess ? "Ready for the next guest" : "Subscribe to go live"}
         </h1>
         <p className="mt-2 text-sm font-semibold leading-6 text-white/66">
           {billingAccess
             ? "Share the link, print the QR, or open the guest view."
-            : "Your setup is saved. Add a payment method to restore guest access."}
+            : "Your setup is saved. Subscribe to put your guide back online for guests."}
         </p>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-[160px_1fr]">

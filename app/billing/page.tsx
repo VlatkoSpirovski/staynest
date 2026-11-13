@@ -69,10 +69,10 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           </div>
           <div>
             <h1 className="text-xl font-bold">
-              {currentStatus === "ACTIVE" ? "Your review growth plan" : "Start your 7-day trial"}
+              {currentStatus === "ACTIVE" ? "Your review growth plan" : "Keep your guide live"}
             </h1>
             <p className="text-sm text-ink/72">
-              {currentStatus === "ACTIVE" ? `${currentPlan.name} · ${currentPlan.price} per year` : "Add a card now. Your first charge is after the trial."}
+              {currentStatus === "ACTIVE" ? `${currentPlan.name} · ${currentPlan.price} per year` : `${currentPlan.price} per year. One payment, everything included.`}
             </p>
           </div>
         </div>
@@ -88,7 +88,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.16em] text-lagoon">Everything for better guest reviews</p>
               <p className="mt-2 text-sm leading-6 text-ink/72">
-                The QR guest guide, Google/Booking/Airbnb review links and AI guest chat, billed once a year. Add your card to start the trial now; Paddle charges only after the 7 days end.
+                The QR guest guide, Google/Booking/Airbnb review links and AI guest chat, billed once a year. Your guide stays online for guests as long as the plan is active.
               </p>
             </div>
             <div className="text-right">
@@ -98,10 +98,10 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           </div>
           <div className="mt-4 flex gap-3 rounded-[8px] bg-mist p-3 text-sm font-medium text-ink/70">
             <ShieldCheck className="mt-0.5 shrink-0 text-olive" size={18} />
-            {trialDate ? `Your free trial runs until ${trialDate}.` : "Paddle starts your 7-day trial after checkout. No charge today."}
+            {trialDate ? `Your free trial runs until ${trialDate}. Subscribe any time to keep your guide live after that.` : "Subscribe to put your guide online for guests."}
           </div>
           <p className="mt-3 text-sm leading-6 text-ink/60">
-            Paddle securely stores the payment method, handles tax and invoicing, and starts recurring billing when the trial ends.
+            Paddle securely handles the payment, tax and invoices. The plan renews once a year and you can cancel any time.
           </p>
         </div>
 

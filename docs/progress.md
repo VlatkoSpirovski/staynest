@@ -36,5 +36,24 @@ Fixed:
 
 Still to do in Stage 2: desktop layout for the dashboard (today a stretched mobile layout with a floating bottom bar), shared design tokens instead of hard-coded colours, dark mode for the host app, accessibility pass.
 
+## Growth: no-card trial, reminders, host steps (13.11.2026, local)
+
+Decision: new hosts get a 7-day free trial without a card (was: card before the trial; 18 of 19 signups since July stopped at the payment page).
+
+Built:
+- Email and Google signup start a 7-day trial (`startTrial`) and land in the dashboard; checkout is now a direct yearly payment (`checkoutMode: "direct"`).
+- Dashboard trial bar: days left, "Keep my guide live"; card-based trials keep their old wording.
+- "How to use StayNest in 6 steps" on the Setup tab (open on the first visit), including printing and placing the QR code.
+- Guests of an ended trial see a friendly "taking a short break" page instead of a 404 (`publicGuideStatus`, `components/guide-unavailable.tsx`); the AI chat stays closed.
+- Reminder emails: 2 days before the end and once after it ended (`lib/trial-reminders.ts`, `/api/cron/trial-reminders`), each at most once per host (claim before send, released on failure). New columns `trialReminderSoonSentAt`, `trialReminderEndedSentAt` (additive migration `20261113160000_trial_reminder_tracking`).
+- `vercel.json` schedules both cron jobs daily.
+
+Tested: 23 Vitest tests; local end-to-end run of the reminder job (one email, none on the second run; ended email); paused guide page and dashboard trial bar checked in the browser; `next build` OK.
+
+Before deploying:
+- In Paddle, remove the 7-day trial from the annual price, otherwise hosts who pay after the free week get another 7 days in Paddle.
+- In Vercel, set `CRON_SECRET` (any long random value); without it the scheduled jobs are refused in production.
+- SMTP variables must be set in Vercel for reminder emails to be sent.
+
 ## Next: Stage 2 (rest)
 Design system and redesign of the existing screens (landing, auth, dashboard editor, admin, public guide), light and dark mode, mobile, accessibility, checked in the browser.

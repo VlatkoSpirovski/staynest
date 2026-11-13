@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { getGoogleProfile, signInWithOAuthProfile, verifyOAuthState, consumeOAuthPreviewToken } from "@/lib/oauth";
 import { claimPropertyPreview } from "@/lib/property-preview";
-import { billingUrl } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 
@@ -25,13 +24,13 @@ export async function GET(request: Request) {
     redirect(`/login?error=${encodeURIComponent(error instanceof Error ? error.message : "Google login failed.")}`);
   }
 
-  let redirectUrl = result.isNewUser ? billingUrl(result.selectedPlan) : "/dashboard";
+  let redirectUrl = result.isNewUser ? "/dashboard?welcome=1" : "/dashboard";
 
   const previewToken = consumeOAuthPreviewToken();
   if (previewToken) {
     const claimedProperty = await claimPropertyPreview(previewToken, result.user.id);
     if (claimedProperty) {
-      redirectUrl = result.isNewUser ? billingUrl(result.selectedPlan) : "/dashboard?preview=claimed";
+      redirectUrl = "/dashboard?preview=claimed";
     }
   }
 

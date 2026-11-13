@@ -48,6 +48,8 @@ model User {
   selectedPlan       String?
   trialEndsAt        DateTime?
   subscriptionStatus String?
+  trialReminderSoonSentAt  DateTime?
+  trialReminderEndedSentAt DateTime?
   paypalSubscriptionId String?
   paddleCustomerId   String?
   paddleSubscriptionId String?

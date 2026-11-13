@@ -170,6 +170,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       trialDaysLeft={trialDaysLeft}
       subscriptionStatus={subscriptionStatus}
       billingAccess={access}
+      cardOnFile={Boolean(user.paddleSubscriptionId)}
       isFirstVisit={searchParams?.welcome === "1"}
       logoutAction={logoutOwner}
       importListingAction={importListingFromUrl}

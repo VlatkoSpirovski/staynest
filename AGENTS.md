@@ -11,7 +11,7 @@ StayNest is a Next.js App Router SaaS MVP for rental/villa owners. Owners create
 Current business flow:
 
 - Landing page sells Basic and Full AI plans.
-- Owners register publicly (email or Google) as `PENDING` and are sent to billing: the 7-day trial requires a card and starts when Paddle confirms checkout. Admins never need a subscription (`hasBillingAccess`).
+- Owners register publicly (email or Google) and get a 7-day trial without a card (`startTrial`), landing in `/dashboard`. Reminder emails go out 2 days before and after the end (`/api/cron/trial-reminders`). After the trial, guests see a "temporarily unavailable" page until the owner subscribes. Admins never need a subscription (`hasBillingAccess`).
 - Admins can also provision owners/admins and manage all properties.
 - Owners manage one main property from `/dashboard`.
 - Guests open public guides at the short canonical `/g/[code]`; `/stay/[slug]` still renders and `/[slug]` permanently redirects to the short link.
@@ -71,7 +71,7 @@ Apple OAuth helper code exists in `lib/oauth.ts`, but the active Apple routes re
 
 ## Recent Structural Changes (2026-08-12)
 
-- Trials start from Paddle (card-required checkout), not at signup; `startTrial` in `lib/billing.ts` is currently unused. `/api/billing/activate` only records the chosen plan and reconciles with Paddle.
+- Trials start at signup (`startTrial`); checkout is a direct yearly payment (`checkoutMode: "direct"`). Older card-based Paddle trials (`card-required-trial`) are still recognised. `/api/billing/activate` only records the chosen plan and reconciles with Paddle.
 - Paddle status rules live in `lib/paddle-status.ts` (tested): a renewal charge is always `ACTIVE`, a late checkout event never downgrades `ACTIVE`. Public guides re-check Paddle at most once an hour per owner when access looks lost (`lib/public-guide-access.ts`).
 - Signup abuse controls in `app/auth-actions.ts`: per-IP rate limits, Cloudflare Turnstile, disposable-domain blocking, auto-generated-name detection, and Gmail-dot/plus-alias canonicalisation via `lib/email-identity.ts` (`User.emailCanonical`).
 - Login and password reset are rate limited per IP and per canonical address.

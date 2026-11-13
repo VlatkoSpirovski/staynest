@@ -12,14 +12,20 @@ type PublicGuideLookup =
 
 const RECONCILE_WINDOW_SECONDS = 60 * 60;
 
+export type PublicGuideStatus = "live" | "paused" | "missing";
+
 export async function canServePublicGuide(lookup: PublicGuideLookup) {
+  return (await publicGuideStatus(lookup)) === "live";
+}
+
+export async function publicGuideStatus(lookup: PublicGuideLookup): Promise<PublicGuideStatus> {
   const slug = "slug" in lookup ? lookup.slug : undefined;
   const publicCode = "publicCode" in lookup ? lookup.publicCode : undefined;
 
-  if (slug && isExamplePublicGuide(slug)) return true;
-  if (publicCode === examplePublicGuide.publicCode) return true;
+  if (slug && isExamplePublicGuide(slug)) return "live";
+  if (publicCode === examplePublicGuide.publicCode) return "live";
 
-  if (!slug && !publicCode) return false;
+  if (!slug && !publicCode) return "missing";
 
   const property = await prisma.property.findFirst({
     where: slug ? { slug } : { publicCode },
@@ -39,20 +45,20 @@ export async function canServePublicGuide(lookup: PublicGuideLookup) {
     }
   });
 
-  if (!property) return false;
+  if (!property) return "missing";
   const owner = property.owner;
-  if (hasBillingAccess(owner)) return true;
+  if (hasBillingAccess(owner)) return "live";
 
   const hasPaddleHandle = Boolean(owner.paddleSubscriptionId || owner.paddleTransactionId || owner.paddleCustomerId);
-  if (!hasPaddleHandle) return false;
+  if (!hasPaddleHandle) return "paused";
 
   const throttle = await rateLimit(`paddle-reconcile:${owner.id}`, 1, RECONCILE_WINDOW_SECONDS);
-  if (!throttle.allowed) return false;
+  if (!throttle.allowed) return "paused";
 
   try {
     const reconciled = await reconcilePaddleStatus(owner);
-    return hasBillingAccess({ ...owner, subscriptionStatus: reconciled.status ?? owner.subscriptionStatus });
+    return hasBillingAccess({ ...owner, subscriptionStatus: reconciled.status ?? owner.subscriptionStatus }) ? "live" : "paused";
   } catch {
-    return false;
+    return "paused";
   }
 }

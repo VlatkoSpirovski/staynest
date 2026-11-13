@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { GuestGuideSection } from "@/components/guest-guide-section";
-import { canServePublicGuide } from "@/lib/public-guide-access";
+import { GuideUnavailable } from "@/components/guide-unavailable";
+import { publicGuideStatus } from "@/lib/public-guide-access";
 import { getCachedPublicGuideSection } from "@/lib/public-guide-cache";
 import { GUIDE_SECTION_IDS } from "@/lib/guide-sections";
 
@@ -24,8 +25,12 @@ export default async function GuideSectionPage({ params }: PageProps) {
     notFound();
   }
 
-  if (!(await canServePublicGuide({ slug: params.slug }))) {
+  const guideStatus = await publicGuideStatus({ slug: params.slug });
+  if (guideStatus === "missing") {
     notFound();
+  }
+  if (guideStatus === "paused") {
+    return <GuideUnavailable />;
   }
 
   const property = await getCachedPublicGuideSection(params.slug);
