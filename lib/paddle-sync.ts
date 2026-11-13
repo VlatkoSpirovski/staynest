@@ -1,6 +1,7 @@
 import "server-only";
 
 import { TRIAL_DAYS } from "@/lib/billing";
+import { grantReferralRewardIfDue } from "@/lib/referral-service";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -157,6 +158,10 @@ export async function reconcilePaddleStatus(user: {
       ...(customerId ? { paddleCustomerId: customerId } : {})
     }
   });
+
+  if (status === "ACTIVE" && user.subscriptionStatus?.toUpperCase() !== "ACTIVE") {
+    await grantReferralRewardIfDue(user.id).catch(() => undefined);
+  }
 
   return { changed: status !== user.subscriptionStatus, status };
 }

@@ -6,11 +6,15 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
 import { normalizePlanKey, startTrial } from "@/lib/billing";
+import { canonicalEmail } from "@/lib/email-identity";
+import { findReferrer } from "@/lib/referral-service";
+import { normalizeReferralCode, REFERRAL_TRIAL_DAYS } from "@/lib/referrals";
 import { getAppUrl } from "@/lib/utils";
 
 const oauthStateCookie = "staynest_oauth_state";
 const oauthPlanCookie = "staynest_oauth_plan";
 const oauthPreviewTokenCookie = "staynest_oauth_preview_token";
+const oauthReferralCookie = "staynest_oauth_ref";
 
 type OAuthProfile = {
   provider: OAuthProvider;
@@ -71,6 +75,27 @@ export function setOAuthPreviewToken(token: string | null) {
     path: "/",
     maxAge: 10 * 60
   });
+}
+
+export function setOAuthReferral(code: string | null) {
+  const normalized = normalizeReferralCode(code);
+  if (!normalized) {
+    cookies().delete(oauthReferralCookie);
+    return;
+  }
+  cookies().set(oauthReferralCookie, normalized, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 10 * 60
+  });
+}
+
+function consumeOAuthReferral() {
+  const value = cookies().get(oauthReferralCookie)?.value ?? null;
+  cookies().delete(oauthReferralCookie);
+  return value;
 }
 
 export function consumeOAuthPreviewToken() {
@@ -240,6 +265,8 @@ export async function signInWithOAuthProfile(profile: OAuthProfile) {
     return { user: existingAccount.user, isNewUser: false, selectedPlan };
   }
 
+  const referrer = await findReferrer(consumeOAuthReferral(), canonicalEmail(profile.email));
+
   const user = await prisma.user.upsert({
     where: { email: profile.email },
     update: {
@@ -257,7 +284,8 @@ export async function signInWithOAuthProfile(profile: OAuthProfile) {
       email: profile.email,
       emailVerifiedAt: profile.emailVerified ? new Date() : null,
       selectedPlan: selectedPlan ?? "annual",
-      ...startTrial(),
+      ...startTrial(referrer ? REFERRAL_TRIAL_DAYS : undefined),
+      ...(referrer ? { referredById: referrer.id } : {}),
       oauthAccounts: {
         create: {
           provider: profile.provider,

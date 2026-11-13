@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getGoogleAuthorizationUrl, setOAuthPlan, setOAuthPreviewToken } from "@/lib/oauth";
+import { getGoogleAuthorizationUrl, setOAuthPlan, setOAuthPreviewToken, setOAuthReferral } from "@/lib/oauth";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +10,7 @@ export async function GET(request: Request) {
     const previewToken = new URL(request.url).searchParams.get("previewToken");
     setOAuthPlan(plan);
     setOAuthPreviewToken(previewToken);
+    setOAuthReferral(new URL(request.url).searchParams.get("ref"));
     authorizationUrl = getGoogleAuthorizationUrl();
   } catch (error) {
     redirect(`/login?error=${encodeURIComponent(error instanceof Error ? error.message : "Google login failed.")}`);

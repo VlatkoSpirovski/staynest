@@ -64,6 +64,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const admin = await requireAdminUser();
   const { users, properties } = await getAdminData();
   const owners = users.filter((user) => user.role === "OWNER");
+  const referralCredits = users.filter((user) => user.referralCreditMonths > 0);
   const appUrl = getAppUrl();
 
   return (
@@ -98,6 +99,24 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       <div className="mx-auto grid max-w-7xl gap-5 px-5 py-6">
         {searchParams?.error ? (
           <div className="rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{searchParams.error}</div>
+        ) : null}
+
+        {referralCredits.length ? (
+          <Panel>
+            <p className="text-sm font-semibold text-lagoon">Referrals</p>
+            <h2 className="text-2xl font-bold">Free months to add in Paddle</h2>
+            <p className="mt-2 text-sm leading-6 text-ink/65">
+              These paying hosts earned free months by inviting other hosts. In Paddle, move their next billing date forward by the months shown, then set the months back to 0 in the database.
+            </p>
+            <ul className="mt-4 grid gap-2 text-sm">
+              {referralCredits.map((user) => (
+                <li key={user.id} className="flex flex-wrap items-center justify-between gap-2 rounded-[8px] border border-ink/10 bg-white px-4 py-3">
+                  <span className="font-semibold">{user.name} · {user.email}</span>
+                  <span className="font-bold text-lagoon">{user.referralCreditMonths} months</span>
+                </li>
+              ))}
+            </ul>
+          </Panel>
         ) : null}
 
         <Panel>

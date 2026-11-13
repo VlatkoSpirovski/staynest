@@ -35,34 +35,41 @@ enum UserRole {
 }
 
 model User {
-  id                 String                   @id @default(cuid())
-  name               String
-  email              String                   @unique
+  id                       String                   @id @default(cuid())
+  name                     String
+  email                    String                   @unique
   /// Deduplication key from lib/email-identity.ts. Not unique at the DB level
   /// because pre-existing bot rows already collide; enforced in the signup path.
-  emailCanonical     String?
-  passwordHash       String?
-  emailVerifiedAt    DateTime?
-  role               UserRole                 @default(OWNER)
-  mustChangePassword Boolean                  @default(false)
-  selectedPlan       String?
-  trialEndsAt        DateTime?
-  subscriptionStatus String?
+  emailCanonical           String?
+  passwordHash             String?
+  emailVerifiedAt          DateTime?
+  role                     UserRole                 @default(OWNER)
+  mustChangePassword       Boolean                  @default(false)
+  selectedPlan             String?
+  trialEndsAt              DateTime?
+  subscriptionStatus       String?
   trialReminderSoonSentAt  DateTime?
   trialReminderEndedSentAt DateTime?
-  paypalSubscriptionId String?
-  paddleCustomerId   String?
-  paddleSubscriptionId String?
-  paddleTransactionId String?
-  properties         Property[]
-  sessions           Session[]
-  oauthAccounts      OAuthAccount[]
-  verificationTokens EmailVerificationToken[]
-  passwordResetTokens PasswordResetToken[]
-  createdAt          DateTime                 @default(now())
-  updatedAt          DateTime                 @updatedAt
+  paypalSubscriptionId     String?
+  paddleCustomerId         String?
+  paddleSubscriptionId     String?
+  paddleTransactionId      String?
+  referralCode             String?                  @unique
+  referredById             String?
+  referredBy               User?                    @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals                User[]                   @relation("Referrals")
+  referralRewardGrantedAt  DateTime?
+  referralCreditMonths     Int                      @default(0)
+  properties               Property[]
+  sessions                 Session[]
+  oauthAccounts            OAuthAccount[]
+  verificationTokens       EmailVerificationToken[]
+  passwordResetTokens      PasswordResetToken[]
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
 
   @@index([emailCanonical])
+  @@index([referredById])
 }
 
 /// Fixed-window counter used to throttle abuse-prone public endpoints.
@@ -129,56 +136,56 @@ model OAuthAccount {
 }
 
 model Property {
-  id              String           @id @default(cuid())
-  ownerId         String
-  owner           User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  name            String
+  id                 String           @id @default(cuid())
+  ownerId            String
+  owner              User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name               String
   /// Descriptive legacy URL, e.g. "villa-sunset-a3f9c2e81b4d". Still resolvable so
   /// QR codes printed before short links existed keep working.
-  slug            String           @unique
+  slug               String           @unique
   /// Canonical short public link used by /g/<code> and every new QR code.
   /// Unguessable by design: the guide exposes the Wi-Fi password.
-  publicCode      String?          @unique
-  logoUrl         String?
-  coverImageUrl   String?
-  accentColor     String           @default("#4a8a8f")
-  templateId      String           @default("classic")
-  designSerif     Boolean          @default(true)
-  designRounded   Boolean          @default(true)
-  welcomeMessage  String           @db.Text
-  wifiName        String?
-  wifiPassword    String?
-  checkInInfo     String?          @db.Text
-  checkOutInfo    String?          @db.Text
-  parkingInfo     String?          @db.Text
-  houseRules      String?          @db.Text
-  emergencyInfo   String?          @db.Text
-  hostContactName String?
-  hostPhone       String?
-  hostEmail       String?
-  aiKnowledge     String?          @db.Text
-  translationLocales String[]      @default(["en"])
-  translations    Json?
-  guideSections   GuideSection[]
-  recommendations Recommendation[]
-  reviewLinks     ReviewLink[]
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  publicCode         String?          @unique
+  logoUrl            String?
+  coverImageUrl      String?
+  accentColor        String           @default("#4a8a8f")
+  templateId         String           @default("classic")
+  designSerif        Boolean          @default(true)
+  designRounded      Boolean          @default(true)
+  welcomeMessage     String           @db.Text
+  wifiName           String?
+  wifiPassword       String?
+  checkInInfo        String?          @db.Text
+  checkOutInfo       String?          @db.Text
+  parkingInfo        String?          @db.Text
+  houseRules         String?          @db.Text
+  emergencyInfo      String?          @db.Text
+  hostContactName    String?
+  hostPhone          String?
+  hostEmail          String?
+  aiKnowledge        String?          @db.Text
+  translationLocales String[]         @default(["en"])
+  translations       Json?
+  guideSections      GuideSection[]
+  recommendations    Recommendation[]
+  reviewLinks        ReviewLink[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
   @@index([ownerId, updatedAt])
 }
 
 model GuideSection {
-  id         String           @id @default(cuid())
-  propertyId String
-  property   Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  type       GuideSectionType
-  title      String
-  content    String           @db.Text
+  id           String           @id @default(cuid())
+  propertyId   String
+  property     Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  type         GuideSectionType
+  title        String
+  content      String           @db.Text
   translations Json?
-  sortOrder  Int              @default(0)
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
+  sortOrder    Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@index([propertyId, sortOrder])
 }
@@ -231,30 +238,30 @@ model ReviewLink {
 }
 
 model PropertyPreview {
-  id              String   @id @default(cuid())
-  token           String   @unique
-  listingUrl      String?
+  id         String  @id @default(cuid())
+  token      String  @unique
+  listingUrl String?
 
-  name            String?
-  description     String?          @db.Text
-  welcomeMessage  String?          @db.Text
-  coverImageUrl   String?
-  checkInInfo     String?          @db.Text
-  checkOutInfo    String?          @db.Text
-  parkingInfo     String?          @db.Text
-  houseRules      String?          @db.Text
-  facilities      String?          @db.Text
-  emergencyInfo   String?          @db.Text
-  hostContactName String?
-  aiKnowledge     String?          @db.Text
-  locationInfo    String?          @db.Text
-  recommendationsDraft String?     @db.Text
-  essentialsDraft String?          @db.Text
+  name                 String?
+  description          String? @db.Text
+  welcomeMessage       String? @db.Text
+  coverImageUrl        String?
+  checkInInfo          String? @db.Text
+  checkOutInfo         String? @db.Text
+  parkingInfo          String? @db.Text
+  houseRules           String? @db.Text
+  facilities           String? @db.Text
+  emergencyInfo        String? @db.Text
+  hostContactName      String?
+  aiKnowledge          String? @db.Text
+  locationInfo         String? @db.Text
+  recommendationsDraft String? @db.Text
+  essentialsDraft      String? @db.Text
 
-  expiresAt       DateTime
+  expiresAt         DateTime
   claimedPropertyId String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([expiresAt])
   @@index([claimedPropertyId])

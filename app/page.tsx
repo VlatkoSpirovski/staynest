@@ -718,7 +718,7 @@ export default function LandingPage() {
                 Start 7 days free
               </Button>
               <p className="mt-3 text-center text-xs font-semibold text-[#172033]/72">
-                7 days free, then €20 per year. Cancel any time before the trial ends and you pay nothing.
+                7 days free, no card needed. Then €20 per year, cancel any time.
               </p>
             </article>
           </div>

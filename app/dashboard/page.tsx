@@ -13,7 +13,8 @@ import { billingUrl, hasBillingAccess, normalizePlanKey, planOption, trialDaysRe
 import { prisma } from "@/lib/prisma";
 import { reconcilePaddleStatus } from "@/lib/paddle-sync";
 import { createUniquePublicCode } from "@/lib/secure-slug";
-import { getSiteUrl } from "@/lib/utils";
+import { getAppUrl, getSiteUrl } from "@/lib/utils";
+import { ensureReferralCode, referralStats } from "@/lib/referral-service";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -126,6 +127,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     access = hasBillingAccess({ ...user, subscriptionStatus });
   }
 
+  const [referralCode, referralSummary] = await Promise.all([
+    user.role === "ADMIN" ? Promise.resolve(null) : ensureReferralCode(user.id),
+    referralStats(user.id)
+  ]);
+
   const trialDaysLeft = trialDaysRemaining(user);
   const expiredTrial = subscriptionStatus?.toUpperCase() === "TRIALING" && trialDaysLeft === 0;
 
@@ -171,6 +177,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       subscriptionStatus={subscriptionStatus}
       billingAccess={access}
       cardOnFile={Boolean(user.paddleSubscriptionId)}
+      referralUrl={referralCode ? `${getAppUrl()}/register?ref=${referralCode}` : null}
+      referralStats={referralSummary}
       isFirstVisit={searchParams?.welcome === "1"}
       logoutAction={logoutOwner}
       importListingAction={importListingFromUrl}

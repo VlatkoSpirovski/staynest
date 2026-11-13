@@ -130,6 +130,8 @@ interface DashboardClientProps {
   subscriptionStatus: string | null;
   billingAccess: boolean;
   cardOnFile: boolean;
+  referralUrl: string | null;
+  referralStats: { invited: number; paid: number; creditMonths: number };
   isFirstVisit: boolean;
   logoutAction: any;
   importListingAction: any;
@@ -632,6 +634,41 @@ function HostStepsGuide({ defaultOpen }: { defaultOpen: boolean }) {
   );
 }
 
+function InviteHostCard({ referralUrl, stats }: { referralUrl: string; stats: { invited: number; paid: number; creditMonths: number } }) {
+  return (
+    <section aria-labelledby="invite-host-title" className="mt-4 rounded-[24px] border border-[#172234]/10 bg-white p-5 shadow-[0_16px_42px_rgba(17,24,39,0.05)] sm:p-6">
+      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#5F9D99]">Invite a host</p>
+      <h2 id="invite-host-title" className="mt-1 text-xl font-black tracking-tight text-[#111827]">Give 3 months, get 3 months</h2>
+      <p className="mt-2 text-sm font-semibold leading-6 text-[#111827]/68">
+        Know another host? With your link they get a 3-month free trial instead of 7 days. When they subscribe, you get 3 months free too.
+      </p>
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <p className="min-w-0 flex-1 break-all rounded-[14px] border border-[#172234]/10 bg-[#F9FAFB] px-4 py-3 text-xs font-black text-[#111827]">{referralUrl}</p>
+        <CopyButton value={referralUrl} label="Copy link" copiedLabel="Copied" className="rounded-[14px] border border-[#172234]/10 bg-[#111827] text-white hover:bg-[#1F2937]" />
+      </div>
+      <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
+        <div className="rounded-[14px] bg-[#F9FAFB] px-2 py-3">
+          <dt className="text-[11px] font-bold text-[#111827]/55">Signed up</dt>
+          <dd className="mt-1 text-lg font-black text-[#111827]">{stats.invited}</dd>
+        </div>
+        <div className="rounded-[14px] bg-[#F9FAFB] px-2 py-3">
+          <dt className="text-[11px] font-bold text-[#111827]/55">Subscribed</dt>
+          <dd className="mt-1 text-lg font-black text-[#111827]">{stats.paid}</dd>
+        </div>
+        <div className="rounded-[14px] bg-[#F9FAFB] px-2 py-3">
+          <dt className="text-[11px] font-bold text-[#111827]/55">Months earned</dt>
+          <dd className="mt-1 text-lg font-black text-[#111827]">{stats.paid * 3}</dd>
+        </div>
+      </dl>
+      {stats.creditMonths > 0 ? (
+        <p className="mt-3 text-xs font-semibold leading-5 text-[#111827]/60">
+          {stats.creditMonths} free months are waiting for your next renewal. We add them to your subscription before it renews.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function StayNestLogoMark() {
   return (
     <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-[18px] bg-[#F8F3EA] shadow-[0_16px_38px_rgba(17,24,39,0.14),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-[#172234]/8">
@@ -693,6 +730,8 @@ export default function DashboardClient(props: DashboardClientProps) {
     subscriptionStatus,
     billingAccess,
     cardOnFile,
+    referralUrl,
+    referralStats,
     isFirstVisit,
     logoutAction,
     importListingAction,
@@ -1112,6 +1151,8 @@ export default function DashboardClient(props: DashboardClientProps) {
             billingAccess={billingAccess}
           />
         ) : null}
+
+        {activeTab === "settings" && referralUrl ? <InviteHostCard referralUrl={referralUrl} stats={referralStats} /> : null}
       </div>
 
       {sheetOpen ? (

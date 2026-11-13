@@ -8,6 +8,8 @@ import { SubmitButton } from "@/components/submit-button";
 import { TurnstileWidget } from "@/components/turnstile-widget";
 import { Field, inputClass, Panel } from "@/components/ui/panel";
 import { registerOwner } from "@/app/auth-actions";
+import { findReferrer } from "@/lib/referral-service";
+import { normalizeReferralCode } from "@/lib/referrals";
 import { normalizePlanKey, planOption } from "@/lib/billing";
 
 export const metadata = {
@@ -36,12 +38,16 @@ type RegisterPageProps = {
     plan?: string;
     error?: string;
     previewToken?: string;
+    ref?: string;
   };
 };
 
-export default function RegisterPage({ searchParams }: RegisterPageProps) {
+export default async function RegisterPage({ searchParams }: RegisterPageProps) {
   const selectedPlan = normalizePlanKey(searchParams?.plan);
   const previewToken = searchParams?.previewToken;
+  const referrer = await findReferrer(searchParams?.ref);
+  const referralCode = referrer ? normalizeReferralCode(searchParams?.ref) : null;
+  const googleHref = `/auth/google?plan=${selectedPlan}${previewToken ? `&previewToken=${encodeURIComponent(previewToken)}` : ""}${referralCode ? `&ref=${referralCode}` : ""}`;
   const selectedOption = planOption(selectedPlan);
   const selectedTier = selectedOption.tier;
 
@@ -55,9 +61,17 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
             </div>
             <div>
               <h1 className="text-xl font-bold">Create your owner account</h1>
-              <p className="text-sm text-ink/60">Start your 7-day free trial. Cancel any time.</p>
+              <p className="text-sm text-ink/60">
+                {referrer ? "Start your 3-month free trial. No card needed." : "Start your 7-day free trial. No card needed."}
+              </p>
             </div>
           </div>
+
+          {referrer ? (
+            <div className="mt-5 rounded-[12px] border border-[#5F9D99]/30 bg-[#5F9D99]/10 px-4 py-3 text-sm font-semibold text-[#2F6B67]">
+              {referrer.name.split(" ")[0] || "A StayNest host"} invited you: your free trial is 3 months instead of 7 days.
+            </div>
+          ) : null}
 
           {searchParams?.error ? (
             <div className="mt-5 rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
@@ -70,7 +84,7 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
           </div>
 
           <LoadingLink
-            href={`/auth/google?plan=${selectedPlan}${previewToken ? `&previewToken=${previewToken}` : ""}`}
+            href={googleHref}
             loadingText="Opening Google..."
             eventName="register_google_started"
             eventParams={{ plan: selectedPlan, preview: Boolean(previewToken) }}
@@ -91,6 +105,7 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
           <form action={registerOwner} className="grid gap-4">
             <input type="hidden" name="plan" value={selectedPlan} />
             {previewToken && <input type="hidden" name="previewToken" value={previewToken} />}
+            {referralCode && <input type="hidden" name="ref" value={referralCode} />}
             <Field label="Full name">
               <input name="name" className={inputClass} autoComplete="name" required />
             </Field>
@@ -126,7 +141,7 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
             <div>
               <h2 className="text-3xl font-extrabold">{selectedOption.name}</h2>
               <p className="mt-2 text-white/65">
-                7 days free, then {selectedOption.price} per year to keep your QR guide, AI answers and review links live.
+                {referrer ? "3 months free" : "7 days free"}, then {selectedOption.price} per year to keep your QR guide, AI answers and review links live.
               </p>
             </div>
             <div className="text-right">

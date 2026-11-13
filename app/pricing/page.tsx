@@ -42,11 +42,15 @@ const features = [
 const faqs = [
   {
     q: "Do I need a card to start?",
-    a: "Yes. Add a card to start the 7-day trial, but you are not charged until the trial ends."
+    a: "No. The 7-day free trial starts without a card. You only add payment details if you want to keep your guide live after the trial."
   },
   {
     q: "What happens after the trial?",
-    a: "Paddle starts the yearly subscription automatically after the 7-day trial unless you cancel during the trial."
+    a: "Your guide goes offline for guests and they see a short “temporarily unavailable” page. Everything you set up is saved, and you can subscribe at any time to put it back online. We email you two days before the trial ends."
+  },
+  {
+    q: "Can I get extra free months?",
+    a: "Yes. Invite another host with your personal link from the dashboard. They get a 3-month free trial instead of 7 days, and when they subscribe, you get 3 months free too."
   },
   {
     q: "Is there a cheaper plan without AI?",
@@ -106,7 +110,7 @@ export default function PricingPage() {
           <Button href={`${appUrl}/register`} className="mt-8 w-full">
             Start improving your reviews
           </Button>
-          <p className="mt-3 text-center text-xs font-semibold text-ink/72">7 days free, then €20 per year. Cancel any time before the trial ends and you pay nothing.</p>
+          <p className="mt-3 text-center text-xs font-semibold text-ink/72">7 days free, no card needed. Then €20 per year, cancel any time.</p>
         </article>
 
         <section className="mt-12">

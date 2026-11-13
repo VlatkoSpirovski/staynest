@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizePlanKey } from "@/lib/billing";
 import { resolveStatus, webhookStatus } from "@/lib/paddle-status";
+import { grantReferralRewardIfDue } from "@/lib/referral-service";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -121,6 +122,12 @@ export async function POST(request: Request) {
   });
 
   console.log("[paddle-webhook] Updated", { userId: user.id, from: user.subscriptionStatus, to: status ?? user.subscriptionStatus });
+
+  if (status === "ACTIVE" && user.subscriptionStatus?.toUpperCase() !== "ACTIVE") {
+    await grantReferralRewardIfDue(user.id).catch((error) => {
+      console.error("[paddle-webhook] Referral reward failed", { userId: user.id, error: error instanceof Error ? error.message : "unknown" });
+    });
+  }
 
   return NextResponse.json({ received: true });
 }

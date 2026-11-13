@@ -13,6 +13,8 @@ import { sendEmail } from "@/lib/email";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { passwordRulesText, validatePassword } from "@/lib/password-policy";
 import { normalizePlanKey, startTrial } from "@/lib/billing";
+import { findReferrer } from "@/lib/referral-service";
+import { REFERRAL_TRIAL_DAYS } from "@/lib/referrals";
 import { getAppUrl } from "@/lib/utils";
 import { claimPropertyPreview } from "@/lib/property-preview";
 
@@ -50,9 +52,11 @@ export async function registerOwner(formData: FormData) {
   const confirmPassword = stringValue(formData, "confirmPassword");
   const planKey = normalizePlanKey(stringValue(formData, "plan"));
   const previewToken = stringValue(formData, "previewToken");
-  
+  const referralCode = stringValue(formData, "ref");
+
   const queryParams = new URLSearchParams({ plan: planKey });
   if (previewToken) queryParams.set("previewToken", previewToken);
+  if (referralCode) queryParams.set("ref", referralCode);
   
   const registerPath = `/register?${queryParams.toString()}`;
 
@@ -102,6 +106,8 @@ export async function registerOwner(formData: FormData) {
     redirectWithError(registerPath, "An account with this email already exists. Please log in.");
   }
 
+  const referrer = await findReferrer(referralCode, emailCanonical);
+
   const user = await prisma.user.create({
     data: {
       name,
@@ -109,7 +115,8 @@ export async function registerOwner(formData: FormData) {
       emailCanonical,
       passwordHash: hashPassword(password),
       selectedPlan: planKey,
-      ...startTrial()
+      ...startTrial(referrer ? REFERRAL_TRIAL_DAYS : undefined),
+      ...(referrer ? { referredById: referrer.id } : {})
     }
   });
 
