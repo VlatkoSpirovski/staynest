@@ -1,6 +1,6 @@
 # StayNest Agent Handoff
 
-Last deep scan: 2026-08-12.
+Last deep scan: 2026-08-12. Progress log: `docs/progress.md`.
 
 This file is the high-signal repo map for future agents. Start here before opening files. Still spot-check the exact files you edit, but do not spend a fresh full scan on basic architecture.
 
@@ -11,7 +11,7 @@ StayNest is a Next.js App Router SaaS MVP for rental/villa owners. Owners create
 Current business flow:
 
 - Landing page sells Basic and Full AI plans.
-- Owners register publicly and get a 7-day no-card trial, landing straight in `/dashboard`. Billing is prompted from the dashboard trial bar, not as a wall in front of the first visit.
+- Owners register publicly (email or Google) as `PENDING` and are sent to billing: the 7-day trial requires a card and starts when Paddle confirms checkout. Admins never need a subscription (`hasBillingAccess`).
 - Admins can also provision owners/admins and manage all properties.
 - Owners manage one main property from `/dashboard`.
 - Guests open public guides at the short canonical `/g/[code]`; `/stay/[slug]` still renders and `/[slug]` permanently redirects to the short link.
@@ -52,7 +52,7 @@ Notes:
 - `npm run build` runs `prisma generate` first.
 - `npm run seed` runs `tsx prisma/seed.ts`.
 - A local PostgreSQL database is required for migrations, seed, and most runtime work.
-- No test framework is configured.
+- Tests: Vitest (`npm test`), files in `tests/`.
 
 ## Environment
 
@@ -71,7 +71,8 @@ Apple OAuth helper code exists in `lib/oauth.ts`, but the active Apple routes re
 
 ## Recent Structural Changes (2026-08-12)
 
-- Trials are granted at signup in `lib/billing.ts` (`startTrial`). `/api/billing/activate` only records the chosen plan now; it no longer gates on `NODE_ENV`.
+- Trials start from Paddle (card-required checkout), not at signup; `startTrial` in `lib/billing.ts` is currently unused. `/api/billing/activate` only records the chosen plan and reconciles with Paddle.
+- Paddle status rules live in `lib/paddle-status.ts` (tested): a renewal charge is always `ACTIVE`, a late checkout event never downgrades `ACTIVE`. Public guides re-check Paddle at most once an hour per owner when access looks lost (`lib/public-guide-access.ts`).
 - Signup abuse controls in `app/auth-actions.ts`: per-IP rate limits, Cloudflare Turnstile, disposable-domain blocking, auto-generated-name detection, and Gmail-dot/plus-alias canonicalisation via `lib/email-identity.ts` (`User.emailCanonical`).
 - Login and password reset are rate limited per IP and per canonical address.
 - Both AI chat routes are rate limited per IP, per property/token, and by a global daily circuit breaker, and now answer in the guest's own language.
@@ -248,7 +249,7 @@ Slug helpers are in `lib/secure-slug.ts`.
 
 `app/auth-actions.ts`:
 
-- `registerOwner`: public owner signup, password policy, creates verified user, selected plan, 7-day trial, status `TRIALING`, session, redirect to billing.
+- `registerOwner` (`app/auth-actions.ts`): public owner signup, password policy, creates verified user, selected plan, status `PENDING`, session, redirect to billing.
 - `loginOwner`: verifies scrypt password, creates session, respects safe relative `next`, redirects temp-password users to `/change-password`.
 - `changePassword`: validates current and new password, clears `mustChangePassword`.
 - `logoutOwner`: destroys session.
@@ -407,7 +408,7 @@ Important behavior:
 
 ## Known Gaps And Gotchas
 
-- No test framework is configured.
+- Tests: Vitest (`npm test`), files in `tests/`.
 - No PayPal webhook or subscription status reconciliation exists.
 - `/billing/complete` does not verify PayPal return state.
 - Email verification helper exists, but `registerOwner` currently sets `emailVerifiedAt` immediately.

@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizePlanKey } from "@/lib/billing";
+import { resolveStatus, webhookStatus } from "@/lib/paddle-status";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -15,6 +16,7 @@ type PaddleWebhook = {
     status?: string;
     customer_id?: string | null;
     subscription_id?: string | null;
+    origin?: string | null;
     custom_data?: {
       userId?: string;
       plan?: string;
@@ -50,22 +52,6 @@ function verifyPaddleSignature(rawBody: string, signatureHeader: string | null, 
   return expectedBuffer.length === signatureBuffer.length && timingSafeEqual(expectedBuffer, signatureBuffer);
 }
 
-function subscriptionStatus(eventType: string, paddleStatus?: string | null, checkoutMode?: string | null) {
-  if (eventType === "transaction.completed") {
-    return checkoutMode === "card-required-trial" ? "TRIALING" : "ACTIVE";
-  }
-  if (eventType === "transaction.payment_failed") return "PAST_DUE";
-  if (eventType === "subscription.trialing") return "TRIALING";
-  if (eventType === "subscription.activated" || eventType === "subscription.resumed") return "ACTIVE";
-  if (eventType === "subscription.paused") return "PAUSED";
-  if (eventType === "subscription.canceled") return "CANCELED";
-  if (eventType === "subscription.past_due") return "PAST_DUE";
-  if (eventType === "subscription.created" || eventType === "subscription.updated") {
-    return paddleStatus ? paddleStatus.toUpperCase() : "ACTIVE";
-  }
-  return null;
-}
-
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const webhookSecret = process.env.PADDLE_WEBHOOK_SECRET;
@@ -91,10 +77,14 @@ export async function POST(request: Request) {
   const customerId = data.customer_id || undefined;
   const subscriptionId = eventType.startsWith("subscription.") ? data.id : data.subscription_id || undefined;
   const transactionId = eventType.startsWith("transaction.") ? data.id : undefined;
-  const status = subscriptionStatus(eventType, data.status, data.custom_data?.checkoutMode);
-  const trialEndsAt = status === "TRIALING" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : undefined;
+  const incomingStatus = webhookStatus({
+    eventType,
+    paddleStatus: data.status,
+    checkoutMode: data.custom_data?.checkoutMode,
+    origin: data.origin
+  });
 
-  console.log("[paddle-webhook] Received", { eventType, userId, customerId, subscriptionId, transactionId, status, selectedPlanKey });
+  console.log("[paddle-webhook] Received", { eventType, userId, customerId, subscriptionId, transactionId, status: incomingStatus, selectedPlanKey });
 
   const where = userId
     ? { id: userId }
@@ -109,8 +99,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true, ignored: true });
   }
 
-  const result = await prisma.user.updateMany({
-    where,
+  const user = await prisma.user.findFirst({ where, select: { id: true, subscriptionStatus: true } });
+  if (!user) {
+    console.warn("[paddle-webhook] No matching user — ignoring event", { eventType, where });
+    return NextResponse.json({ received: true, ignored: true });
+  }
+
+  const status = resolveStatus(user.subscriptionStatus, incomingStatus, eventType);
+  const trialEndsAt = status === "TRIALING" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : undefined;
+
+  await prisma.user.update({
+    where: { id: user.id },
     data: {
       ...(selectedPlanKey ? { selectedPlan: selectedPlanKey } : {}),
       ...(status ? { subscriptionStatus: status } : {}),
@@ -121,7 +120,7 @@ export async function POST(request: Request) {
     }
   });
 
-  console.log("[paddle-webhook] Updated", { where, matchedCount: result.count });
+  console.log("[paddle-webhook] Updated", { userId: user.id, from: user.subscriptionStatus, to: status ?? user.subscriptionStatus });
 
   return NextResponse.json({ received: true });
 }

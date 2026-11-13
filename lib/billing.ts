@@ -83,7 +83,10 @@ export function trialDaysRemaining(user: Pick<User, "trialEndsAt">) {
   return ms <= 0 ? 0 : Math.ceil(ms / (24 * 60 * 60 * 1000));
 }
 
-export function hasBillingAccess(user: Pick<User, "subscriptionStatus" | "trialEndsAt">) {
+export function hasBillingAccess(
+  user: Pick<User, "subscriptionStatus" | "trialEndsAt"> & Partial<Pick<User, "role">>
+) {
+  if (user.role === "ADMIN") return true;
   const status = user.subscriptionStatus?.toUpperCase();
   if (status === "ACTIVE") return true;
   if (status !== "TRIALING") return false;
