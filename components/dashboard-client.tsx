@@ -583,7 +583,7 @@ function TrialStatusBar({
 const HOST_STEPS = [
   {
     title: "Fill in your guide",
-    text: "Paste your Booking.com or Airbnb link to import the basics, or type Wi-Fi, check-in, parking and house rules yourself."
+    text: "Paste your listing link (for example Booking.com) or the listing text to import the basics, or type Wi-Fi, check-in, parking and house rules yourself."
   },
   {
     title: "Add tips and review links",

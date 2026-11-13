@@ -16,9 +16,6 @@ export const metadata: Metadata = {
     template: "%s · StayNest"
   },
   description: "QR guest guides that help Airbnb and Booking.com hosts answer questions and collect more 5-star reviews.",
-  alternates: {
-    canonical: "/"
-  },
   icons: {
     icon: [{ url: "/staynest-logo.png", type: "image/png" }],
     apple: [{ url: "/staynest-logo.png", type: "image/png" }]

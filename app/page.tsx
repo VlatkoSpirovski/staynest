@@ -30,7 +30,7 @@ import { getAppUrl } from "@/lib/utils";
 export const metadata = {
   title: "Get more 5-star reviews from every stay.",
   description:
-    "StayNest helps Airbnb, Booking.com and villa hosts get more 5-star reviews with a QR guest guide, AI guest answers, Google review links, checkout reminders and a review-ready guest experience.",
+    "QR guest guide for Airbnb, Booking.com and villa hosts: Wi-Fi, check-in, local tips, AI guest answers and review links. 7 days free, no card.",
   keywords: [
     "get more 5-star reviews",
     "Airbnb 5-star reviews",
@@ -65,6 +65,7 @@ const navItems = [
   { label: "Reviews", href: "#reviews" },
   { label: "Hosts", href: "#hosts" },
   { label: "Example", href: "/g/example" },
+  { label: "Guides", href: "/guides" },
   { label: "Pricing", href: "#pricing" }
 ];
 
