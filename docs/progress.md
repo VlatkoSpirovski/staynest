@@ -55,5 +55,30 @@ Before deploying:
 - In Vercel, set `CRON_SECRET` (any long random value); without it the scheduled jobs are refused in production.
 - SMTP variables must be set in Vercel for reminder emails to be sent.
 
+## SEO (13.11.2026, local)
+
+- Canonical domain is now `https://www.staynest.site` (the apex redirects there); the root layout no longer gives every page the homepage canonical.
+- Valid structured data: Organization, WebSite, SoftwareApplication with the real offer (EUR 20/year); the fake site-search action is gone. Guides add Article, FAQPage and BreadcrumbList; the tool adds WebApplication and FAQPage.
+- Generated social image (`app/opengraph-image.tsx`, also used for Twitter).
+- `/guides` with 8 host guides (`lib/guides-content.ts`): welcome book, house manual, check-in instructions, Wi-Fi QR code, more reviews, house rules, local recommendations, digital vs printed guide. No invented statistics; review-policy statements stay general.
+- `/tools/wifi-qr-code`: Wi-Fi QR generator that runs in the browser (`lib/wifi-qr.ts`, tested escaping); verified that no request contains the network name or password.
+- Sitemap: 16 URLs with fixed dates. Links to the guides from the landing nav and every footer.
+- Checked: every page has one H1, a title up to 70 characters, a description, its own canonical and valid JSON-LD.
+
+## Referrals (13.11.2026, local)
+
+- Every owner gets a code (`ensureReferralCode`) and an invite card under Settings with stats.
+- `/register?ref=CODE` (email and Google): 90-day trial instead of 7, `referredById` stored; self-referral by the same canonical email is ignored.
+- When an invited owner first becomes `ACTIVE` (webhook or reconcile), the inviter is rewarded once (`referralRewardGrantedAt` claim): trial extended by 90 days, or, for paying inviters, `referralCreditMonths` +3, listed in the admin area to apply in Paddle by hand.
+- Migration `20261113170000_referrals` (additive). Tested with unit tests and a local end-to-end run (signup through the link, reward once, credit path).
+
+## Win-back
+
+`docs/winback-2026-11.md`: SQL and two email texts to give the 29 earlier non-paying signups a fresh 14-day trial. Run after deploying.
+
+## Final QA (13.11.2026)
+
+`tsc` OK, `next lint` OK, 32 Vitest tests, `next build` OK (35 pages). Browser crawl of 19 public pages: no broken links, no JavaScript errors, no horizontal overflow on mobile. Dashboard: all four tabs without errors on desktop and mobile.
+
 ## Next: Stage 2 (rest)
 Design system and redesign of the existing screens (landing, auth, dashboard editor, admin, public guide), light and dark mode, mobile, accessibility, checked in the browser.

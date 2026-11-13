@@ -11,7 +11,7 @@ StayNest is a Next.js App Router SaaS MVP for rental/villa owners. Owners create
 Current business flow:
 
 - Landing page sells Basic and Full AI plans.
-- Owners register publicly (email or Google) and get a 7-day trial without a card (`startTrial`), landing in `/dashboard`. Reminder emails go out 2 days before and after the end (`/api/cron/trial-reminders`). After the trial, guests see a "temporarily unavailable" page until the owner subscribes. Admins never need a subscription (`hasBillingAccess`).
+- Owners register publicly (email or Google) and get a 7-day trial without a card (`startTrial`), landing in `/dashboard`. Reminder emails go out 2 days before and after the end (`/api/cron/trial-reminders`). After the trial, guests see a "temporarily unavailable" page until the owner subscribes. Admins never need a subscription (`hasBillingAccess`). Referrals: `/register?ref=CODE` gives a 90-day trial; the inviter is rewarded once when the invited owner first pays (`lib/referral-service.ts`).
 - Admins can also provision owners/admins and manage all properties.
 - Owners manage one main property from `/dashboard`.
 - Guests open public guides at the short canonical `/g/[code]`; `/stay/[slug]` still renders and `/[slug]` permanently redirects to the short link.
