@@ -616,7 +616,7 @@ export default function LandingPage() {
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">How it works</p>
             <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">From listing to review-ready guest guide in minutes</h2>
           </div>
-          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {steps.map((step, index) => {
               const Icon = step.icon;
               return (
@@ -717,7 +717,7 @@ export default function LandingPage() {
                 Start 7 days free
               </Button>
               <p className="mt-3 text-center text-xs font-semibold text-[#172033]/72">
-                No card needed to start. Cancel any time.
+                7 days free, then €20 per year. Cancel any time before the trial ends and you pay nothing.
               </p>
             </article>
           </div>

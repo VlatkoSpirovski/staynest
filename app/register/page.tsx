@@ -55,7 +55,7 @@ export default function RegisterPage({ searchParams }: RegisterPageProps) {
             </div>
             <div>
               <h1 className="text-xl font-bold">Create your owner account</h1>
-              <p className="text-sm text-ink/60">Start building a review-ready guide free.</p>
+              <p className="text-sm text-ink/60">Start your 7-day free trial. Cancel any time.</p>
             </div>
           </div>
 

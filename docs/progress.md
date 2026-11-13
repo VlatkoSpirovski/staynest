@@ -25,5 +25,16 @@ Checks run: `tsc --noEmit` OK, `next lint` OK (existing `<img>` warnings), `vite
 - Nothing calls `/api/cron/expire-previews` (no `vercel.json` cron): expired previews and old rate-limit rows are never cleaned up. Set `CRON_SECRET` in Vercel and add a schedule.
 - Automated cross-tenant tests need a test database; not set up yet.
 
-## Next: Stage 2
+## Stage 2, part 1: visual bugs found in the browser (13.11.2026, local)
+
+Checked with real screenshots (desktop 1440 px, mobile 390 px) of landing, login, register, public guide and dashboard.
+
+Fixed:
+- Public guide header: the photo and dark overlay layer had zero height in the classic and dark luxury layouts (`relative` overrode `absolute`), so the white title sat on a light background and was unreadable for every guest. `HeroImage` now only adds `relative` when no position is passed (`components/guest-guide-home.tsx`). Verified in the browser for classic.
+- Landing, pricing and register no longer claim "No card needed": they now say 7 days free, then EUR 20 per year, cancel before the trial ends and pay nothing.
+- "How it works": five steps sit on one row on wide screens instead of leaving the fifth card alone.
+
+Still to do in Stage 2: desktop layout for the dashboard (today a stretched mobile layout with a floating bottom bar), shared design tokens instead of hard-coded colours, dark mode for the host app, accessibility pass.
+
+## Next: Stage 2 (rest)
 Design system and redesign of the existing screens (landing, auth, dashboard editor, admin, public guide), light and dark mode, mobile, accessibility, checked in the browser.

@@ -99,7 +99,7 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
   function HeroImage({ className = "" }: { className?: string }) {
     const canOptimizeCover = property.coverImageUrl && !property.coverImageUrl.startsWith("data:");
     return (
-      <div className={`relative overflow-hidden ${className}`} style={{ background: "var(--guide-hero-fallback)" }}>
+      <div className={`${/\b(absolute|fixed)\b/.test(className) ? "" : "relative "}overflow-hidden ${className}`} style={{ background: "var(--guide-hero-fallback)" }}>
         {canOptimizeCover ? (
           <Image src={property.coverImageUrl || ""} alt="" fill priority className="object-cover" sizes="430px" style={{ filter: "var(--guide-hero-image-filter)" }} />
         ) : property.coverImageUrl ? (

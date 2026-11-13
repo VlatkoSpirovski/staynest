@@ -106,7 +106,7 @@ export default function PricingPage() {
           <Button href={`${appUrl}/register`} className="mt-8 w-full">
             Start improving your reviews
           </Button>
-          <p className="mt-3 text-center text-xs font-semibold text-ink/72">No card needed to start. Cancel any time.</p>
+          <p className="mt-3 text-center text-xs font-semibold text-ink/72">7 days free, then €20 per year. Cancel any time before the trial ends and you pay nothing.</p>
         </article>
 
         <section className="mt-12">
