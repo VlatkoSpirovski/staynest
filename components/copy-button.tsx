@@ -8,18 +8,21 @@ export function CopyButton({
   value,
   label = "Copy",
   copiedLabel = "Copied",
-  className
+  className,
+  onCopied
 }: {
   value: string;
   label?: string;
   copiedLabel?: string;
   className?: string;
+  onCopied?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
 
   async function copyValue() {
     await navigator.clipboard.writeText(value);
     setCopied(true);
+    onCopied?.();
     window.setTimeout(() => setCopied(false), 1600);
   }
 

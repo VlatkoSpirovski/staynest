@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Home, KeyRound, Map, Phone, Pill, ShieldAlert, Star, Utensils, Wifi } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
+import { GuestLanguageProvider, GuestLanguageSwitcher, useGuestLanguage } from "@/components/guest-language";
 import { GuestChatLauncher } from "@/components/guest-chat-launcher";
 import { MenuLink, PoweredByStayNest } from "@/app/stay/[slug]/guide-ui";
 import { GuestGuideSectionContent, type GuestGuideSectionProperty } from "@/components/guest-guide-section";
@@ -187,6 +187,7 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
   function Footer() {
     return (
       <div className="px-5 pb-[4.75rem] pt-0">
+        <GuestLanguageSwitcher className="mb-4" />
         <PoweredByStayNest label={t.poweredBy} />
       </div>
     );
@@ -222,9 +223,9 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
           </header>
 
           <section className="px-5 pb-4 pt-6">
-            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[var(--guide-accent)]">{t.heroEyebrow[layout]}</p>
             <h1 className="mt-3 text-[2.65rem] font-black leading-[0.95] tracking-tight text-[var(--guide-text)]" style={{ fontFamily: "var(--guide-heading-font)" }}>
-              Welcome to {property.name}
+              {t.welcomeTo} {property.name}
             </h1>
             <p className="mt-4 max-w-[330px] text-sm font-semibold leading-7 text-[var(--guide-muted)]">{t.heroDescription}</p>
           </section>
@@ -253,7 +254,7 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
           <section className="relative overflow-hidden rounded-[var(--guide-hero-radius)] text-[var(--guide-hero-text)] shadow-[0_24px_70px_rgba(64,99,112,0.18)]">
             <HeroImage className="h-[var(--guide-hero-height)]" />
             <div className="absolute inset-x-0 bottom-0 p-6">
-              <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white/82">{theme.preview.eyebrow}</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white/82">{t.heroEyebrow[layout]}</p>
               <h1 className="mt-2 text-5xl font-semibold leading-[0.9]" style={{ fontFamily: "var(--guide-heading-font)" }}>{property.name}</h1>
               <p className="mt-4 max-w-[290px] text-sm font-semibold leading-6 text-white/84">{t.heroDescription}</p>
             </div>
@@ -280,7 +281,7 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
                 <LogoMark />
               </div>
               <div className="pb-3">
-                <p className="text-[11px] font-black uppercase tracking-[0.34em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.34em] text-[var(--guide-accent)]">{t.heroEyebrow[layout]}</p>
                 <h1 className="mt-3 text-5xl font-semibold leading-none" style={{ fontFamily: "var(--guide-heading-font)" }}>{property.name}</h1>
                 <p className="mt-5 max-w-[300px] text-sm font-semibold leading-7 text-[var(--guide-hero-text)] opacity-80">{t.heroDescription}</p>
               </div>

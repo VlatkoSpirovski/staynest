@@ -42,6 +42,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Field, inputClass, textareaClass } from "@/components/ui/panel";
 import { isEssentialCategory, normalizePlaceCategory, type PlaceRecommendationCategory } from "@/lib/place-recommendation";
 import { planOption, type PlanTier } from "@/lib/billing";
+import { trackEvent } from "@/lib/analytics";
 import { getGuideTheme, guideThemeStyle, guideThemes, type GuideTheme, type GuideThemeId } from "@/themes";
 
 const BILLING_BASE_URL = (process.env.NEXT_PUBLIC_PAYMENT_URL || (process.env.NODE_ENV === "production" ? "https://staynest.site" : "http://localhost:3000")).replace(/\/$/, "");
@@ -1361,6 +1362,23 @@ function SetupScreen({
   billingAccess: boolean;
 }) {
   const hasGuide = Boolean(property.id && property.name);
+  const essentials = ESSENTIAL_IDS.map((id) => setupItems.find((item) => item.id === id)).filter(Boolean) as SetupItem[];
+  const essentialsDone = essentials.filter((item) => item.done).length;
+  const ready = hasGuide && essentialsDone === essentials.length;
+  const nextEssential = essentials.find((item) => !item.done);
+
+  useEffect(() => {
+    if (!ready || !property.id) return;
+    const key = `staynest_essentials_done_${property.id}`;
+    try {
+      if (window.localStorage.getItem(key)) return;
+      window.localStorage.setItem(key, "1");
+    } catch {
+      return;
+    }
+    trackEvent("essentials_completed");
+  }, [ready, property.id]);
+  const extras = setupItems.filter((item) => extraCopy[item.id] && !item.done);
 
   if (!hasGuide) {
     return (
@@ -1369,7 +1387,7 @@ function SetupScreen({
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sn-accent">Welcome to StayNest</p>
           <h2 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl">Let&rsquo;s build your guest guide</h2>
           <p className="mt-2 max-w-xl text-[15px] leading-7 text-sn-muted">
-            Paste your Booking.com link and we fill in the basics for you. It takes about a minute.
+            Paste your Booking.com link or your Airbnb listing text and we fill in the basics for you. It takes about a minute.
           </p>
           <ImportListingForm property={property} importListingAction={importListingAction} />
           <div className="mt-6 flex items-center gap-3 text-sm text-sn-muted">
@@ -1389,11 +1407,6 @@ function SetupScreen({
     );
   }
 
-  const essentials = ESSENTIAL_IDS.map((id) => setupItems.find((item) => item.id === id)).filter(Boolean) as SetupItem[];
-  const essentialsDone = essentials.filter((item) => item.done).length;
-  const ready = essentialsDone === essentials.length;
-  const nextEssential = essentials.find((item) => !item.done);
-  const extras = setupItems.filter((item) => extraCopy[item.id] && !item.done);
 
   return (
     <div className="space-y-4">
@@ -1487,7 +1500,7 @@ function SetupScreen({
         <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
           <span className="inline-flex items-center gap-2">
             <WandSparkles size={16} className="text-sn-accent" aria-hidden="true" />
-            Fill in more from your Booking.com listing
+            Fill in more from your Booking.com or Airbnb listing
           </span>
           <ChevronDown size={16} className="text-sn-muted transition group-open:rotate-180" aria-hidden="true" />
         </summary>
@@ -1539,13 +1552,14 @@ function ShareCard({
                   <a
                     href={qrCode}
                     download={`staynest-${property.slug || "guide"}-qr.png`}
+                    onClick={() => trackEvent("qr_downloaded")}
                     className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-sn-ink transition hover:bg-white/90"
                   >
                     <Download size={15} aria-hidden="true" /> Download QR
                   </a>
                 ) : null}
                 {publicUrl ? (
-                  <CopyButton value={publicUrl} label="Copy link" copiedLabel="Link copied" className="min-h-11 border-white/20 bg-transparent text-white hover:bg-white/10" />
+                  <CopyButton value={publicUrl} label="Copy link" copiedLabel="Link copied" onCopied={() => trackEvent("guest_link_copied")} className="min-h-11 border-white/20 bg-transparent text-white hover:bg-white/10" />
                 ) : null}
                 {publicUrl ? (
                   <a
@@ -1577,32 +1591,71 @@ function ImportListingForm({
   property: Property;
   importListingAction: any;
 }) {
+  const [mode, setMode] = useState<"link" | "text">("link");
+  const [airbnbHint, setAirbnbHint] = useState(false);
+
   return (
-    <form action={importListingAction} className="mt-5 grid gap-3">
+    <form action={importListingAction} onSubmit={() => trackEvent("guide_import_started", { mode })} className="mt-5 grid gap-3">
       <input type="hidden" name="propertyId" value={property.id} />
-      <label className="flex min-h-12 items-center gap-2 rounded-full border border-sn-line/12 bg-sn-surface px-4 focus-within:border-sn-accent/50 focus-within:ring-2 focus-within:ring-sn-accent/20">
-        <span className="sr-only">Booking.com listing link</span>
-        <Link2 size={17} className="shrink-0 text-sn-accent" aria-hidden="true" />
-        <input
-          name="listingUrl"
-          type="url"
-          className="min-h-11 min-w-0 flex-1 bg-transparent text-sm font-medium text-sn-ink outline-none placeholder:text-sn-muted/70"
-          placeholder="https://www.booking.com/hotel/..."
-        />
-      </label>
-      <details className="rounded-2xl bg-sn-canvas">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 text-xs font-semibold text-sn-muted [&::-webkit-details-marker]:hidden">
-          No link, or the site blocks reading? Paste the listing text instead
-          <ChevronDown size={15} aria-hidden="true" />
-        </summary>
-        <div className="px-3 pb-3">
-          <textarea
-            name="listingText"
-            className={`${textareaClass} min-h-28 bg-sn-surface text-sm`}
-            placeholder="Copy the listing description, facilities, house rules and check-in/out details here."
+      <div className="grid grid-cols-2 gap-1 rounded-full bg-sn-canvas p-1" role="tablist" aria-label="How to import">
+        {[
+          { id: "link" as const, label: "Booking.com link" },
+          { id: "text" as const, label: "Airbnb or other" }
+        ].map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            role="tab"
+            aria-selected={mode === option.id}
+            onClick={() => setMode(option.id)}
+            className={`min-h-10 rounded-full text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sn-accent/40 ${mode === option.id ? "bg-sn-surface text-sn-ink shadow-sm" : "text-sn-muted hover:text-sn-ink"}`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      {mode === "link" ? (
+        <label className="flex min-h-12 items-center gap-2 rounded-full border border-sn-line/12 bg-sn-surface px-4 focus-within:border-sn-accent/50 focus-within:ring-2 focus-within:ring-sn-accent/20">
+          <span className="sr-only">Booking.com listing link</span>
+          <Link2 size={17} className="shrink-0 text-sn-accent" aria-hidden="true" />
+          <input
+            name="listingUrl"
+            type="url"
+            required
+            onChange={(event) => {
+              if (/airbnb\./i.test(event.target.value)) {
+                setAirbnbHint(true);
+                setMode("text");
+              }
+            }}
+            className="min-h-11 min-w-0 flex-1 bg-transparent text-sm font-medium text-sn-ink outline-none placeholder:text-sn-muted/70"
+            placeholder="https://www.booking.com/hotel/..."
           />
+        </label>
+      ) : (
+        <div className="grid gap-2">
+          {airbnbHint ? (
+            <p className="rounded-2xl bg-sn-accent-soft px-4 py-3 text-xs leading-5 text-sn-accent">
+              Airbnb does not allow automatic reading, so paste the text instead. It works just as well.
+            </p>
+          ) : null}
+          <ol className="grid gap-1 text-xs leading-5 text-sn-muted">
+            <li>1. Open your listing on Airbnb (or any site) and select the description, house rules and check-in details.</li>
+            <li>2. Copy and paste everything below. Messy text is fine.</li>
+          </ol>
+          <label>
+            <span className="sr-only">Listing text</span>
+            <textarea
+              name="listingText"
+              required
+              className={`${textareaClass} min-h-40 bg-sn-surface text-sm`}
+              placeholder="Paste your listing description, amenities, house rules, check-in and check-out details here."
+            />
+          </label>
         </div>
-      </details>
+      )}
+
       <SubmitButton pendingText="Reading your listing..." className="min-h-12 rounded-full bg-sn-ink text-white hover:bg-sn-ink/90">
         <WandSparkles size={16} aria-hidden="true" />
         Fill in my guide

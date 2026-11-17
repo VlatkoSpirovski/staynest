@@ -1,12 +1,14 @@
 "use client";
 
 import { useFormState } from "react-dom";
+import Link from "next/link";
 import { Link2 } from "lucide-react";
 import { SubmitButton } from "@/components/submit-button";
 import { generatePreviewFromUrl } from "@/app/preview-actions";
+import { getAppUrl } from "@/lib/utils";
 
 export function PreviewForm() {
-  const [state, formAction] = useFormState(generatePreviewFromUrl, { error: "" });
+  const [state, formAction] = useFormState(generatePreviewFromUrl, { error: "" } as { error: string; blockedHost?: string });
 
   return (
     <form action={formAction} className="w-full">
@@ -32,7 +34,14 @@ export function PreviewForm() {
           See my guide
         </SubmitButton>
       </div>
-      {state.error ? (
+      {state.blockedHost ? (
+        <div role="alert" className="mt-3 rounded-2xl bg-sn-accent-soft px-4 py-3 text-sm text-sn-ink">
+          <p>{state.error}</p>
+          <Link href={`${getAppUrl()}/register?plan=ai`} className="mt-2 inline-flex font-semibold text-sn-accent underline-offset-4 hover:underline">
+            Create my free guide
+          </Link>
+        </div>
+      ) : state.error ? (
         <p role="alert" className="mt-3 rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700">
           {state.error}
         </p>

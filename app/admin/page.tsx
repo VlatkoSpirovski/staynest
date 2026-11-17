@@ -14,6 +14,7 @@ import {
 } from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass, Panel, textareaClass } from "@/components/ui/panel";
+import { hostFunnel } from "@/lib/host-funnel";
 import { requireAdminUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/utils";
@@ -65,6 +66,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const { users, properties } = await getAdminData();
   const owners = users.filter((user) => user.role === "OWNER");
   const referralCredits = users.filter((user) => user.referralCreditMonths > 0);
+  const funnelAll = hostFunnel(users, properties);
+  const funnelRecent = hostFunnel(users, properties, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+  const funnelSteps = [
+    { key: "signedUp" as const, label: "Signed up" },
+    { key: "startedGuide" as const, label: "Started a guide" },
+    { key: "essentialsDone" as const, label: "Finished the 4 essentials" },
+    { key: "paying" as const, label: "Paying" }
+  ];
   const appUrl = getAppUrl();
 
   return (
@@ -100,6 +109,40 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         {searchParams?.error ? (
           <div className="rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{searchParams.error}</div>
         ) : null}
+
+        <Panel>
+          <p className="text-sm font-semibold text-lagoon">Host funnel</p>
+          <h2 className="text-2xl font-bold">Where hosts drop off</h2>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[480px] text-left text-sm">
+              <thead>
+                <tr className="text-ink/55">
+                  <th className="py-2 font-semibold">Step</th>
+                  <th className="py-2 font-semibold">Last 30 days</th>
+                  <th className="py-2 font-semibold">All time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {funnelSteps.map((step) => (
+                  <tr key={step.key} className="border-t border-ink/10">
+                    <td className="py-2.5 font-semibold">{step.label}</td>
+                    <td className="py-2.5">
+                      {funnelRecent[step.key]}
+                      {step.key !== "signedUp" && funnelRecent.signedUp ? <span className="ml-2 text-ink/45">{Math.round((funnelRecent[step.key] / funnelRecent.signedUp) * 100)}%</span> : null}
+                    </td>
+                    <td className="py-2.5">
+                      {funnelAll[step.key]}
+                      {step.key !== "signedUp" && funnelAll.signedUp ? <span className="ml-2 text-ink/45">{Math.round((funnelAll[step.key] / funnelAll.signedUp) * 100)}%</span> : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-3 text-xs leading-5 text-ink/55">
+            Owner accounts only. QR downloads and link copies are tracked as Google Analytics events (qr_downloaded, guest_link_copied, essentials_completed).
+          </p>
+        </Panel>
 
         {referralCredits.length ? (
           <Panel>

@@ -28,6 +28,7 @@ import {
 
 type PreviewFormState = {
   error: string;
+  blockedHost?: string;
 };
 
 export async function generatePreviewFromUrl(_state: PreviewFormState, formData: FormData): Promise<PreviewFormState> {
@@ -54,7 +55,10 @@ export async function generatePreviewFromUrl(_state: PreviewFormState, formData:
 
   const unsupportedHost = unsupportedListingHost(url);
   if (unsupportedHost) {
-    return { error: `${unsupportedHost} blocks automated imports. Please paste your Booking.com listing link instead.` };
+    return {
+      error: `${unsupportedHost} does not allow automatic reading, so we cannot preview it here. Create your free guide and paste your listing text instead: it takes about a minute.`,
+      blockedHost: unsupportedHost
+    };
   }
 
   const apiKey = process.env.OPENAI_API_KEY;

@@ -169,10 +169,13 @@ export async function importListingFromUrl(formData: FormData) {
     }
 
     const unsupportedHost = unsupportedListingHost(url);
-    if (unsupportedHost) {
+    if (unsupportedHost && !pastedText) {
       dashboardError(
-        `${unsupportedHost} blocks automated imports. Paste your Booking.com link instead, or paste the listing text below.`
+        `${unsupportedHost} does not allow automatic reading. Copy your listing description, house rules and check-in details from ${unsupportedHost} and paste them in the text box instead.`
       );
+    }
+    if (unsupportedHost) {
+      url = null;
     }
   }
 

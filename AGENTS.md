@@ -77,7 +77,7 @@ Apple OAuth helper code exists in `lib/oauth.ts`, but the active Apple routes re
 - Login and password reset are rate limited per IP and per canonical address.
 - Both AI chat routes are rate limited per IP, per property/token, and by a global daily circuit breaker, and now answer in the guest's own language.
 - `Property.publicCode` powers the canonical short guide link. `lib/secure-slug.ts` mints codes from an unambiguous base32 alphabet; `lib/guide-sections.ts` holds the shared section list plus the reserved-root-path guard that stops bot scans from reaching the database.
-- The listing importer rejects Airbnb URLs (`unsupportedListingHost`); Booking.com only. Airbnb review links and Airbnb marketing keywords are unchanged.
+- The listing importer cannot fetch Airbnb URLs (`unsupportedListingHost`); Airbnb hosts paste their listing text instead (dashboard import form has a paste mode, and pasted text overrides a blocked link).
 - All four guide themes now meet WCAG AA for body, muted and accent text. Modern's hero scrim was inverted to light because dark hero text over a dark cover photo measured 1:1.
 - `prisma/purge-bot-accounts.ts` reports (and with `--delete` removes) the automated signups that predate these controls.
 

@@ -92,3 +92,11 @@ Design system and redesign of the existing screens (landing, auth, dashboard edi
 - Signup: three fields (password confirmation dropped on signup only; reset and change password still confirm), password rules shown up front.
 - Checked: tsc, next lint (only existing img warnings), 32 Vitest tests, screenshots desktop 1440 and mobile 390 of every changed screen with no horizontal overflow, real local signup lands in the new dashboard. `next build` not run (dev server was using `.next`).
 - Host app pass (same day): login rebuilt ("Welcome back", one button); edit sheets are a side panel on desktop and a bottom sheet on phones, one column, a "what guests see" line per section, example text in every field, Escape and an icon to close, one save button style; saves show a toast at the top that fades out (errors stay until dismissed); trial banner only on Home unless 2 days or less are left or it ended; phone header shows the property, its status and a Guest view link; lighter tab bar. Real save tested locally (toast shown, row updated).
+
+## Gaps closed before launch (17.11.2026, local)
+
+- Airbnb: links still cannot be read automatically (bot protection, and scraping would break Airbnb's terms). The import form now offers "Booking.com link" or "Airbnb or other: paste text"; pasting an Airbnb link switches to paste mode with instructions. With pasted text, an Airbnb link no longer blocks the import. The landing preview explains the same and links to signup.
+- Guest guide languages: English, German, French, Italian, Spanish, Dutch. Picked from the phone's language, remembered after a manual choice (switcher at the bottom of the guide), `html lang` set. Host-written content stays in the host's language; the AI concierge answers in the guest's language. Test checks every language has every text.
+- Funnel: admin page shows signed up, started a guide, finished the 4 essentials, paying (last 30 days and all time, `lib/host-funnel.ts`, tested). Google Analytics events: qr_downloaded, guest_link_copied, essentials_completed, guide_import_started.
+- Checked: tsc, next lint (no errors), 37 Vitest tests, `next build` OK on a copy of the project, screenshots of the new screens.
+
