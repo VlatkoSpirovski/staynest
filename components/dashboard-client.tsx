@@ -1871,6 +1871,13 @@ function DesignScreen({
   );
 }
 
+const themeBestFor: Record<GuideThemeId, string> = {
+  classic: "Villas and mountain stays",
+  modern: "City apartments",
+  darkLuxury: "Luxury stays and cabins",
+  mediterranean: "Seaside apartments"
+};
+
 function TemplateChoiceCard({
   theme,
   property,
@@ -1888,50 +1895,16 @@ function TemplateChoiceCard({
   designRounded: boolean;
   onSelect: () => void;
 }) {
-  const shellClass =
-    theme.layout === "darkLuxury"
-      ? "border-[#D6AF6F]/24 bg-[#0B1218] text-[#F7F0E2] shadow-[0_28px_86px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.08)]"
-      : theme.layout === "modern"
-        ? "border-[#111827]/8 bg-[#FFFFFF] text-[#111827] shadow-[0_1px_2px_rgba(17,24,39,0.04)]"
-        : theme.layout === "mediterranean"
-          ? "border-[#6FA1AD]/18 bg-[#FBFAF4] text-[#18313A] shadow-[0_24px_70px_rgba(64,99,112,0.12),inset_0_1px_0_rgba(255,255,255,0.92)]"
-          : "border-[#D8C8AE]/60 bg-[#F7EFE3] text-[#1F2326] shadow-[0_24px_70px_rgba(76,55,37,0.13),inset_0_1px_0_rgba(255,255,255,0.9)]";
-  const selectedClass =
-    theme.layout === "darkLuxury"
-      ? "ring-4 ring-[#D6AF6F]/18 border-[#D6AF6F]/55"
-      : theme.layout === "modern"
-        ? "ring-4 ring-[#111827]/8 border-[#111827]/28"
-        : theme.layout === "mediterranean"
-          ? "ring-4 ring-[#6FA1AD]/16 border-[#6FA1AD]/42"
-          : "ring-4 ring-[#9B7C4B]/16 border-[#9B7C4B]/42";
-  const mutedClass = "opacity-60";
-  const pillClass =
-    theme.layout === "darkLuxury"
-      ? "bg-[#D6AF6F]/10 text-[#D6AF6F] ring-1 ring-[#D6AF6F]/18"
-      : theme.layout === "modern"
-        ? "bg-[#F4F6F8] text-[#65707C]"
-        : theme.layout === "mediterranean"
-          ? "bg-[#EAF3F1] text-[#4F8793] ring-1 ring-[#6FA1AD]/14"
-          : "bg-[#FFF9EF] text-[#9B7C4B] ring-1 ring-[#9B7C4B]/12";
-
   return (
-    <article
-      role="button"
-      tabIndex={0}
+    <button
+      type="button"
       onClick={onSelect}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") onSelect();
-      }}
-      className={`w-[282px] shrink-0 cursor-pointer rounded-[28px] border p-3 transition duration-200 hover:-translate-y-1 lg:w-auto ${shellClass} ${
-        selected ? selectedClass : ""
+      aria-pressed={selected}
+      className={`group w-[260px] shrink-0 rounded-[26px] border bg-sn-surface p-2.5 text-left transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sn-accent/50 focus-visible:ring-offset-2 lg:w-auto ${
+        selected ? "border-sn-ink shadow-[0_0_0_1px_rgb(var(--sn-ink))]" : "border-sn-line/10 hover:border-sn-line/25"
       }`}
     >
-      <div className="relative">
-        {selected ? (
-          <span className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-full text-white shadow-[0_1px_2px_rgba(17,24,39,0.04)]" style={{ backgroundColor: accentColor }}>
-            <Check size={16} />
-          </span>
-        ) : null}
+      <div className="relative overflow-hidden rounded-[20px]">
         <TemplatePhonePreview
           theme={theme}
           property={property}
@@ -1941,29 +1914,21 @@ function TemplateChoiceCard({
           compact
         />
       </div>
-
-      <div className="px-1 pb-1 pt-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-bold tracking-tight">{theme.name}</h2>
-            <p className={`mt-1 min-h-[40px] text-xs font-semibold leading-5 ${mutedClass}`}>{theme.description}</p>
-          </div>
+      <div className="flex items-center justify-between gap-3 px-2 pb-1.5 pt-3.5">
+        <div className="min-w-0">
+          <p className="text-[15px] font-bold tracking-tight">{theme.name}</p>
+          <p className="truncate text-xs text-sn-muted">{themeBestFor[theme.id]}</p>
         </div>
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <div className="flex -space-x-1">
-            {theme.palette.map((color) => (
-              <span key={color} className="h-5 w-5 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: color }} />
-            ))}
-          </div>
-          <button type="button" onClick={(event) => { event.stopPropagation(); onSelect(); }} className={`rounded-full px-3 py-2 text-xs font-bold ${pillClass}`}>
-            Preview
-          </button>
-        </div>
-        <p className={`mt-3 rounded-[14px] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] ${pillClass}`}>
-          Best for: {theme.bestFor}
-        </p>
+        <span
+          className={`grid h-7 w-7 shrink-0 place-items-center rounded-full transition ${
+            selected ? "bg-sn-ink text-white" : "border border-sn-line/20 text-transparent group-hover:border-sn-line/40"
+          }`}
+          aria-hidden="true"
+        >
+          <Check size={15} />
+        </span>
       </div>
-    </article>
+    </button>
   );
 }
 
@@ -2072,7 +2037,6 @@ function TemplatePhonePreview({
               <p className={`${compact ? "text-xs" : "text-sm"} font-bold`}>{displayName}</p>
             </div>
           </div>
-          <span className="rounded-full border border-[var(--guide-card-border)] px-2.5 py-1 text-[9px] font-bold backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
         </header>
         <section className={`${compact ? "p-4" : "p-5"}`}>
           <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
@@ -2093,7 +2057,6 @@ function TemplatePhonePreview({
       <div style={{ ...style, background: "var(--guide-shell-bg)" }} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] p-3 text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
         <header className="mb-3 flex items-center justify-between">
           <PreviewLogo small={compact} />
-          <span className="rounded-full border border-[var(--guide-card-border)] px-2.5 py-1 text-[9px] font-bold backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
         </header>
         <section className="relative overflow-hidden rounded-[var(--guide-hero-radius)]">
           <HeroLayer className={compact ? "h-32" : "h-44"} />
@@ -2117,7 +2080,6 @@ function TemplatePhonePreview({
           <div className={`${compact ? "p-4" : "p-5"} relative flex h-full flex-col justify-between`}>
             <div className="flex items-start justify-between">
               <PreviewLogo small={compact} />
-              <span className="rounded-full border border-[#D6AF6F]/28 px-2.5 py-1 text-[9px] font-bold backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
             </div>
             <div>
               <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
@@ -2139,7 +2101,6 @@ function TemplatePhonePreview({
         <div className={`${compact ? "p-4" : "p-5"} relative flex h-full flex-col justify-between text-white`}>
           <div className="flex items-start justify-between gap-3">
             <PreviewLogo small={compact} />
-            <span className="rounded-full px-3 py-1.5 text-[10px] font-bold tracking-[0.12em] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
           </div>
           <div>
             <p className={`${compact ? "text-sm" : "text-xl"} leading-tight`} style={{ fontFamily: "var(--guide-heading-font)" }}>Welcome to</p>
