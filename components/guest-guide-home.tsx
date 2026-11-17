@@ -142,7 +142,7 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
       <div className="guide-enter mx-auto min-h-screen w-full max-w-[430px] shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)", fontFamily: "var(--guide-body-font)" }}>
         <GuideTopBar name={property.name} logoUrl={property.logoUrl} />
 
-        <div className="px-4 sm:px-5">
+        <div className="min-w-0 px-4 sm:px-5">
           <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[var(--guide-hero-radius)]" style={{ background: "var(--guide-hero-fallback)" }}>
             {canOptimizeCover ? (
               <Image src={property.coverImageUrl || ""} alt="" fill priority className="object-cover" sizes="(max-width: 430px) 100vw, 430px" style={{ filter: "var(--guide-hero-image-filter)" }} />
@@ -177,7 +177,7 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
             <p className="mt-2 text-[15px] leading-6 text-[var(--guide-muted)]">{t.heroTagline}</p>
           )}
 
-          <div className="mt-5 grid gap-3">
+          <div className="mt-5 grid min-w-0 grid-cols-1 gap-3">
             {property.wifiName ? <GuideWifiCard network={property.wifiName} password={property.wifiPassword} /> : null}
             <GuideRowCard
               href={`${baseHref}/arrival`}
@@ -188,7 +188,7 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
               subtitle={checkOutLine || t.menu.arrival.subtitle}
             />
             {firstRow.length ? (
-              <nav aria-label={t.guestGuide} className="grid gap-3">
+              <nav aria-label={t.guestGuide} className="grid min-w-0 grid-cols-1 gap-3">
                 <div className={`grid gap-3 ${firstRow.length === 3 ? "grid-cols-3" : firstRow.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
                   {firstRow.map((tile) => (
                     <GuideTileCard key={tile.id} href={`${baseHref}/${tile.id}`} onNavigate={open(tile.id)} icon={tile.icon} title={tile.title} />

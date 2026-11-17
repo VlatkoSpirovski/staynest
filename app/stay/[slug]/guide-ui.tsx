@@ -88,7 +88,7 @@ export function DetailShell({
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--guide-accent)]">{eyebrow}</p>
           <h1 className="mt-2 break-words text-[1.85rem] font-bold leading-[1.1] tracking-tight text-[var(--guide-text)]" style={{ fontFamily: "var(--guide-heading-font)" }}>{title}</h1>
         </div>
-        <div className="mt-6 grid gap-3">{children}</div>
+        <div className="mt-6 grid min-w-0 grid-cols-1 gap-3">{children}</div>
         <PoweredByStayNest className="mt-10" label={poweredByLabel} />
       </div>
     </main>
@@ -97,7 +97,7 @@ export function DetailShell({
 
 export function MiniCard({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
   return (
-    <article className="rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] p-4 text-left text-[var(--guide-text)] sm:p-5" style={{ background: "var(--guide-card-bg)", boxShadow: "var(--guide-card-shadow), var(--guide-card-inset-shadow)" }}>
+    <article className="min-w-0 rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] p-4 text-left text-[var(--guide-text)] sm:p-5" style={{ background: "var(--guide-card-bg)", boxShadow: "var(--guide-card-shadow), var(--guide-card-inset-shadow)" }}>
       <h2 className="text-base font-bold tracking-tight text-[var(--guide-text)]">{title}</h2>
       <div className="mt-2 break-words text-[15px] leading-7 text-[var(--guide-muted)]">{children}</div>
     </article>

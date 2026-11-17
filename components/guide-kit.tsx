@@ -85,13 +85,13 @@ export function GuideRowCard({ icon, title, subtitle, eyebrow, href, onNavigate 
       href={href}
       prefetch
       onClick={onNavigate}
-      className={`group flex min-h-[72px] items-center gap-3 rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] px-4 py-3 text-left text-[var(--guide-text)] transition duration-200 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${focusRing}`}
+      className={`group flex min-h-[72px] w-full min-w-0 items-center gap-3 rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] px-4 py-3 text-left text-[var(--guide-text)] transition duration-200 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${focusRing}`}
       style={cardSurface}
     >
       <GuideIcon>{icon}</GuideIcon>
       <span className="min-w-0 flex-1">
         {eyebrow ? <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--guide-accent)]">{eyebrow}</span> : null}
-        <span className="block truncate text-[15px] font-bold tracking-tight">{title}</span>
+        <span className="line-clamp-2 break-words text-[15px] font-bold leading-snug tracking-tight">{title}</span>
         {subtitle ? <span className="block truncate text-xs text-[var(--guide-muted)]">{subtitle}</span> : null}
       </span>
       <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-[var(--guide-muted)] transition group-hover:translate-x-0.5 motion-reduce:transition-none" />
@@ -105,7 +105,7 @@ export function GuideTileCard({ icon, title, href, onNavigate }: CardProps) {
       href={href}
       prefetch
       onClick={onNavigate}
-      className={`flex min-h-[88px] min-w-0 flex-col items-center justify-center gap-2 rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] px-2 py-3 text-center text-[var(--guide-text)] transition duration-200 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${focusRing}`}
+      className={`flex min-h-[88px] w-full min-w-0 flex-col items-center justify-center gap-2 rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] px-2 py-3 text-center text-[var(--guide-text)] transition duration-200 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${focusRing}`}
       style={cardSurface}
     >
       <GuideIcon small>{icon}</GuideIcon>
@@ -148,7 +148,7 @@ export function GuideWifiCard({ network, password }: { network: string; password
   }
 
   return (
-    <section aria-label={t.menu.wifi.title} className="rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] p-4 text-[var(--guide-text)]" style={cardSurface}>
+    <section aria-label={t.menu.wifi.title} className="min-w-0 rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] p-4 text-[var(--guide-text)]" style={cardSurface}>
       <div className="flex items-center gap-3">
         <GuideIcon>
           <Wifi size={20} />
