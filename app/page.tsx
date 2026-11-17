@@ -170,7 +170,7 @@ function LiveDemoPhone() {
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-sn-muted">Guest asks</p>
         <p className="mt-1 text-sm font-semibold">&ldquo;Wo ist der Schlüssel?&rdquo;</p>
       </div>
-      <div className="absolute -right-10 bottom-2 hidden items-center gap-2 rounded-2xl bg-white px-4 py-3 shadow-[0_18px_44px_rgba(17,24,39,0.14)] sm:flex">
+      <div className="absolute -right-10 bottom-24 hidden items-center gap-2 rounded-2xl bg-white px-4 py-3 shadow-[0_18px_44px_rgba(17,24,39,0.14)] sm:flex">
         <span className="flex text-amber-400" aria-hidden="true">
           {[0, 1, 2, 3, 4].map((i) => (
             <Star key={i} size={14} fill="currentColor" />
@@ -178,7 +178,7 @@ function LiveDemoPhone() {
         </span>
         <span className="text-sm font-semibold">Review link inside</span>
       </div>
-      <p className="mt-5 text-center text-sm font-medium text-sn-muted">
+      <p className="mt-6 text-center text-sm font-medium text-sn-muted">
         <span className="hidden lg:inline">This is the real guide. Tap around.</span>
         <Link href={EXAMPLE_HREF} className="font-semibold text-sn-accent underline-offset-4 hover:underline lg:hidden">
           Open the live demo
