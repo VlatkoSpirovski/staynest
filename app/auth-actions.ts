@@ -64,7 +64,7 @@ export async function registerOwner(formData: FormData) {
     redirectWithError(registerPath, "Please complete every required field.");
   }
 
-  if (password !== confirmPassword) {
+  if (formData.has("confirmPassword") && password !== confirmPassword) {
     redirectWithError(registerPath, "Passwords do not match.");
   }
 

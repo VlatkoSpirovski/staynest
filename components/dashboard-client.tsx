@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState, useTransition } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   AlertCircle,
   BadgeCheck,
@@ -31,7 +31,8 @@ import {
   Star,
   Utensils,
   WandSparkles,
-  Wifi
+  Wifi,
+  X
 } from "lucide-react";
 
 import { CopyButton } from "@/components/copy-button";
@@ -145,11 +146,11 @@ interface DashboardClientProps {
 type TabId = "setup" | "modules" | "design" | "settings";
 type ModuleId = "photos" | "welcome" | "wifi" | "checkin" | "rules" | "restaurants" | "activities" | "essentials" | "contact" | "emergency" | "ai" | "reviews";
 
-const tabs: Array<{ id: TabId; label: string; icon: typeof Home }> = [
-  { id: "setup", label: "Setup", icon: BadgeCheck },
-  { id: "modules", label: "Modules", icon: BedDouble },
-  { id: "design", label: "Design", icon: Palette },
-  { id: "settings", label: "Settings", icon: Settings }
+const tabs: Array<{ id: TabId; label: string; icon: typeof Home; title: string; description: string }> = [
+  { id: "setup", label: "Home", icon: BadgeCheck, title: "Your guide", description: "Finish the essentials, then share it with your guests." },
+  { id: "modules", label: "Content", icon: BedDouble, title: "Content", description: "Everything guests see. Tap a section to edit it." },
+  { id: "design", label: "Design", icon: Palette, title: "Design", description: "Choose how your guide looks on your guests' phones." },
+  { id: "settings", label: "Share", icon: Settings, title: "Share and settings", description: "Your guest link, QR code, subscription and invitations." }
 ];
 
 const moduleCopy: Record<
@@ -167,14 +168,14 @@ const moduleCopy: Record<
     subtitle: "First impression",
     preview: (property) => property.name || property.welcomeMessage || "Add property name and welcome note",
     icon: Heart,
-    accent: "bg-[#F3F4F6] text-[#374151] ring-1 ring-[#172234]/10 shadow-[0_12px_26px_rgba(17,24,39,0.06)]"
+    accent: "bg-[#F3F4F6] text-[#374151] ring-1 ring-[#172234]/10 shadow-[0_1px_2px_rgba(17,24,39,0.04)]"
   },
   photos: {
     title: "Photos",
     subtitle: "Logo and cover",
     preview: (property) => (property.logoUrl && property.coverImageUrl ? "Brand visuals ready" : "Upload logo and property photo"),
     icon: ImageIcon,
-    accent: "bg-[#EEF2F6] text-[#24364C] ring-1 ring-[#172234]/10 shadow-[0_12px_26px_rgba(17,24,39,0.06)]"
+    accent: "bg-[#EEF2F6] text-[#24364C] ring-1 ring-[#172234]/10 shadow-[0_1px_2px_rgba(17,24,39,0.04)]"
   },
   wifi: {
     title: "Wi-Fi",
@@ -188,7 +189,7 @@ const moduleCopy: Record<
     subtitle: "Arrival made easy",
     preview: (property) => property.checkInInfo || "Add entry instructions",
     icon: KeyRound,
-    accent: "bg-[#EEF2F6] text-[#24364C] ring-1 ring-[#172234]/10 shadow-[0_12px_26px_rgba(17,24,39,0.06)]"
+    accent: "bg-[#EEF2F6] text-[#24364C] ring-1 ring-[#172234]/10 shadow-[0_1px_2px_rgba(17,24,39,0.04)]"
   },
   rules: {
     title: "House Rules",
@@ -202,7 +203,7 @@ const moduleCopy: Record<
     subtitle: "Local favorites",
     preview: (property) => restaurantItems(property)[0]?.title || "Add dinner and cafe picks",
     icon: Utensils,
-    accent: "bg-[#EEF2F6] text-[#374151] ring-1 ring-[#172234]/10 shadow-[0_12px_26px_rgba(17,24,39,0.06)]"
+    accent: "bg-[#EEF2F6] text-[#374151] ring-1 ring-[#172234]/10 shadow-[0_1px_2px_rgba(17,24,39,0.04)]"
   },
   activities: {
     title: "Activities",
@@ -230,7 +231,7 @@ const moduleCopy: Record<
     subtitle: "Safety contact",
     preview: (property) => property.emergencyInfo || "Add urgent help details",
     icon: ShieldAlert,
-    accent: "bg-[#FEF2F2] text-[#991B1B] ring-1 ring-[#FECACA]/80 shadow-[0_12px_26px_rgba(17,24,39,0.06)]"
+    accent: "bg-[#FEF2F2] text-[#991B1B] ring-1 ring-[#FECACA]/80 shadow-[0_1px_2px_rgba(17,24,39,0.04)]"
   },
   ai: {
     title: "AI",
@@ -519,13 +520,17 @@ function TrialStatusBar({
   trialDaysLeft,
   trialLabel,
   selectedPlan,
-  cardOnFile
+  cardOnFile,
+  hasGuide,
+  onlyIfUrgent = false
 }: {
   subscriptionStatus: string | null;
   trialDaysLeft: number | null;
   trialLabel: string | null;
   selectedPlan: string;
   cardOnFile: boolean;
+  hasGuide: boolean;
+  onlyIfUrgent?: boolean;
 }) {
   const status = subscriptionStatus?.toUpperCase();
   if (status === "ACTIVE") return null;
@@ -533,12 +538,13 @@ function TrialStatusBar({
   const billingHref = `${BILLING_BASE_URL}/billing?plan=${encodeURIComponent(selectedPlan)}`;
   const expired = status !== "TRIALING" || trialDaysLeft === null || trialDaysLeft <= 0;
   const urgent = !expired && trialDaysLeft !== null && trialDaysLeft <= 2;
+  if (onlyIfUrgent && !expired && !urgent) return null;
 
   const tone = expired
     ? "border-red-200 bg-red-50 text-red-800"
     : urgent
       ? "border-amber-200 bg-amber-50 text-amber-900"
-      : "border-[#172234]/10 bg-white text-[#111827]";
+      : "border-sn-line/10 bg-sn-surface text-sn-ink";
 
   const daysText = trialDaysLeft === 1 ? "1 day" : `${trialDaysLeft} days`;
   const headline = expired
@@ -555,109 +561,62 @@ function TrialStatusBar({
       ? trialLabel
         ? `Your card is on file. Paddle starts yearly billing after ${trialLabel}.`
         : "Your card is on file. Paddle starts yearly billing after the trial."
-      : trialLabel
+      : !hasGuide
+        ? "Set up your guide now. It stays free for guests until the trial ends."
+        : trialLabel
         ? `Your guide is live for guests until ${trialLabel}. Subscribe any time to keep it live after that.`
         : "Your guide is live for guests during the trial. Subscribe any time to keep it live.";
 
   const action = expired ? "Subscribe to go live" : cardOnFile ? "Manage billing" : "Keep my guide live";
+  const showAction = expired || urgent || cardOnFile || hasGuide;
 
   return (
-    <div className={`mb-4 flex flex-col gap-3 rounded-[18px] border px-4 py-3 shadow-[0_16px_42px_rgba(17,24,39,0.05)] sm:flex-row sm:items-center sm:justify-between ${tone}`}>
+    <div className={`mb-4 flex flex-col gap-3 rounded-[20px] border px-4 py-3 sm:flex-row sm:items-center sm:justify-between ${tone}`}>
       <div className="flex items-start gap-3">
         <span className="mt-0.5 shrink-0">
           {expired ? <AlertCircle size={18} /> : <Sparkles size={18} />}
         </span>
         <div>
-          <p className="text-sm font-black">{headline}</p>
+          <p className="text-sm font-bold">{headline}</p>
           <p className="mt-0.5 text-xs font-semibold opacity-80">{detail}</p>
         </div>
       </div>
-      <a
-        href={billingHref}
-        className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-[14px] bg-[#111827] px-4 text-sm font-black text-white transition hover:bg-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#111827]/40 focus:ring-offset-2"
-      >
-        {action}
-      </a>
+      {showAction ? (
+        <a
+          href={billingHref}
+          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-sn-ink px-4 text-sm font-semibold text-white transition hover:bg-sn-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-sn-accent/40 focus-visible:ring-offset-2"
+        >
+          {action}
+        </a>
+      ) : null}
     </div>
-  );
-}
-
-const HOST_STEPS = [
-  {
-    title: "Fill in your guide",
-    text: "Paste your listing link (for example Booking.com) or the listing text to import the basics, or type Wi-Fi, check-in, parking and house rules yourself."
-  },
-  {
-    title: "Add tips and review links",
-    text: "Add your favourite restaurants, beaches and essentials, plus your Google, Booking.com and Airbnb review links."
-  },
-  {
-    title: "Check it like a guest",
-    text: "In Settings, tap Open preview or scan the QR code with your phone to see exactly what guests see."
-  },
-  {
-    title: "Download and print the QR code",
-    text: "In Settings, tap Download QR. Print it on a card or A5 sheet, about 6 cm or larger, ideally laminated or framed."
-  },
-  {
-    title: "Place it where guests look",
-    text: "Put it by the entrance, on the fridge or next to the Wi-Fi router, and send the guide link in your booking message before arrival."
-  },
-  {
-    title: "Keep it up to date",
-    text: "Edit any time: changes go live instantly and the QR code never changes. Guests ask the AI chat, and happy guests find your review links."
-  }
-];
-
-function HostStepsGuide({ defaultOpen }: { defaultOpen: boolean }) {
-  return (
-    <details open={defaultOpen} className="group mb-4 rounded-[18px] border border-[#172234]/10 bg-white px-4 py-3 shadow-[0_16px_42px_rgba(17,24,39,0.05)]">
-      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-[#111827] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5F9D99]/50 [&::-webkit-details-marker]:hidden">
-        <span className="inline-flex items-center gap-2">
-          <QrCode size={17} className="text-[#5F9D99]" />
-          How to use StayNest in 6 steps
-        </span>
-        <ChevronDown size={17} className="shrink-0 transition group-open:rotate-180" aria-hidden="true" />
-      </summary>
-      <ol className="mt-3 grid gap-3 pb-1 sm:grid-cols-2">
-        {HOST_STEPS.map((step, index) => (
-          <li key={step.title} className="flex gap-3">
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#5F9D99]/12 text-xs font-black text-[#3F7F7B]">{index + 1}</span>
-            <div>
-              <p className="text-sm font-black text-[#111827]">{step.title}</p>
-              <p className="mt-0.5 text-xs font-semibold leading-5 text-[#111827]/68">{step.text}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </details>
   );
 }
 
 function InviteHostCard({ referralUrl, stats }: { referralUrl: string; stats: { invited: number; paid: number; creditMonths: number } }) {
   return (
-    <section aria-labelledby="invite-host-title" className="mt-4 rounded-[24px] border border-[#172234]/10 bg-white p-5 shadow-[0_16px_42px_rgba(17,24,39,0.05)] sm:p-6">
-      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#5F9D99]">Invite a host</p>
-      <h2 id="invite-host-title" className="mt-1 text-xl font-black tracking-tight text-[#111827]">Give 3 months, get 3 months</h2>
+    <section aria-labelledby="invite-host-title" className="mt-4 rounded-[20px] border border-[#172234]/10 bg-white p-5 shadow-[0_1px_2px_rgba(17,24,39,0.04)] sm:p-6">
+      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#5F9D99]">Invite a host</p>
+      <h2 id="invite-host-title" className="mt-1 text-xl font-bold tracking-tight text-[#111827]">Give 3 months, get 3 months</h2>
       <p className="mt-2 text-sm font-semibold leading-6 text-[#111827]/68">
         Know another host? With your link they get a 3-month free trial instead of 7 days. When they subscribe, you get 3 months free too.
       </p>
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-        <p className="min-w-0 flex-1 break-all rounded-[14px] border border-[#172234]/10 bg-[#F9FAFB] px-4 py-3 text-xs font-black text-[#111827]">{referralUrl}</p>
+        <p className="min-w-0 flex-1 break-all rounded-[14px] border border-[#172234]/10 bg-sn-canvas px-4 py-3 text-xs font-bold text-[#111827]">{referralUrl}</p>
         <CopyButton value={referralUrl} label="Copy link" copiedLabel="Copied" className="rounded-[14px] border border-[#172234]/10 bg-[#111827] text-white hover:bg-[#1F2937]" />
       </div>
       <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
-        <div className="rounded-[14px] bg-[#F9FAFB] px-2 py-3">
+        <div className="rounded-[14px] bg-sn-canvas px-2 py-3">
           <dt className="text-[11px] font-bold text-[#111827]/55">Signed up</dt>
-          <dd className="mt-1 text-lg font-black text-[#111827]">{stats.invited}</dd>
+          <dd className="mt-1 text-lg font-bold text-[#111827]">{stats.invited}</dd>
         </div>
-        <div className="rounded-[14px] bg-[#F9FAFB] px-2 py-3">
+        <div className="rounded-[14px] bg-sn-canvas px-2 py-3">
           <dt className="text-[11px] font-bold text-[#111827]/55">Subscribed</dt>
-          <dd className="mt-1 text-lg font-black text-[#111827]">{stats.paid}</dd>
+          <dd className="mt-1 text-lg font-bold text-[#111827]">{stats.paid}</dd>
         </div>
-        <div className="rounded-[14px] bg-[#F9FAFB] px-2 py-3">
+        <div className="rounded-[14px] bg-sn-canvas px-2 py-3">
           <dt className="text-[11px] font-bold text-[#111827]/55">Months earned</dt>
-          <dd className="mt-1 text-lg font-black text-[#111827]">{stats.paid * 3}</dd>
+          <dd className="mt-1 text-lg font-bold text-[#111827]">{stats.paid * 3}</dd>
         </div>
       </dl>
       {stats.creditMonths > 0 ? (
@@ -669,20 +628,144 @@ function InviteHostCard({ referralUrl, stats }: { referralUrl: string; stats: { 
   );
 }
 
-function StayNestLogoMark() {
+function DesktopSidebar({
+  activeTab,
+  onSelect,
+  propertyName,
+  logoUrl,
+  publicUrl,
+  live,
+  accountLabel,
+  logoutAction
+}: {
+  activeTab: TabId;
+  onSelect: (tab: TabId) => void;
+  propertyName: string;
+  logoUrl: string | null;
+  publicUrl: string;
+  live: boolean;
+  accountLabel: string;
+  logoutAction: () => void | Promise<void>;
+}) {
   return (
-    <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-[18px] bg-[#F8F3EA] shadow-[0_16px_38px_rgba(17,24,39,0.14),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-[#172234]/8">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/staynest-logo.png" alt="StayNest" className="h-full w-full object-cover" />
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[272px] flex-col border-r border-sn-line/10 bg-sn-surface lg:flex">
+      <div className="flex items-center gap-3 px-6 pb-5 pt-6">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/staynest-logo.png" alt="" className="h-9 w-9 rounded-[12px] object-cover ring-1 ring-sn-line/10" />
+        <div>
+          <p className="text-base font-extrabold leading-none tracking-tight">StayNest</p>
+          <p className="mt-1 text-[11px] font-semibold text-sn-muted">Host workspace</p>
+        </div>
+      </div>
+
+      <div className="mx-4 rounded-[16px] border border-sn-line/10 bg-sn-canvas p-3">
+        <div className="flex items-center gap-3">
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="" className="h-10 w-10 rounded-[12px] object-cover" />
+          ) : (
+            <span className="grid h-10 w-10 place-items-center rounded-[12px] bg-sn-accent-soft text-sn-accent">
+              <Home size={18} aria-hidden="true" />
+            </span>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold">{propertyName}</p>
+            <p className={`mt-0.5 inline-flex items-center gap-1.5 text-xs font-semibold ${!publicUrl ? "text-sn-muted" : live ? "text-sn-accent" : "text-sn-warn"}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${!publicUrl ? "bg-sn-muted" : live ? "bg-sn-accent" : "bg-sn-warn"}`} aria-hidden="true" />
+              {!publicUrl ? "Not set up yet" : live ? "Live for guests" : "Paused for guests"}
+            </p>
+          </div>
+        </div>
+        {publicUrl ? (
+          <a
+            href={publicUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 flex min-h-9 items-center justify-center gap-1.5 rounded-[10px] border border-sn-line/12 bg-sn-surface text-xs font-bold text-sn-ink transition hover:bg-sn-canvas focus:outline-none focus-visible:ring-2 focus-visible:ring-sn-accent/40"
+          >
+            Open guest view <ExternalLink size={13} aria-hidden="true" />
+          </a>
+        ) : null}
+      </div>
+
+      <nav aria-label="Dashboard sections" className="mt-6 grid gap-1 px-3">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onSelect(tab.id)}
+              aria-current={active ? "page" : undefined}
+              className={`flex min-h-11 items-center gap-3 rounded-[12px] px-3 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sn-accent/40 ${
+                active ? "bg-sn-ink text-white" : "text-sn-ink/72 hover:bg-sn-canvas hover:text-sn-ink"
+              }`}
+            >
+              <Icon size={18} strokeWidth={active ? 2.4 : 2} aria-hidden="true" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="mt-auto border-t border-sn-line/10 p-4">
+        <div className="flex items-center gap-3 px-2">
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-sn-ink text-xs font-bold text-white" aria-hidden="true">
+            {accountLabel.slice(0, 1).toUpperCase()}
+          </span>
+          <p className="min-w-0 flex-1 truncate text-sm font-semibold text-sn-ink/80">{accountLabel}</p>
+        </div>
+        <form action={logoutAction} className="mt-3">
+          <button type="submit" className="flex min-h-10 w-full items-center gap-2 rounded-[10px] px-3 text-sm font-semibold text-sn-muted transition hover:bg-sn-canvas hover:text-sn-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-sn-accent/40">
+            <LogOut size={16} aria-hidden="true" />
+            Log out
+          </button>
+        </form>
+      </div>
+    </aside>
+  );
+}
+
+function PageHeader({ tab }: { tab: { title: string; description: string } }) {
+  return (
+    <div className="sr-only lg:not-sr-only lg:mb-6">
+      <h1 className="text-[28px] font-extrabold leading-tight tracking-tight">{tab.title}</h1>
+      <p className="mt-1 text-sm font-medium text-sn-muted">{tab.description}</p>
     </div>
   );
 }
 
-function StayNestHeaderTitle() {
+function GuidePreviewPanel({ publicUrl, live, refreshKey }: { publicUrl: string; live: boolean; refreshKey: number }) {
+  if (!publicUrl) return null;
   return (
-    <div className="text-center">
-      <p className="text-lg font-black leading-none tracking-tight text-[#111827]">StayNest</p>
-      <p className="mt-1 text-[9px] font-black uppercase tracking-[0.22em] text-[#5F9D99]">Host app</p>
+    <aside aria-label="Guest view preview" className="sticky top-8 hidden xl:block">
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-sm font-bold">Guest view</p>
+        <span className={`text-xs font-semibold ${live ? "text-sn-accent" : "text-sn-warn"}`}>{live ? "Live" : "Paused"}</span>
+      </div>
+      <div className="overflow-hidden rounded-[36px] border-[10px] border-sn-ink bg-sn-ink shadow-[0_1px_2px_rgba(17,24,39,0.04)]">
+        <iframe
+          key={refreshKey}
+          src={publicUrl}
+          title="Your guide as guests see it"
+          className="block h-[640px] w-full rounded-[26px] bg-white"
+          loading="lazy"
+        />
+      </div>
+      <p className="mt-3 text-center text-xs font-medium text-sn-muted">Updates after you save.</p>
+    </aside>
+  );
+}
+
+function MobileHeaderTitle({ name, status }: { name: string; status: "none" | "live" | "paused" }) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate text-[15px] font-bold leading-tight tracking-tight">{name}</p>
+      <p className={`mt-0.5 inline-flex items-center gap-1.5 text-xs font-semibold ${status === "live" ? "text-sn-accent" : status === "paused" ? "text-sn-warn" : "text-sn-muted"}`}>
+        <span className={`h-1.5 w-1.5 rounded-full ${status === "live" ? "bg-sn-accent" : status === "paused" ? "bg-sn-warn" : "bg-sn-muted"}`} aria-hidden="true" />
+        {status === "live" ? "Live for guests" : status === "paused" ? "Paused for guests" : "Not set up yet"}
+      </p>
     </div>
   );
 }
@@ -732,7 +815,6 @@ export default function DashboardClient(props: DashboardClientProps) {
     cardOnFile,
     referralUrl,
     referralStats,
-    isFirstVisit,
     logoutAction,
     importListingAction,
     savePropertyInlineAction,
@@ -761,6 +843,12 @@ export default function DashboardClient(props: DashboardClientProps) {
     else if (successMessage) setNotice({ type: "success", text: successMessage });
   }, [errorMessage, successMessage]);
 
+  useEffect(() => {
+    if (notice?.type !== "success") return;
+    const timer = window.setTimeout(() => setNotice(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
   const siteBaseUrl = useMemo(() => {
     // Recover the origin from whatever public URL the server rendered, whether
     // that was the short /g/<code> form or the legacy /stay/<slug> one.
@@ -779,6 +867,15 @@ export default function DashboardClient(props: DashboardClientProps) {
   const [activeModule, setActiveModule] = useState<ModuleId>("welcome");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [propertyMenuOpen, setPropertyMenuOpen] = useState(false);
+  const [previewKey, setPreviewKey] = useState(0);
+  const lastSavingKey = useRef("");
+
+  useEffect(() => {
+    if (lastSavingKey.current && !savingKey) {
+      setPreviewKey((key) => key + 1);
+    }
+    lastSavingKey.current = savingKey;
+  }, [savingKey]);
 
   const setupItems = useMemo(
     () => [
@@ -798,9 +895,7 @@ export default function DashboardClient(props: DashboardClientProps) {
     [property]
   );
 
-  const completion = Math.round((setupItems.filter((item) => item.done).length / setupItems.length) * 100);
-  const missingItems = setupItems.filter((item) => !item.done).slice(0, 3);
-  const quickActions = missingItems.length ? missingItems : setupItems.slice(1, 4);
+  const hasGuide = Boolean(property.id && property.name);
 
   const openModule = (id: ModuleId) => {
     setActiveModule(id);
@@ -845,7 +940,7 @@ export default function DashboardClient(props: DashboardClientProps) {
     finishInlineSave({
       key: "property",
       previousProperty,
-      message: "Guest experience saved.",
+      message: "Saved. Guests see it now.",
       action: async () => {
         const result = await savePropertyInlineAction(formData);
         if (result?.ok && result.data?.property) {
@@ -869,7 +964,7 @@ export default function DashboardClient(props: DashboardClientProps) {
     finishInlineSave({
       key: "design",
       previousProperty,
-      message: "Template updated successfully.",
+      message: "Style applied.",
       action: async () => {
         const result = await savePropertyDesignInlineAction(formData);
         if (result?.ok && result.data?.property) {
@@ -1024,7 +1119,7 @@ export default function DashboardClient(props: DashboardClientProps) {
     finishInlineSave({
       key: "reviews",
       previousProperty,
-      message: "Review path saved.",
+      message: "Review link saved.",
       action: async () => {
         const result = await saveReviewLinksInlineAction(formData);
         if (result?.ok && result.data?.reviewLinks) {
@@ -1040,28 +1135,55 @@ export default function DashboardClient(props: DashboardClientProps) {
   }, [activeTab]);
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-white text-[#111827]">
-      <div className="fixed inset-0 -z-10 bg-white" />
+    <main className="min-h-screen overflow-x-hidden bg-sn-canvas text-sn-ink">
+      <div className="fixed inset-0 -z-10 bg-sn-canvas" />
 
-      <header className="sticky top-0 z-40 border-b border-[#172234]/6 bg-white/90 px-4 py-3 shadow-[0_10px_36px_rgba(17,24,39,0.04)] backdrop-blur-2xl lg:px-8">
-        <div className="relative mx-auto flex max-w-5xl items-center justify-between">
-          <StayNestLogoMark />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <StayNestHeaderTitle />
+      <DesktopSidebar
+        activeTab={activeTab}
+        onSelect={setActiveTab}
+        propertyName={property.name || "Your guide"}
+        logoUrl={property.logoUrl}
+        publicUrl={publicUrl}
+        live={billingAccess}
+        accountLabel={property.hostContactName || user.email}
+        logoutAction={logoutAction}
+      />
+
+      <header className="sticky top-0 z-40 border-b border-sn-line/8 bg-sn-canvas/85 px-4 py-3 backdrop-blur-xl lg:hidden">
+        <div className="relative mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            {property.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={property.logoUrl} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src="/staynest-logo.png" alt="" className="h-10 w-10 shrink-0 rounded-xl object-contain" />
+            )}
+            <MobileHeaderTitle name={property.name || "Your guide"} status={!publicUrl ? "none" : billingAccess ? "live" : "paused"} />
           </div>
+          {publicUrl ? (
+            <a
+              href={publicUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="ml-auto inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-sn-line/12 px-3 text-xs font-semibold"
+            >
+              Guest view <ExternalLink size={13} aria-hidden="true" />
+            </a>
+          ) : null}
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setPropertyMenuOpen((open) => !open)}
               aria-label="Open account menu"
-              className="grid h-11 w-11 place-items-center rounded-[18px] bg-[#111827] text-xs font-black text-white shadow-[0_18px_44px_rgba(17,24,39,0.28),inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:bg-[#162033] focus:outline-none focus:ring-2 focus:ring-[#5F9D99]/35 focus:ring-offset-2"
+              className="grid h-10 w-10 place-items-center rounded-full bg-sn-ink text-xs font-bold text-white transition hover:bg-sn-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-sn-accent/40 focus-visible:ring-offset-2"
             >
               {(property.hostContactName || user.email).slice(0, 1).toUpperCase()}
             </button>
             {propertyMenuOpen ? (
-              <div className="absolute right-4 top-16 z-50 w-64 rounded-[24px] border border-[#172234]/8 bg-[#FFFFFF] p-3 shadow-[0_30px_90px_rgba(17,24,39,0.18),inset_0_1px_0_rgba(255,255,255,0.9)]">
-                <p className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#111827]/40">Active guide</p>
-                <div className="flex items-center gap-3 rounded-[18px] bg-[#F9FAFB] p-3">
+              <div className="absolute right-4 top-16 z-50 w-64 rounded-[20px] border border-sn-line/10 bg-[#FFFFFF] p-3 shadow-[0_1px_2px_rgba(17,24,39,0.04)]">
+                <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#111827]/40">Active guide</p>
+                <div className="flex items-center gap-3 rounded-[18px] bg-sn-canvas p-3">
                   {property.logoUrl ? (
                     <img src={property.logoUrl} alt="" className="h-11 w-11 rounded-[16px] object-cover" />
                   ) : (
@@ -1070,12 +1192,12 @@ export default function DashboardClient(props: DashboardClientProps) {
                     </div>
                   )}
                   <div>
-                    <p className="text-sm font-black">{property.name}</p>
-                    <p className="text-xs font-semibold text-[#111827]/50">Ready for guests</p>
+                    <p className="text-sm font-bold">{property.name || "Your guide"}</p>
+                    <p className="text-xs font-semibold text-[#111827]/50">{!publicUrl ? "Not set up yet" : billingAccess ? "Live for guests" : "Paused for guests"}</p>
                   </div>
                 </div>
-                <form action={logoutAction} className="mt-2 border-t border-[#172234]/8 pt-2">
-                  <button type="submit" className="flex min-h-11 w-full items-center gap-2 rounded-[16px] px-3 text-left text-sm font-black text-[#111827]/72 transition hover:bg-[#F9FAFB] hover:text-[#111827]">
+                <form action={logoutAction} className="mt-2 border-t border-sn-line/10 pt-2">
+                  <button type="submit" className="flex min-h-11 w-full items-center gap-2 rounded-[16px] px-3 text-left text-sm font-bold text-[#111827]/72 transition hover:bg-sn-canvas hover:text-[#111827]">
                     <LogOut size={16} />
                     Log out
                   </button>
@@ -1086,41 +1208,29 @@ export default function DashboardClient(props: DashboardClientProps) {
         </div>
       </header>
 
-      <div className="mx-auto max-w-5xl px-4 pb-32 pt-5 lg:pb-32 lg:px-8">
+      <div className="lg:pl-[272px]">
+      <div className="mx-auto max-w-6xl px-4 pb-32 pt-5 lg:px-10 lg:pb-16 lg:pt-8 xl:grid xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start xl:gap-10">
+      <div className="min-w-0">
+        <PageHeader tab={tabs.find((tab) => tab.id === activeTab) ?? tabs[0]} />
         <TrialStatusBar
           subscriptionStatus={subscriptionStatus}
           trialDaysLeft={trialDaysLeft}
           trialLabel={trialLabel}
           selectedPlan={selectedPlan}
           cardOnFile={cardOnFile}
+          hasGuide={hasGuide}
+          onlyIfUrgent={activeTab !== "setup"}
         />
-
-        {activeTab === "setup" ? <HostStepsGuide defaultOpen={isFirstVisit} /> : null}
-
-        {notice ? (
-          <div
-            className={`mb-4 rounded-[18px] px-4 py-3 text-sm font-bold shadow-[0_16px_42px_rgba(17,24,39,0.06)] ${
-              notice.type === "error"
-                ? "border border-red-200 bg-red-50 text-red-700"
-                : notice.type === "saving"
-                  ? "border border-[#172234]/8 bg-[#F9FAFB] text-[#111827]/70"
-                  : "border border-[#76875D]/18 bg-[#76875D]/10 text-[#5F704B]"
-            }`}
-          >
-            <span className="inline-flex items-center gap-2">
-              {notice.type === "saving" ? <Loader2 className="animate-spin" size={15} /> : null}
-              {notice.text}
-            </span>
-          </div>
-        ) : null}
 
         {activeTab === "setup" ? (
           <SetupScreen
             property={property}
-            completion={completion}
-            quickActions={quickActions}
+            setupItems={setupItems}
             openModule={openModule}
             importListingAction={importListingAction}
+            publicUrl={publicUrl}
+            qrCode={qrCode}
+            billingAccess={billingAccess}
           />
         ) : null}
 
@@ -1154,6 +1264,9 @@ export default function DashboardClient(props: DashboardClientProps) {
 
         {activeTab === "settings" && referralUrl ? <InviteHostCard referralUrl={referralUrl} stats={referralStats} /> : null}
       </div>
+      <GuidePreviewPanel publicUrl={publicUrl} live={billingAccess} refreshKey={previewKey} />
+      </div>
+      </div>
 
       {sheetOpen ? (
         <ModuleSheet
@@ -1167,7 +1280,24 @@ export default function DashboardClient(props: DashboardClientProps) {
         />
       ) : null}
 
-      <nav className="dashboard-tab-nav">
+      {notice ? (
+        <div
+          role={notice.type === "error" ? "alert" : "status"}
+          className={`fixed left-1/2 top-4 z-[60] flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-[0_18px_50px_rgba(17,24,39,0.18)] lg:left-[calc(50%+136px)] ${
+            notice.type === "error" ? "bg-red-600 text-white" : "bg-sn-ink text-white"
+          }`}
+        >
+          {notice.type === "saving" ? <Loader2 className="animate-spin" size={15} aria-hidden="true" /> : notice.type === "success" ? <Check size={15} aria-hidden="true" /> : <AlertCircle size={15} aria-hidden="true" />}
+          <span className="truncate">{notice.text}</span>
+          {notice.type === "error" ? (
+            <button type="button" onClick={() => setNotice(null)} aria-label="Dismiss" className="-mr-1 grid h-6 w-6 place-items-center rounded-full hover:bg-white/15">
+              <X size={14} aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      <nav className="dashboard-tab-nav lg:hidden" aria-label="Dashboard sections">
         <div className="dashboard-tab-grid">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -1180,7 +1310,7 @@ export default function DashboardClient(props: DashboardClientProps) {
                 aria-current={active ? "page" : undefined}
                 className={`dashboard-tab-button ${active ? "dashboard-tab-button-active" : ""}`}
               >
-                <Icon size={active ? 26 : 24} strokeWidth={active ? 2.8 : 2.5} />
+                <Icon size={21} strokeWidth={active ? 2.4 : 2} aria-hidden="true" />
                 {tab.label}
               </button>
             );
@@ -1191,221 +1321,367 @@ export default function DashboardClient(props: DashboardClientProps) {
   );
 }
 
+type SetupItem = { id: ModuleId; label: string; done: boolean };
+
+const ESSENTIAL_IDS: ModuleId[] = ["welcome", "wifi", "checkin", "contact"];
+
+const essentialCopy: Partial<Record<ModuleId, { label: string; why: string }>> = {
+  welcome: { label: "Name and welcome note", why: "The first thing guests see when they scan." },
+  wifi: { label: "Wi-Fi", why: "The question every guest asks first." },
+  checkin: { label: "Check-in steps", why: "A calm arrival starts the stay well." },
+  contact: { label: "Your contact", why: "So guests can reach you if they need to." }
+};
+
+const extraCopy: Partial<Record<ModuleId, { label: string; why: string }>> = {
+  reviews: { label: "Google review link", why: "Happy guests can review you in one tap." },
+  photos: { label: "Cover photo and logo", why: "Your guide looks like your place." },
+  restaurants: { label: "Favourite restaurants", why: "Guests love a local tip." },
+  activities: { label: "Things to do", why: "Beaches, walks and tours nearby." },
+  essentials: { label: "Pharmacy, ATM, supermarket", why: "Saves you the late-night message." },
+  rules: { label: "House rules and parking", why: "Clear rules prevent awkward moments." },
+  ai: { label: "Notes for the AI concierge", why: "It answers more questions for you." },
+  emergency: { label: "Emergency info", why: "Peace of mind for you and your guests." }
+};
+
 function SetupScreen({
   property,
-  completion,
-  quickActions,
+  setupItems,
   openModule,
-  importListingAction
+  importListingAction,
+  publicUrl,
+  qrCode,
+  billingAccess
 }: {
   property: Property;
-  completion: number;
-  quickActions: Array<{ id: ModuleId; label: string; done: boolean }>;
+  setupItems: SetupItem[];
   openModule: (id: ModuleId) => void;
   importListingAction: any;
+  publicUrl: string;
+  qrCode: string;
+  billingAccess: boolean;
 }) {
-  // The hero used to claim the guide was "almost ready" even at 0%, which read as
-  // broken to anyone who had just signed up. Derive the message from real state.
-  const stage = !property.name
-    ? { eyebrow: "First step", title: "Let\u2019s build your guest guide" }
-    : completion >= 100
-      ? { eyebrow: "Ready for guests", title: `${property.name} is good to go` }
-      : completion >= 50
-        ? { eyebrow: "Almost there", title: "Your guest guide is almost ready" }
-        : { eyebrow: "In progress", title: "Add the essentials your guests ask for" };
+  const hasGuide = Boolean(property.id && property.name);
+
+  if (!hasGuide) {
+    return (
+      <div className="space-y-4">
+        <section className="rounded-[24px] border border-sn-line/10 bg-sn-surface p-6 sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sn-accent">Welcome to StayNest</p>
+          <h2 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl">Let&rsquo;s build your guest guide</h2>
+          <p className="mt-2 max-w-xl text-[15px] leading-7 text-sn-muted">
+            Paste your Booking.com link and we fill in the basics for you. It takes about a minute.
+          </p>
+          <ImportListingForm property={property} importListingAction={importListingAction} />
+          <div className="mt-6 flex items-center gap-3 text-sm text-sn-muted">
+            <span className="h-px flex-1 bg-sn-line/10" />
+            or
+            <span className="h-px flex-1 bg-sn-line/10" />
+          </div>
+          <button
+            type="button"
+            onClick={() => openModule("welcome")}
+            className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-sn-line/12 bg-sn-surface text-sm font-semibold transition hover:border-sn-line/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-sn-accent/40"
+          >
+            Start from scratch <ChevronRight size={16} aria-hidden="true" />
+          </button>
+        </section>
+      </div>
+    );
+  }
+
+  const essentials = ESSENTIAL_IDS.map((id) => setupItems.find((item) => item.id === id)).filter(Boolean) as SetupItem[];
+  const essentialsDone = essentials.filter((item) => item.done).length;
+  const ready = essentialsDone === essentials.length;
+  const nextEssential = essentials.find((item) => !item.done);
+  const extras = setupItems.filter((item) => extraCopy[item.id] && !item.done);
 
   return (
     <div className="space-y-4">
-      <section className="overflow-hidden rounded-[24px] border border-white/55 bg-[#111827] text-white shadow-[0_34px_110px_rgba(17,24,39,0.30),inset_0_1px_0_rgba(255,255,255,0.10)]">
-        <div className="relative h-48">
-          {property.coverImageUrl ? (
-            <img src={property.coverImageUrl} alt="" className="h-full w-full object-cover opacity-90 saturate-[0.96] contrast-[1.04]" />
-          ) : (
-            <div className="h-full w-full bg-[radial-gradient(circle_at_50%_0%,rgba(95,157,153,0.24),transparent_42%),linear-gradient(145deg,#111827_0%,#162033_100%)]" />
-          )}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,transparent_0%,rgba(17,24,39,0.24)_43%,rgba(17,24,39,0.78)_100%)]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#162033]/48 to-transparent" />
-          <div className="absolute bottom-5 left-5 right-5">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-white/70">{stage.eyebrow}</p>
-            <h1 className="mt-2 max-w-sm text-3xl font-black leading-[1.04] tracking-tight">{stage.title}</h1>
-          </div>
-        </div>
-      </section>
-
-      <section className="overflow-hidden rounded-[24px] border border-[#172234]/8 bg-white shadow-[0_30px_90px_rgba(17,24,39,0.10)]">
-        <div className="bg-[radial-gradient(circle_at_82%_0%,rgba(95,157,153,0.22),transparent_34%),linear-gradient(145deg,#111827_0%,#162033_100%)] px-5 py-5 text-white">
-          <div className="flex items-center justify-between gap-4">
+      {ready ? (
+        <ShareCard property={property} publicUrl={publicUrl} qrCode={qrCode} billingAccess={billingAccess} />
+      ) : (
+        <section className="rounded-[24px] border border-sn-line/10 bg-sn-surface p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#B7DAD5]">Setup progress</p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight">{completion}% complete</h2>
-              <p className="mt-1 text-sm font-semibold leading-6 text-white/70">{completion >= 100 ? "Every section is filled in. Share your QR code from Settings." : "Finish the essentials in under 3 minutes."}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sn-accent">Ready for guests</p>
+              <h2 className="mt-1 text-xl font-extrabold tracking-tight sm:text-2xl">
+                {essentialsDone === 0 ? "Four things and you are ready" : `${essentials.length - essentialsDone} more to go`}
+              </h2>
             </div>
-            <div className="relative grid h-[72px] w-[72px] shrink-0 place-items-center">
-              <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 72 72" aria-hidden>
-                <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="5" />
-                <circle
-                  cx="36"
-                  cy="36"
-                  r="30"
-                  fill="none"
-                  stroke="#B7DAD5"
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                  strokeDasharray={`${(completion / 100) * 188.5} 188.5`}
-                  className="transition-all duration-700"
-                />
-              </svg>
-              <span className="text-sm font-black">{completion}%</span>
-            </div>
+            <span className="shrink-0 rounded-full bg-sn-accent-soft px-3 py-1 text-sm font-bold tabular-nums text-sn-accent">
+              {essentialsDone}/{essentials.length}
+            </span>
           </div>
-        </div>
-
-        <div className="grid gap-2 p-4">
-          {quickActions.map((item) => (
+          <div className="mt-4 grid grid-cols-4 gap-1.5" aria-hidden="true">
+            {essentials.map((item) => (
+              <span key={item.id} className={`h-1.5 rounded-full ${item.done ? "bg-sn-accent" : "bg-sn-line/10"}`} />
+            ))}
+          </div>
+          <ul className="mt-4 grid gap-1">
+            {essentials.map((item) => {
+              const copy = essentialCopy[item.id];
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => openModule(item.id)}
+                    className="group flex min-h-14 w-full items-center gap-3 rounded-2xl px-2 text-left transition hover:bg-sn-canvas focus:outline-none focus-visible:ring-2 focus-visible:ring-sn-accent/40"
+                  >
+                    <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${item.done ? "bg-sn-accent text-white" : "border border-dashed border-sn-line/30 text-sn-muted"}`}>
+                      {item.done ? <Check size={14} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className={`block text-sm font-semibold ${item.done ? "text-sn-muted line-through decoration-sn-line/30" : ""}`}>{copy?.label ?? item.label}</span>
+                      {!item.done ? <span className="block text-xs text-sn-muted">{copy?.why}</span> : null}
+                    </span>
+                    <ChevronRight size={17} className="shrink-0 text-sn-muted transition group-hover:translate-x-0.5" aria-hidden="true" />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {nextEssential ? (
             <button
-              key={item.id}
               type="button"
-              onClick={() => openModule(item.id)}
-              className="flex min-h-12 items-center justify-between rounded-[18px] border border-[#172234]/7 bg-[#FFFFFF] px-4 text-left shadow-[0_12px_34px_rgba(17,24,39,0.055),inset_0_1px_0_rgba(255,255,255,0.78)] transition hover:-translate-y-0.5 hover:bg-[#FFFFFF] hover:shadow-[0_18px_48px_rgba(17,24,39,0.10)]"
+              onClick={() => openModule(nextEssential.id)}
+              className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-sn-ink text-sm font-semibold text-white transition hover:bg-sn-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-sn-accent/40 focus-visible:ring-offset-2"
             >
-              <span className="flex items-center gap-3">
-                <span className={`grid h-6 w-6 place-items-center rounded-[10px] ${item.done ? "bg-[#76875D]/14 text-[#5F704B]" : "bg-[#E8F4F3] text-[#5F9D99]"}`}>
-                  {item.done ? <Check size={13} /> : <Plus size={13} />}
-                </span>
-                <span className="text-sm font-black">{item.done ? `Review ${item.label}` : `Add ${item.label}`}</span>
-              </span>
-              <ChevronRight size={16} className="text-[#111827]/28" />
+              Next: {essentialCopy[nextEssential.id]?.label ?? nextEssential.label} <ChevronRight size={16} aria-hidden="true" />
             </button>
-          ))}
-        </div>
-      </section>
+          ) : null}
+        </section>
+      )}
 
-      <ImportListingCard property={property} importListingAction={importListingAction} />
+      {extras.length ? (
+        <section className="rounded-[24px] border border-sn-line/10 bg-sn-surface p-5 sm:p-6">
+          <h2 className="text-lg font-bold tracking-tight">{ready ? "Make it even better" : "After that"}</h2>
+          <p className="mt-1 text-sm text-sn-muted">Optional, but guests notice.</p>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+            {extras.slice(0, ready ? 6 : 4).map((item) => {
+              const info = moduleCopy[item.id];
+              const copy = extraCopy[item.id];
+              const Icon = info.icon;
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => openModule(item.id)}
+                    className="flex h-full w-full items-start gap-3 rounded-2xl border border-sn-line/8 p-3 text-left transition hover:border-sn-line/20 hover:bg-sn-canvas focus:outline-none focus-visible:ring-2 focus-visible:ring-sn-accent/40"
+                  >
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-sn-canvas text-sn-ink">
+                      <Icon size={17} aria-hidden="true" />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold">{copy?.label}</span>
+                      <span className="block text-xs leading-5 text-sn-muted">{copy?.why}</span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+
+      <details className="group rounded-[24px] border border-sn-line/10 bg-sn-surface px-5 py-2 sm:px-6">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+          <span className="inline-flex items-center gap-2">
+            <WandSparkles size={16} className="text-sn-accent" aria-hidden="true" />
+            Fill in more from your Booking.com listing
+          </span>
+          <ChevronDown size={16} className="text-sn-muted transition group-open:rotate-180" aria-hidden="true" />
+        </summary>
+        <div className="pb-4">
+          <ImportListingForm property={property} importListingAction={importListingAction} />
+        </div>
+      </details>
     </div>
   );
 }
 
-function ImportListingCard({
+function ShareCard({
   property,
-  importListingAction
+  publicUrl,
+  qrCode,
+  billingAccess
 }: {
   property: Property;
-  importListingAction: any;
+  publicUrl: string;
+  qrCode: string;
+  billingAccess: boolean;
 }) {
+  const billingHref = `${BILLING_BASE_URL}/billing?plan=ai`;
   return (
-    <section className="overflow-hidden rounded-[24px] border border-[#172234]/8 bg-white shadow-[0_30px_90px_rgba(17,24,39,0.10),inset_0_1px_0_rgba(255,255,255,0.94)]">
-      <div className="bg-[radial-gradient(circle_at_12%_0%,rgba(183,218,213,0.22),transparent_34%),linear-gradient(145deg,#FFFFFF_0%,#F7FAFA_100%)] p-5">
-        <div className="flex items-start gap-3">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[16px] bg-[#111827] text-white shadow-[0_16px_42px_rgba(17,24,39,0.22),inset_0_1px_0_rgba(255,255,255,0.12)]">
-            <WandSparkles size={19} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#5F9D99]">Smart prefill</p>
-            <h2 className="mt-1 text-2xl font-black tracking-tight">Import from Booking.com</h2>
-            <p className="mt-2 text-sm font-semibold leading-6 text-[#111827]/58">
-              Paste a listing link. StayNest will pull the public details it can read: name, host name, check-in/out, parking, rules and facilities.
-            </p>
+    <section className="overflow-hidden rounded-[24px] bg-sn-ink p-5 text-white sm:p-6">
+      <p className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#8FD3C9]">
+        <Check size={14} aria-hidden="true" /> Ready for guests
+      </p>
+      <h2 className="mt-2 text-2xl font-extrabold tracking-tight">Share it with your next guest</h2>
+      <div className="mt-5 grid gap-5 sm:grid-cols-[148px_1fr] sm:items-center">
+        <div className="grid h-[148px] w-[148px] place-items-center rounded-2xl bg-white p-3">
+          {qrCode ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={qrCode} alt="QR code for your guest guide" className="h-full w-full object-contain" />
+          ) : (
+            <QrCode size={96} className="text-sn-ink" aria-hidden="true" />
+          )}
+        </div>
+        <div>
+          <ol className="grid gap-2 text-sm text-white/75">
+            <li><span className="font-semibold text-white">1.</span> Print the QR code, about 6 cm or larger.</li>
+            <li><span className="font-semibold text-white">2.</span> Put it by the door, the fridge or the router.</li>
+            <li><span className="font-semibold text-white">3.</span> Send the link in your booking message.</li>
+          </ol>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {billingAccess ? (
+              <>
+                {qrCode ? (
+                  <a
+                    href={qrCode}
+                    download={`staynest-${property.slug || "guide"}-qr.png`}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-sn-ink transition hover:bg-white/90"
+                  >
+                    <Download size={15} aria-hidden="true" /> Download QR
+                  </a>
+                ) : null}
+                {publicUrl ? (
+                  <CopyButton value={publicUrl} label="Copy link" copiedLabel="Link copied" className="min-h-11 border-white/20 bg-transparent text-white hover:bg-white/10" />
+                ) : null}
+                {publicUrl ? (
+                  <a
+                    href={publicUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-white/80 transition hover:text-white"
+                  >
+                    Open as guest <ExternalLink size={14} aria-hidden="true" />
+                  </a>
+                ) : null}
+              </>
+            ) : (
+              <a href={billingHref} className="inline-flex min-h-11 items-center rounded-full bg-white px-4 text-sm font-semibold text-sn-ink">
+                Subscribe to put it online
+              </a>
+            )}
           </div>
         </div>
-
-        <form action={importListingAction} className="mt-5 grid gap-3">
-          <input type="hidden" name="propertyId" value={property.id} />
-          <label className="grid gap-2">
-            <span className="text-xs font-black uppercase tracking-[0.14em] text-[#111827]/42">Listing link</span>
-            <span className="flex min-h-12 items-center gap-2 rounded-[16px] border border-[#172234]/8 bg-white px-3 shadow-[0_10px_28px_rgba(17,24,39,0.055),inset_0_1px_0_rgba(255,255,255,0.84)]">
-              <Link2 size={17} className="shrink-0 text-[#5F9D99]" />
-              <input
-                name="listingUrl"
-                type="url"
-                className="min-h-11 min-w-0 flex-1 bg-transparent text-sm font-bold text-[#111827] outline-none placeholder:text-[#111827]/32"
-                placeholder="https://www.booking.com/hotel/..."
-              />
-            </span>
-          </label>
-
-          <details className="rounded-[18px] border border-[#172234]/8 bg-white">
-            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 text-sm font-black text-[#111827] [&::-webkit-details-marker]:hidden">
-              <span>Paste listing text if the site blocks reading</span>
-              <ChevronDown size={16} className="text-[#111827]/35" />
-            </summary>
-            <div className="border-t border-[#172234]/7 p-3">
-              <textarea
-                name="listingText"
-                className={`${textareaClass} min-h-28 bg-[#F9FAFB] text-sm`}
-                placeholder="Copy the listing description, facilities, house rules and check-in/out details here."
-              />
-            </div>
-          </details>
-
-          <div className="rounded-[18px] border border-[#5F9D99]/14 bg-[#E8F4F3]/55 px-4 py-3">
-            <p className="text-xs font-semibold leading-5 text-[#315F5B]">
-              Private details like Wi-Fi passwords and lockbox codes are never invented. After import, review each field before guests use the guide.
-            </p>
-          </div>
-
-          <SubmitButton pendingText="Importing..." className="min-h-12 rounded-[16px] bg-[#111827] text-white shadow-[0_18px_50px_rgba(17,24,39,0.26),inset_0_1px_0_rgba(255,255,255,0.12)]">
-            <WandSparkles size={16} />
-            Prefill guide
-          </SubmitButton>
-        </form>
       </div>
     </section>
   );
 }
 
+function ImportListingForm({
+  property,
+  importListingAction
+}: {
+  property: Property;
+  importListingAction: any;
+}) {
+  return (
+    <form action={importListingAction} className="mt-5 grid gap-3">
+      <input type="hidden" name="propertyId" value={property.id} />
+      <label className="flex min-h-12 items-center gap-2 rounded-full border border-sn-line/12 bg-sn-surface px-4 focus-within:border-sn-accent/50 focus-within:ring-2 focus-within:ring-sn-accent/20">
+        <span className="sr-only">Booking.com listing link</span>
+        <Link2 size={17} className="shrink-0 text-sn-accent" aria-hidden="true" />
+        <input
+          name="listingUrl"
+          type="url"
+          className="min-h-11 min-w-0 flex-1 bg-transparent text-sm font-medium text-sn-ink outline-none placeholder:text-sn-muted/70"
+          placeholder="https://www.booking.com/hotel/..."
+        />
+      </label>
+      <details className="rounded-2xl bg-sn-canvas">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 text-xs font-semibold text-sn-muted [&::-webkit-details-marker]:hidden">
+          No link, or the site blocks reading? Paste the listing text instead
+          <ChevronDown size={15} aria-hidden="true" />
+        </summary>
+        <div className="px-3 pb-3">
+          <textarea
+            name="listingText"
+            className={`${textareaClass} min-h-28 bg-sn-surface text-sm`}
+            placeholder="Copy the listing description, facilities, house rules and check-in/out details here."
+          />
+        </div>
+      </details>
+      <SubmitButton pendingText="Reading your listing..." className="min-h-12 rounded-full bg-sn-ink text-white hover:bg-sn-ink/90">
+        <WandSparkles size={16} aria-hidden="true" />
+        Fill in my guide
+      </SubmitButton>
+      <p className="text-xs leading-5 text-sn-muted">
+        We never invent private details like Wi-Fi passwords or lockbox codes. Check each section before guests use it.
+      </p>
+    </form>
+  );
+}
+
+const moduleGroups: Array<{ title: string; hint: string; ids: ModuleId[] }> = [
+  { title: "Essentials", hint: "What every guest needs", ids: ["welcome", "wifi", "checkin", "contact"] },
+  { title: "Make them feel at home", hint: "Photos, rules and your local tips", ids: ["photos", "rules", "restaurants", "activities", "essentials"] },
+  { title: "Reviews and help", hint: "Review links, AI concierge and safety", ids: ["reviews", "ai", "emergency"] }
+];
+
 function ModulesScreen({
   property,
   setupItems,
-  activeModule,
   openModule
 }: {
   property: Property;
-  setupItems: Array<{ id: ModuleId; label: string; done: boolean }>;
+  setupItems: SetupItem[];
   activeModule: ModuleId;
   openModule: (id: ModuleId) => void;
 }) {
-  const moduleIds = Object.keys(moduleCopy) as ModuleId[];
-
   return (
-    <div className="space-y-4">
-      <div>
-        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#5F9D99]">Modules</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight">Build the guide fast</h1>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        {moduleIds.map((id) => {
-          const info = moduleCopy[id];
-          const Icon = info.icon;
-          const done = setupItems.find((item) => item.id === id)?.done;
-          const selected = activeModule === id;
-
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => openModule(id)}
-              className={`min-h-[158px] rounded-[20px] border p-4 text-left shadow-[0_22px_62px_rgba(17,24,39,0.085),inset_0_1px_0_rgba(255,255,255,0.82)] transition hover:-translate-y-0.5 hover:shadow-[0_28px_78px_rgba(17,24,39,0.14)] ${
-                selected
-                  ? "border-[#111827]/32 bg-white ring-4 ring-[#111827]/8"
-                  : "border-[#172234]/7 bg-white"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className={`grid h-10 w-10 place-items-center rounded-[16px] ${info.accent}`}>
-                  <Icon size={18} />
-                </div>
-                <span className={`rounded-[10px] px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] ${done ? "bg-[#76875D]/12 text-[#5F704B]" : "bg-[#F3F4F6] text-[#6B7280]"}`}>
-                  {done ? "Done" : "Add"}
-                </span>
+    <div className="space-y-6">
+      {moduleGroups.map((group) => {
+        const doneCount = group.ids.filter((id) => setupItems.find((item) => item.id === id)?.done).length;
+        return (
+          <section key={group.title}>
+            <div className="mb-2 flex items-end justify-between gap-3 px-1">
+              <div>
+                <h2 className="text-base font-bold tracking-tight">{group.title}</h2>
+                <p className="text-xs text-sn-muted">{group.hint}</p>
               </div>
-              <h2 className="mt-4 text-lg font-black leading-tight">{info.title}</h2>
-              <p className="mt-1 text-xs font-bold text-[#111827]/48">{info.subtitle}</p>
-              <p className="mt-3 line-clamp-2 text-xs font-semibold leading-5 text-[#111827]/62">{shortText(info.preview(property), "Ready to edit")}</p>
-            </button>
-          );
-        })}
-      </div>
+              <span className="text-xs font-semibold tabular-nums text-sn-muted">
+                {doneCount}/{group.ids.length} done
+              </span>
+            </div>
+            <ul className="divide-y divide-sn-line/8 overflow-hidden rounded-[22px] border border-sn-line/10 bg-sn-surface">
+              {group.ids.map((id) => {
+                const info = moduleCopy[id];
+                const Icon = info.icon;
+                const done = Boolean(setupItems.find((item) => item.id === id)?.done);
+                return (
+                  <li key={id}>
+                    <button
+                      type="button"
+                      onClick={() => openModule(id)}
+                      className="group flex min-h-[68px] w-full items-center gap-3 px-4 text-left transition hover:bg-sn-canvas focus:outline-none focus-visible:bg-sn-canvas focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sn-accent/40"
+                    >
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sn-canvas text-sn-ink">
+                        <Icon size={18} aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold">{info.title}</span>
+                        <span className="block truncate text-xs text-sn-muted">{done ? shortText(info.preview(property), info.subtitle) : info.subtitle}</span>
+                      </span>
+                      {done ? (
+                        <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-sn-accent">
+                          <Check size={14} aria-hidden="true" /> Done
+                        </span>
+                      ) : (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-sn-ink px-3 py-1 text-xs font-semibold text-white">
+                          <Plus size={13} aria-hidden="true" /> Add
+                        </span>
+                      )}
+                      <ChevronRight size={16} className="shrink-0 text-sn-muted transition group-hover:translate-x-0.5" aria-hidden="true" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })}
     </div>
   );
 }
@@ -1448,21 +1724,19 @@ function DesignScreen({
     setDesignRounded(nextTheme.defaults.roundedCards);
   }
 
-  return (
-    <div className="space-y-5">
-      <section className="rounded-[28px] border border-[#172234]/8 bg-white p-5 shadow-[0_30px_90px_rgba(17,24,39,0.08),inset_0_1px_0_rgba(255,255,255,0.94)] lg:p-7">
-        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#5F9D99]">Design</p>
-        <div className="mt-3 max-w-2xl">
-          <h1 className="text-3xl font-black leading-[1.02] tracking-tight lg:text-5xl">Choose your guest guide style</h1>
-          <p className="mt-4 text-sm font-semibold leading-7 text-[#111827]/58 lg:text-base">
-            Pick the template that matches your property atmosphere. You can change it anytime.
-          </p>
-        </div>
-      </section>
+  const savedTheme = getGuideTheme(property.templateId);
+  const savedAccent = savedTheme.accentOptions.includes(property.accentColor) ? property.accentColor : savedTheme.defaults.accentColor;
+  const dirty =
+    selectedThemeId !== savedTheme.id ||
+    accentColor !== savedAccent ||
+    designSerif !== (property.designSerif ?? savedTheme.defaults.serifHeading) ||
+    designRounded !== (property.designRounded ?? savedTheme.defaults.roundedCards);
 
-      <section className="space-y-4">
+  return (
+    <div className="space-y-5 pb-24 lg:pb-0">
+      <section>
         <div className="-mx-4 overflow-x-auto px-4 pb-2 lg:mx-0 lg:overflow-visible lg:px-0">
-          <div className="flex w-max gap-3 lg:grid lg:w-auto lg:grid-cols-2 xl:grid-cols-4">
+          <div className="flex w-max gap-3 lg:grid lg:w-auto lg:grid-cols-2">
             {guideThemes.map((theme) => (
               <TemplateChoiceCard
                 key={theme.id}
@@ -1477,28 +1751,69 @@ function DesignScreen({
             ))}
           </div>
         </div>
-
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSaveDesign(new FormData(event.currentTarget));
-          }}
-          className="flex flex-col items-stretch gap-3 px-1 sm:flex-row sm:items-center sm:justify-end"
-        >
-          <input type="hidden" name="propertyId" value={property.id} />
-          <input type="hidden" name="templateId" value={selectedThemeId} />
-          <input type="hidden" name="accentColor" value={accentColor} />
-          {designSerif ? <input type="hidden" name="designSerif" value="1" /> : null}
-          {designRounded ? <input type="hidden" name="designRounded" value="1" /> : null}
-
-          {!canSave ? (
-            <p className="rounded-[16px] border border-[#F59E0B]/20 bg-[#FFFBEB] px-4 py-3 text-sm font-bold text-[#92400E]">Create the property first, then apply a template.</p>
-          ) : null}
-          <InlineSaveButton saving={saving} savingText="Applying..." disabled={!canSave} className="min-h-12 rounded-[16px] bg-[#111827] px-8 text-white shadow-[0_18px_48px_rgba(17,24,39,0.24),inset_0_1px_0_rgba(255,255,255,0.12)] disabled:opacity-50">
-            Apply Template
-          </InlineSaveButton>
-        </form>
       </section>
+
+      <section className="rounded-[22px] border border-sn-line/10 bg-sn-surface p-5">
+        <h2 className="text-base font-bold tracking-tight">Fine-tune {selectedTheme.name}</h2>
+        <div className="mt-4 grid gap-5 sm:grid-cols-[1fr_auto] sm:items-start">
+          <fieldset>
+            <legend className="text-xs font-semibold text-sn-muted">Accent colour</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {selectedTheme.accentOptions.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setAccentColor(color)}
+                  aria-label={`Accent colour ${color}`}
+                  aria-pressed={accentColor === color}
+                  className={`grid h-10 w-10 place-items-center rounded-full ring-offset-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sn-accent/50 ${accentColor === color ? "ring-2 ring-sn-ink" : "ring-1 ring-sn-line/15"}`}
+                  style={{ backgroundColor: color }}
+                >
+                  {accentColor === color ? <Check size={16} className="text-white mix-blend-difference" aria-hidden="true" /> : null}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <div className="grid gap-2">
+            {[
+              { label: "Elegant serif headings", value: designSerif, set: setDesignSerif },
+              { label: "Rounded cards", value: designRounded, set: setDesignRounded }
+            ].map((option) => (
+              <label key={option.label} className="flex min-h-10 cursor-pointer items-center justify-between gap-4 text-sm font-medium">
+                {option.label}
+                <span className="relative inline-flex">
+                  <input type="checkbox" checked={option.value} onChange={(event) => option.set(event.target.checked)} className="peer sr-only" />
+                  <span className="h-6 w-11 rounded-full bg-sn-line/15 transition peer-checked:bg-sn-accent peer-focus-visible:ring-2 peer-focus-visible:ring-sn-accent/40" />
+                  <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5" />
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSaveDesign(new FormData(event.currentTarget));
+        }}
+        className={`fixed inset-x-4 bottom-[104px] z-30 flex items-center justify-between gap-3 rounded-full border border-sn-line/10 bg-white/95 py-2 pl-5 pr-2 shadow-[0_18px_50px_rgba(17,24,39,0.16)] backdrop-blur-xl transition lg:sticky lg:inset-x-auto lg:bottom-6 ${
+          dirty || saving ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
+        }`}
+        aria-hidden={!dirty && !saving}
+      >
+        <input type="hidden" name="propertyId" value={property.id} />
+        <input type="hidden" name="templateId" value={selectedThemeId} />
+        <input type="hidden" name="accentColor" value={accentColor} />
+        {designSerif ? <input type="hidden" name="designSerif" value="1" /> : null}
+        {designRounded ? <input type="hidden" name="designRounded" value="1" /> : null}
+        <p className="min-w-0 truncate text-sm font-medium">
+          {canSave ? <>Not applied yet: <span className="font-semibold">{selectedTheme.name}</span></> : "Create your guide first, then pick a style."}
+        </p>
+        <InlineSaveButton saving={saving} savingText="Applying..." disabled={!canSave} className="min-h-11 shrink-0 rounded-full bg-sn-ink px-6 text-white disabled:opacity-50">
+          Apply
+        </InlineSaveButton>
+      </form>
     </div>
   );
 }
@@ -1524,7 +1839,7 @@ function TemplateChoiceCard({
     theme.layout === "darkLuxury"
       ? "border-[#D6AF6F]/24 bg-[#0B1218] text-[#F7F0E2] shadow-[0_28px_86px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.08)]"
       : theme.layout === "modern"
-        ? "border-[#111827]/8 bg-[#FFFFFF] text-[#111827] shadow-[0_18px_54px_rgba(17,24,39,0.06),inset_0_1px_0_rgba(255,255,255,0.98)]"
+        ? "border-[#111827]/8 bg-[#FFFFFF] text-[#111827] shadow-[0_1px_2px_rgba(17,24,39,0.04)]"
         : theme.layout === "mediterranean"
           ? "border-[#6FA1AD]/18 bg-[#FBFAF4] text-[#18313A] shadow-[0_24px_70px_rgba(64,99,112,0.12),inset_0_1px_0_rgba(255,255,255,0.92)]"
           : "border-[#D8C8AE]/60 bg-[#F7EFE3] text-[#1F2326] shadow-[0_24px_70px_rgba(76,55,37,0.13),inset_0_1px_0_rgba(255,255,255,0.9)]";
@@ -1560,7 +1875,7 @@ function TemplateChoiceCard({
     >
       <div className="relative">
         {selected ? (
-          <span className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-full text-white shadow-[0_12px_30px_rgba(17,24,39,0.28)]" style={{ backgroundColor: accentColor }}>
+          <span className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-full text-white shadow-[0_1px_2px_rgba(17,24,39,0.04)]" style={{ backgroundColor: accentColor }}>
             <Check size={16} />
           </span>
         ) : null}
@@ -1577,7 +1892,7 @@ function TemplateChoiceCard({
       <div className="px-1 pb-1 pt-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-black tracking-tight">{theme.name}</h2>
+            <h2 className="text-lg font-bold tracking-tight">{theme.name}</h2>
             <p className={`mt-1 min-h-[40px] text-xs font-semibold leading-5 ${mutedClass}`}>{theme.description}</p>
           </div>
         </div>
@@ -1587,11 +1902,11 @@ function TemplateChoiceCard({
               <span key={color} className="h-5 w-5 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: color }} />
             ))}
           </div>
-          <button type="button" onClick={(event) => { event.stopPropagation(); onSelect(); }} className={`rounded-full px-3 py-2 text-xs font-black ${pillClass}`}>
+          <button type="button" onClick={(event) => { event.stopPropagation(); onSelect(); }} className={`rounded-full px-3 py-2 text-xs font-bold ${pillClass}`}>
             Preview
           </button>
         </div>
-        <p className={`mt-3 rounded-[14px] px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] ${pillClass}`}>
+        <p className={`mt-3 rounded-[14px] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] ${pillClass}`}>
           Best for: {theme.bestFor}
         </p>
       </div>
@@ -1627,7 +1942,7 @@ function TemplatePhonePreview({
   function PreviewLogo({ small = false }: { small?: boolean }) {
     return (
       <div
-        className={`${small ? "h-9 w-9 rounded-[13px]" : "h-12 w-12 rounded-[18px]"} grid shrink-0 place-items-center overflow-hidden p-1 text-[10px] font-black text-[var(--guide-text)] shadow-[0_12px_34px_rgba(0,0,0,0.16)] ring-1 ring-[var(--guide-card-border)]`}
+        className={`${small ? "h-9 w-9 rounded-[13px]" : "h-12 w-12 rounded-[18px]"} grid shrink-0 place-items-center overflow-hidden p-1 text-[10px] font-bold text-[var(--guide-text)] shadow-[0_12px_34px_rgba(0,0,0,0.16)] ring-1 ring-[var(--guide-card-border)]`}
         style={{ background: "var(--guide-elevated-bg)" }}
       >
         {property.logoUrl ? (
@@ -1642,12 +1957,12 @@ function TemplatePhonePreview({
 
   function HeroLayer({ className = "" }: { className?: string }) {
     return (
-      <div className={`relative overflow-hidden ${className}`} style={{ background: theme.preview.heroBackground }}>
+      <div className={`${/\b(absolute|fixed)\b/.test(className) ? "" : "relative "}overflow-hidden ${className}`} style={{ background: theme.preview.heroBackground }}>
         {property.coverImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={property.coverImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ filter: "var(--guide-hero-image-filter)" }} />
         ) : null}
-        <div className="absolute inset-0" style={{ background: "var(--guide-hero-overlay)" }} />
+        {theme.layout === "modern" && property.coverImageUrl ? null : <div className="absolute inset-0" style={{ background: "var(--guide-hero-overlay)" }} />}
       </div>
     );
   }
@@ -1668,7 +1983,7 @@ function TemplatePhonePreview({
                   <Icon size={13} />
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate text-[11px] font-black">{item.title}</span>
+                  <span className="block truncate text-[11px] font-bold">{item.title}</span>
                   <span className="block truncate text-[9px] font-semibold text-[var(--guide-muted)]">{item.subtitle}</span>
                 </span>
               </div>
@@ -1684,7 +1999,7 @@ function TemplatePhonePreview({
               <span className={`${compact ? "h-8 w-8" : "h-11 w-11"} ${variant === "darkLuxury" ? "" : "mx-auto"} grid place-items-center rounded-[var(--guide-icon-radius)] text-[var(--guide-accent)] shadow-[var(--guide-icon-shadow)]`} style={{ background: "var(--guide-icon-bg)" }}>
                 <Icon size={compact ? 14 : 17} />
               </span>
-              <p className={`${compact ? "mt-2 text-[11px]" : "mt-3 text-sm"} font-black`}>{item.title}</p>
+              <p className={`${compact ? "mt-2 text-[11px]" : "mt-3 text-sm"} font-bold`}>{item.title}</p>
               <p className={`${compact ? "text-[10px]" : "text-xs"} mt-1 font-semibold text-[var(--guide-muted)]`}>{item.subtitle}</p>
             </div>
           );
@@ -1700,15 +2015,15 @@ function TemplatePhonePreview({
           <div className="flex items-center gap-2">
             <PreviewLogo small={compact} />
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--guide-muted)]">Stay guide</p>
-              <p className={`${compact ? "text-xs" : "text-sm"} font-black`}>{displayName}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--guide-muted)]">Stay guide</p>
+              <p className={`${compact ? "text-xs" : "text-sm"} font-bold`}>{displayName}</p>
             </div>
           </div>
-          <span className="rounded-full border border-[var(--guide-card-border)] px-2.5 py-1 text-[9px] font-black backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
+          <span className="rounded-full border border-[var(--guide-card-border)] px-2.5 py-1 text-[9px] font-bold backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
         </header>
         <section className={`${compact ? "p-4" : "p-5"}`}>
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
-          <h3 className={`${compact ? "mt-2 text-2xl" : "mt-3 text-3xl"} font-black leading-[0.95] tracking-tight`} style={{ fontFamily: "var(--guide-heading-font)" }}>
+          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
+          <h3 className={`${compact ? "mt-2 text-2xl" : "mt-3 text-3xl"} font-bold leading-[0.95] tracking-tight`} style={{ fontFamily: "var(--guide-heading-font)" }}>
             Welcome to {displayName}
           </h3>
           <HeroLayer className={`${compact ? "mt-3 h-28" : "mt-4 h-36"} rounded-[var(--guide-hero-radius)]`} />
@@ -1725,12 +2040,12 @@ function TemplatePhonePreview({
       <div style={{ ...style, background: "var(--guide-shell-bg)" }} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] p-3 text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
         <header className="mb-3 flex items-center justify-between">
           <PreviewLogo small={compact} />
-          <span className="rounded-full border border-[var(--guide-card-border)] px-2.5 py-1 text-[9px] font-black backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
+          <span className="rounded-full border border-[var(--guide-card-border)] px-2.5 py-1 text-[9px] font-bold backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
         </header>
         <section className="relative overflow-hidden rounded-[var(--guide-hero-radius)]">
           <HeroLayer className={compact ? "h-32" : "h-44"} />
           <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-            <p className="text-[9px] font-black uppercase tracking-[0.22em] text-white/82">{theme.preview.eyebrow}</p>
+            <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-white/82">{theme.preview.eyebrow}</p>
             <h3 className={`${compact ? "text-2xl" : "text-4xl"} font-semibold leading-none`} style={{ fontFamily: "var(--guide-heading-font)" }}>{displayName}</h3>
           </div>
         </section>
@@ -1749,10 +2064,10 @@ function TemplatePhonePreview({
           <div className={`${compact ? "p-4" : "p-5"} relative flex h-full flex-col justify-between`}>
             <div className="flex items-start justify-between">
               <PreviewLogo small={compact} />
-              <span className="rounded-full border border-[#D6AF6F]/28 px-2.5 py-1 text-[9px] font-black backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
+              <span className="rounded-full border border-[#D6AF6F]/28 px-2.5 py-1 text-[9px] font-bold backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
             </div>
             <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.24em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
               <h3 className={`${compact ? "text-3xl" : "text-4xl"} font-semibold leading-none`} style={{ fontFamily: "var(--guide-heading-font)" }}>{displayName}</h3>
             </div>
           </div>
@@ -1771,11 +2086,11 @@ function TemplatePhonePreview({
         <div className={`${compact ? "p-4" : "p-5"} relative flex h-full flex-col justify-between text-white`}>
           <div className="flex items-start justify-between gap-3">
             <PreviewLogo small={compact} />
-            <span className="rounded-full px-3 py-1.5 text-[10px] font-black tracking-[0.12em] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
+            <span className="rounded-full px-3 py-1.5 text-[10px] font-bold tracking-[0.12em] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl" style={{ background: "var(--guide-language-bg)", color: "var(--guide-language-text)" }}>EN</span>
           </div>
           <div>
             <p className={`${compact ? "text-sm" : "text-xl"} leading-tight`} style={{ fontFamily: "var(--guide-heading-font)" }}>Welcome to</p>
-            <h3 className={`${compact ? "text-2xl" : "text-4xl"} font-black leading-none`} style={{ fontFamily: "var(--guide-heading-font)" }}>{displayName}</h3>
+            <h3 className={`${compact ? "text-2xl" : "text-4xl"} font-bold leading-none`} style={{ fontFamily: "var(--guide-heading-font)" }}>{displayName}</h3>
             <p className={`${compact ? "mt-2 text-[11px] leading-4" : "mt-4 text-sm leading-6"} max-w-[260px] font-semibold text-white/82`}>Your polished mobile guide for Wi-Fi, arrival, house info and more.</p>
           </div>
         </div>
@@ -1808,89 +2123,58 @@ function SettingsScreen({
 
   return (
     <div className="space-y-4">
-      <div>
-        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#5F9D99]">Settings</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight">Guide & account</h1>
-      </div>
+      {publicUrl ? (
+        <>
+          <ShareCard property={property} publicUrl={publicUrl} qrCode={qrCode} billingAccess={billingAccess} />
+          <section className="rounded-[22px] border border-sn-line/10 bg-sn-surface p-5">
+            <p className="text-xs font-semibold text-sn-muted">Your guest link</p>
+            <p className="mt-1 break-all text-sm font-semibold">{publicUrl}</p>
+            <p className="mt-2 text-xs leading-5 text-sn-muted">This link and the QR code never change, even when you edit the guide.</p>
+          </section>
+        </>
+      ) : (
+        <section className="rounded-[22px] border border-sn-line/10 bg-sn-surface p-5">
+          <h2 className="text-base font-bold">Your link and QR code appear here</h2>
+          <p className="mt-1 text-sm text-sn-muted">Create your guide on the Home tab first.</p>
+        </section>
+      )}
 
-      <section className="rounded-[24px] border border-white/12 bg-[#111827] bg-[radial-gradient(circle_at_82%_0%,rgba(95,157,153,0.22),transparent_34%),linear-gradient(145deg,#111827_0%,#162033_100%)] p-5 text-white shadow-[0_36px_116px_rgba(17,24,39,0.34),inset_0_1px_0_rgba(255,255,255,0.10)]">
-        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#B7DAD5]">
-          {billingAccess ? "Your guide is live" : "Your guide is paused"}
-        </p>
-        <h1 className="mt-2 text-3xl font-black leading-tight tracking-tight">
-          {billingAccess ? "Ready for the next guest" : "Subscribe to go live"}
-        </h1>
-        <p className="mt-2 text-sm font-semibold leading-6 text-white/66">
-          {billingAccess
-            ? "Share the link, print the QR, or open the guest view."
-            : "Your setup is saved. Subscribe to put your guide back online for guests."}
-        </p>
-
-        <div className="mt-5 grid gap-4 sm:grid-cols-[160px_1fr]">
-          <div className="grid place-items-center rounded-[20px] bg-[#FFFFFF] p-4 shadow-[0_18px_46px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.92)]">
-            {qrCode ? <img src={qrCode} alt="Guest guide QR code" className="h-32 w-32 object-contain" /> : <QrCode size={104} className="text-[#111827]" />}
+      <section className="rounded-[22px] border border-sn-line/10 bg-sn-surface p-5">
+        <h2 className="text-base font-bold tracking-tight">Subscription</h2>
+        <div className="mt-3 flex flex-col gap-4 rounded-2xl bg-sn-canvas p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold">
+              {planName} · {currentPlan.price} per year
+            </p>
+            <p className="mt-0.5 text-xs leading-5 text-sn-muted">Guide, QR code, review links and AI concierge included.</p>
           </div>
-          <div className="flex flex-col justify-between gap-3">
-            <div className="rounded-[18px] border border-white/10 bg-white/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-              <p className="text-xs font-bold text-white/48">Guest link</p>
-              <p className="mt-1 break-all text-xs font-black leading-5">{publicUrl}</p>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {billingAccess ? (
-                <CopyButton value={publicUrl} label="Share link" copiedLabel="Copied" className="rounded-[16px] border border-[#172234]/10 bg-[#FFFFFF] text-[#111827] shadow-[0_14px_34px_rgba(17,24,39,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] hover:bg-white" />
-              ) : (
-                <a href={billingHref} className="inline-flex min-h-12 items-center justify-center rounded-[16px] border border-[#172234]/10 bg-[#FFFFFF] px-4 text-sm font-black text-[#111827] shadow-[0_14px_34px_rgba(17,24,39,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] transition hover:-translate-y-0.5 hover:bg-white">
-                  Add payment
-                </a>
-              )}
-              {qrCode && billingAccess ? (
-                <a
-                  href={qrCode}
-                  download={`staynest-${property.slug}-qr.png`}
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[16px] border border-[#172234]/10 bg-[#FFFFFF] px-4 text-sm font-black text-[#111827] shadow-[0_14px_34px_rgba(17,24,39,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#B7DAD5]/60 focus:ring-offset-2 focus:ring-offset-[#111827]"
-                >
-                  <span>Download QR</span>
-                  <Download size={15} />
-                </a>
-              ) : null}
-              {billingAccess ? (
-                <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[16px] bg-[#5F9D99] px-4 text-sm font-black text-white shadow-[0_18px_48px_rgba(95,157,153,0.30),inset_0_1px_0_rgba(255,255,255,0.16)] transition hover:-translate-y-0.5 hover:bg-[#558F8B] focus:outline-none focus:ring-2 focus:ring-[#B7DAD5]/60 focus:ring-offset-2 focus:ring-offset-[#111827]">
-                  <span>Open preview</span>
-                  <ExternalLink size={15} />
-                </a>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-[24px] border border-[#172234]/8 bg-white p-5 shadow-[0_30px_90px_rgba(17,24,39,0.12),inset_0_1px_0_rgba(255,255,255,0.92)]">
-        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#5F9D99]">Billing</p>
-        <h2 className="mt-2 text-2xl font-black tracking-tight">Manage your subscription</h2>
-        <div className="mt-3 rounded-[18px] border border-[#172234]/10 bg-[#F9FAFB] p-4">
-          <p className="text-xs font-bold text-[#111827]/55">Current plan</p>
-          <p className="mt-1 text-sm font-black text-[#111827]">
-            {planName} · {currentPlan.price} per year
-          </p>
-          <p className="mt-1 text-xs font-semibold text-[#111827]/65">
-            Everything is included: the guest guide, the QR code, review links and AI guest chat.
-          </p>
-        </div>
-        <div className="mt-4">
           <a
-            href={`${BILLING_BASE_URL}/billing`}
-            className="inline-flex min-h-11 items-center justify-center rounded-[16px] bg-[#111827] px-4 text-sm font-black text-white transition hover:bg-[#1F2937]"
+            href={billingAccess ? `${BILLING_BASE_URL}/billing` : billingHref}
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-sn-ink px-5 text-sm font-semibold text-white transition hover:bg-sn-ink/90"
           >
-            Manage billing
+            {billingAccess ? "Manage billing" : "Subscribe"}
           </a>
-          <p className="mt-3 text-xs font-semibold text-[#111827]/55">
-            Paddle handles checkout securely and updates your subscription automatically.
-          </p>
         </div>
+        <p className="mt-3 text-xs text-sn-muted">Payments are handled securely by Paddle.</p>
       </section>
     </div>
   );
 }
+
+const sheetHints: Record<ModuleId, string> = {
+  welcome: "The first thing guests read when they scan.",
+  photos: "Your logo and one photo of the place.",
+  wifi: "Guests copy the password with one tap.",
+  checkin: "How to get in, and what to do when leaving.",
+  rules: "Short and friendly works best.",
+  restaurants: "Your favourite places to eat and drink.",
+  activities: "Beaches, walks, tours and sights.",
+  essentials: "Pharmacy, supermarket, ATM, petrol.",
+  contact: "Guests can call or WhatsApp you from the guide.",
+  emergency: "Who to call when something goes wrong.",
+  ai: "The concierge answers guests only from what you write here and in the guide.",
+  reviews: "Happy guests can leave a review in one tap."
+};
 
 function ModuleSheet({
   property,
@@ -1921,6 +2205,14 @@ function ModuleSheet({
   const [recommendationDrafts, setRecommendationDrafts] = useState<PlaceRecommendationDraft[]>([]);
 
   useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  useEffect(() => {
     if (!isPlaceModule) return;
     setRecommendationDrafts(
       visibleRecommendations.length
@@ -1938,26 +2230,31 @@ function ModuleSheet({
   }
 
   return (
-    <div className="dashboard-sheet-overlay fixed inset-0 z-50 flex flex-col justify-end bg-[#0B1220]/64 backdrop-blur-md lg:items-center lg:justify-center lg:p-6">
-      <button type="button" aria-label="Close editor" className="absolute inset-0" onClick={onClose} />
-      <section className="dashboard-sheet-panel relative h-[calc(100dvh-8px)] max-h-[calc(100dvh-8px)] w-full overflow-y-auto rounded-t-[22px] border-t border-[#172234]/8 bg-white px-4 pb-4 pt-2 shadow-[0_-38px_110px_rgba(17,24,39,0.34)] lg:h-auto lg:max-h-[86vh] lg:max-w-5xl lg:rounded-[24px] lg:border lg:px-6 lg:pb-6 lg:pt-5 lg:shadow-[0_38px_130px_rgba(17,24,39,0.34)]">
-        <div className="mx-auto h-1.5 w-11 rounded-full bg-[#111827]/18 lg:hidden" />
-        <div className="mt-3 flex items-center justify-between gap-3 lg:mt-0 lg:border-b lg:border-[#172234]/8 lg:pb-5">
+    <div className="dashboard-sheet-overlay fixed inset-0 z-50 flex flex-col justify-end bg-sn-ink/40 backdrop-blur-sm lg:flex-row lg:justify-end" role="dialog" aria-modal="true" aria-labelledby="module-sheet-title">
+      <button type="button" aria-label="Close editor" tabIndex={-1} className="absolute inset-0" onClick={onClose} />
+      <section className="dashboard-sheet-panel relative flex h-[calc(100dvh-12px)] w-full flex-col overflow-y-auto rounded-t-[26px] bg-sn-surface px-5 pb-5 pt-2 shadow-[0_-30px_90px_rgba(17,24,39,0.28)] lg:h-full lg:max-w-[560px] lg:rounded-none lg:rounded-l-[28px] lg:px-8 lg:pt-7">
+        <div className="mx-auto h-1.5 w-10 shrink-0 rounded-full bg-sn-line/15 lg:hidden" aria-hidden="true" />
+        <div className="mt-3 flex items-start justify-between gap-3 lg:mt-0">
           <div className="flex items-center gap-3">
-            <div className={`grid h-10 w-10 place-items-center rounded-[15px] lg:h-11 lg:w-11 lg:rounded-[16px] ${info.accent}`}>
-              <Icon size={19} />
-            </div>
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sn-canvas text-sn-ink">
+              <Icon size={20} aria-hidden="true" />
+            </span>
             <div>
-              <h2 className="text-lg font-black tracking-tight lg:text-xl">{info.title}</h2>
-              <p className="text-xs font-bold text-[#111827]/48">{info.subtitle}</p>
+              <h2 id="module-sheet-title" className="text-xl font-extrabold tracking-tight">{info.title}</h2>
+              <p className="text-sm text-sn-muted">{sheetHints[activeModule]}</p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="rounded-[14px] bg-[#FFFFFF] px-4 py-2 text-xs font-black shadow-[0_14px_38px_rgba(17,24,39,0.10),inset_0_1px_0_rgba(255,255,255,0.86)]">
-            Close
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sn-canvas text-sn-ink transition hover:bg-sn-line/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-sn-accent/40"
+          >
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
 
-        <div className="mt-4 lg:mt-5">
+        <div className="mt-6 flex-1">
           {isPropertyModule ? (
             <form
               onSubmit={(event: FormEvent<HTMLFormElement>) => {
@@ -1969,10 +2266,10 @@ function ModuleSheet({
               <input type="hidden" name="propertyId" value={property.id} />
               <input type="hidden" name="accentColor" value={property.accentColor || "#5D9C9A"} />
 
-              <div className="overflow-hidden rounded-[20px] border border-[#172234]/8 bg-white shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)] lg:shadow-[0_18px_58px_rgba(17,24,39,0.08),inset_0_1px_0_rgba(255,255,255,0.90)]">
+              <div className="overflow-hidden rounded-[20px] border border-sn-line/10 bg-sn-surface">
                 {activeModule === "photos" ? (
                   <div className="grid gap-3 p-4">
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid gap-4">
                       <ImageUploadField label="Property logo" fileName="logoFile" urlName="logoUrl" removeName="removeLogo" currentUrl={property.logoUrl} />
                       <ImageUploadField label="Property photo" fileName="coverImageFile" urlName="coverImageUrl" removeName="removeCoverImage" currentUrl={property.coverImageUrl} />
                     </div>
@@ -1980,81 +2277,81 @@ function ModuleSheet({
                 ) : null}
 
                 {activeModule === "welcome" ? (
-                  <div className="grid gap-0 divide-y divide-[#172234]/7 lg:grid-cols-[0.9fr_1.1fr] lg:divide-x lg:divide-y-0">
-                    <div className="p-4 lg:p-5">
+                  <div className="grid gap-0 divide-y divide-sn-line/8">
+                    <div className="p-4">
                       <Field label="Property name">
-                        <input name="name" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.name} placeholder="Your property name" required />
+                        <input name="name" className={`${inputClass} bg-sn-canvas`} defaultValue={property.name} placeholder="Your property name" required />
                       </Field>
                     </div>
-                    <div className="p-4 lg:p-5">
+                    <div className="p-4">
                     <Field label="Welcome note">
-                      <textarea name="welcomeMessage" className={`${textareaClass} min-h-24 bg-[#F9FAFB] lg:min-h-44`} defaultValue={property.welcomeMessage} />
+                      <textarea name="welcomeMessage" className={`${textareaClass} min-h-28 bg-sn-canvas`} defaultValue={property.welcomeMessage} placeholder="Welcome! We are happy to have you. Everything you need for your stay is in this guide." />
                     </Field>
                     </div>
                   </div>
                 ) : null}
 
                 {activeModule === "wifi" ? (
-                  <div className="grid gap-0 divide-y divide-[#172234]/7 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-                    <div className="p-4 lg:p-5">
+                  <div className="grid gap-0 divide-y divide-sn-line/8">
+                    <div className="p-4">
                       <Field label="Network">
-                        <input name="wifiName" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.wifiName || ""} />
+                        <input name="wifiName" className={`${inputClass} bg-sn-canvas`} defaultValue={property.wifiName || ""} placeholder="VillaSunset_Guest" autoComplete="off" />
                       </Field>
                     </div>
-                    <div className="p-4 lg:p-5">
+                    <div className="p-4">
                       <Field label="Password">
-                        <input name="wifiPassword" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.wifiPassword || ""} />
+                        <input name="wifiPassword" className={`${inputClass} bg-sn-canvas`} defaultValue={property.wifiPassword || ""} placeholder="The password guests type" autoComplete="off" />
                       </Field>
                     </div>
                   </div>
                 ) : null}
 
                 {activeModule === "checkin" ? (
-                  <div className="grid gap-0 divide-y divide-[#172234]/7 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-                    <div className="p-4 lg:p-5">
+                  <div className="grid gap-0 divide-y divide-sn-line/8">
+                    <div className="p-4">
                       <Field label="Check-in">
-                        <textarea name="checkInInfo" className={`${textareaClass} min-h-24 bg-[#F9FAFB] lg:min-h-52`} defaultValue={property.checkInInfo || ""} />
+                        <textarea name="checkInInfo" className={`${textareaClass} min-h-28 bg-sn-canvas`} defaultValue={property.checkInInfo || ""} placeholder="Check-in from 15:00. The key box is left of the door; we send the code the day before." />
                       </Field>
                     </div>
-                    <div className="p-4 lg:p-5">
+                    <div className="p-4">
                       <Field label="Checkout">
-                        <textarea name="checkOutInfo" className={`${textareaClass} min-h-20 bg-[#F9FAFB] lg:min-h-52`} defaultValue={property.checkOutInfo || ""} />
+                        <textarea name="checkOutInfo" className={`${textareaClass} min-h-24 bg-sn-canvas`} defaultValue={property.checkOutInfo || ""} placeholder="Check-out by 10:00. Leave the keys in the box and close the windows." />
                       </Field>
                     </div>
                   </div>
                 ) : null}
 
                 {activeModule === "rules" ? (
-                  <div className="grid gap-0 divide-y divide-[#172234]/7 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-                    <div className="p-4 lg:p-5">
+                  <div className="grid gap-0 divide-y divide-sn-line/8">
+                    <div className="p-4">
                       <Field label="House rules">
-                        <textarea name="houseRules" className={`${textareaClass} min-h-24 bg-[#F9FAFB] lg:min-h-52`} defaultValue={property.houseRules || ""} />
+                        <textarea name="houseRules" className={`${textareaClass} min-h-28 bg-sn-canvas`} defaultValue={property.houseRules || ""} placeholder="Quiet hours 22:00 to 08:00. No smoking inside. No parties." />
                       </Field>
                     </div>
-                    <div className="p-4 lg:p-5">
+                    <div className="p-4">
                       <Field label="Parking">
-                        <textarea name="parkingInfo" className={`${textareaClass} min-h-20 bg-[#F9FAFB] lg:min-h-52`} defaultValue={property.parkingInfo || ""} />
+                        <textarea name="parkingInfo" className={`${textareaClass} min-h-24 bg-sn-canvas`} defaultValue={property.parkingInfo || ""} placeholder="Free parking in front of the house, one car." />
                       </Field>
                     </div>
                   </div>
                 ) : null}
 
                 {activeModule === "contact" ? (
-                  <div className="grid gap-0 divide-y divide-[#172234]/7 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
-                    <div className="p-4 lg:p-5">
-                      <Field label="Host name">
-                        <input name="hostContactName" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.hostContactName || ""} />
+                  <div className="grid gap-0 divide-y divide-sn-line/8">
+                    <div className="p-4">
+                      <Field label="Your name">
+                        <input name="hostContactName" className={`${inputClass} bg-sn-canvas`} defaultValue={property.hostContactName || ""} placeholder="Your first name" />
                       </Field>
                     </div>
-                    <div className="grid gap-0 divide-y divide-[#172234]/7 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:col-span-2">
-                      <div className="p-4 lg:p-5">
+                    <div className="grid gap-0 divide-y divide-sn-line/8">
+                      <div className="p-4">
                         <Field label="Phone">
-                          <input name="hostPhone" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.hostPhone || ""} />
+                          <input name="hostPhone" type="tel" className={`${inputClass} bg-sn-canvas`} defaultValue={property.hostPhone || ""} placeholder="+389 70 123 456 (also used for WhatsApp)" />
                         </Field>
                       </div>
-                      <div className="p-4 lg:p-5">
+                      <div className="p-4">
                         <Field label="Email">
-                          <input name="hostEmail" type="email" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={property.hostEmail || ""} />
+                          <input name="hostEmail" type="email" className={`${inputClass} bg-sn-canvas`} defaultValue={property.hostEmail || ""} />
                         </Field>
                       </div>
                     </div>
@@ -2062,17 +2359,17 @@ function ModuleSheet({
                 ) : null}
 
                 {activeModule === "emergency" ? (
-                  <div className="p-4 lg:p-5">
+                  <div className="p-4">
                     <Field label="Emergency contact and safety notes">
-                      <textarea name="emergencyInfo" className={`${textareaClass} min-h-24 bg-[#F9FAFB] lg:min-h-44`} defaultValue={property.emergencyInfo || ""} />
+                      <textarea name="emergencyInfo" className={`${textareaClass} min-h-28 bg-sn-canvas`} defaultValue={property.emergencyInfo || ""} placeholder="Emergency 112. Nearest hospital and pharmacy, and who to call for urgent property issues." />
                     </Field>
                   </div>
                 ) : null}
 
                 {activeModule === "ai" ? (
-                  <div className="p-4 lg:p-5">
-                    <Field label="AI guest chat knowledge">
-                      <textarea name="aiKnowledge" className={`${textareaClass} min-h-32 bg-[#F9FAFB] lg:min-h-52`} defaultValue={property.aiKnowledge || ""} />
+                  <div className="p-4">
+                    <Field label="What should the AI concierge know?">
+                      <textarea name="aiKnowledge" className={`${textareaClass} min-h-48 bg-sn-canvas`} defaultValue={property.aiKnowledge || ""} placeholder="Anything guests ask you: where the extra towels are, how the coffee machine works, which bin is for recycling, your favourite beach, how to get a taxi." />
                     </Field>
                   </div>
                 ) : null}
@@ -2092,8 +2389,8 @@ function ModuleSheet({
               {activeModule !== "contact" ? <input type="hidden" name="hostEmail" value={property.hostEmail || ""} /> : null}
               {activeModule !== "ai" ? <input type="hidden" name="aiKnowledge" value={property.aiKnowledge || ""} /> : null}
 
-              <div className="sticky bottom-2 lg:static lg:flex lg:justify-end">
-                <InlineSaveButton saving={savingKey === "property"} savingText="Saving..." className="luxury-btn-teal w-full lg:w-auto lg:px-8">
+              <div className="sticky bottom-0 -mx-1 bg-gradient-to-t from-sn-surface via-sn-surface to-transparent px-1 pb-1 pt-4">
+                <InlineSaveButton saving={savingKey === "property"} savingText="Saving..." className="min-h-12 w-full bg-sn-ink text-[15px] text-white hover:bg-sn-ink/90">
                   <Save size={16} />
                   Save changes
                 </InlineSaveButton>
@@ -2105,15 +2402,18 @@ function ModuleSheet({
                 event.preventDefault();
                 onSaveReviewLinks(new FormData(event.currentTarget));
               }}
-              className="space-y-4 rounded-[20px] border border-[#172234]/8 bg-white p-4 shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)]"
+              className="space-y-4 rounded-[20px] border border-sn-line/10 bg-sn-surface p-4"
             >
               <input type="hidden" name="propertyId" value={property.id} />
               <input type="hidden" name="booking" value="" />
               <input type="hidden" name="airbnb" value="" />
               <Field label="Google review link">
-                <input name="google" className={`${inputClass} bg-[#F9FAFB]`} defaultValue={getReviewValue(property, "GOOGLE")} placeholder="https://g.page/r/..." />
+                <input name="google" type="url" className={`${inputClass} bg-sn-canvas`} defaultValue={getReviewValue(property, "GOOGLE")} placeholder="https://g.page/r/..." />
               </Field>
-              <InlineSaveButton saving={savingKey === "reviews"} savingText="Saving..." className="min-h-12 w-full rounded-[16px] bg-[#111827] text-white shadow-[0_18px_50px_rgba(17,24,39,0.26),inset_0_1px_0_rgba(255,255,255,0.12)]">
+              <p className="-mt-2 text-xs leading-5 text-sn-muted">
+                Where to find it: open your Google Business Profile, tap &ldquo;Ask for reviews&rdquo; and copy the link.
+              </p>
+              <InlineSaveButton saving={savingKey === "reviews"} savingText="Saving..." className="min-h-12 w-full bg-sn-ink text-[15px] text-white hover:bg-sn-ink/90">
                 <Save size={16} />
                 Save Google link
               </InlineSaveButton>
@@ -2128,11 +2428,11 @@ function ModuleSheet({
             >
               <input type="hidden" name="propertyId" value={property.id} />
 
-              <div className="overflow-hidden rounded-[20px] border border-[#172234]/8 bg-white shadow-[0_24px_74px_rgba(17,24,39,0.13),inset_0_1px_0_rgba(255,255,255,0.90)]">
-                <div className="grid gap-3 border-b border-[#172234]/8 bg-[#F9FAFB] px-4 py-3 sm:flex sm:items-center sm:justify-between">
+              <div className="overflow-hidden rounded-[20px] border border-sn-line/10 bg-sn-surface">
+                <div className="grid gap-3 border-b border-sn-line/10 bg-sn-canvas px-4 py-3 sm:flex sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#5F9D99]">Add place</p>
-                    <h3 className="text-base font-black">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#5F9D99]">Add place</p>
+                    <h3 className="text-base font-bold">
                       {activeModule === "restaurants" ? "Restaurants, cafes and bars" : activeModule === "essentials" ? "Nearby essentials" : "Attractions, beaches and activities"}
                     </h3>
                   </div>
@@ -2140,7 +2440,7 @@ function ModuleSheet({
                     <button
                       type="button"
                       onClick={() => setRecommendationDrafts((drafts) => [...drafts, createManualPlaceDraft(defaultCategory, drafts.length + 1, activeModule === "essentials")])}
-                      className="inline-flex min-h-10 items-center gap-2 rounded-[14px] bg-white px-3 text-xs font-black text-[#111827] shadow-[0_12px_30px_rgba(17,24,39,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-[#172234]/8"
+                      className="inline-flex min-h-10 items-center gap-2 rounded-[14px] bg-white px-3 text-xs font-bold text-[#111827] shadow-[0_1px_2px_rgba(17,24,39,0.04)] ring-1 ring-[#172234]/8"
                     >
                       <Link2 size={14} />
                       Add place
@@ -2160,13 +2460,13 @@ function ModuleSheet({
                       />
                     ))
                   ) : (
-                    <div className="rounded-[18px] border border-dashed border-[#172234]/14 bg-[#F9FAFB] px-4 py-8 text-center">
-                      <p className="text-sm font-black text-[#111827]">No {activeModule === "restaurants" ? "places" : activeModule === "essentials" ? "essentials" : "activities"} yet.</p>
+                    <div className="rounded-[18px] border border-dashed border-[#172234]/14 bg-sn-canvas px-4 py-8 text-center">
+                      <p className="text-sm font-bold text-[#111827]">No {activeModule === "restaurants" ? "places" : activeModule === "essentials" ? "essentials" : "activities"} yet.</p>
                       <p className="mt-1 text-xs font-semibold text-[#111827]/48">Add the name, type, description and link manually.</p>
                       <button
                         type="button"
                         onClick={() => setRecommendationDrafts([createManualPlaceDraft(defaultCategory, 1, activeModule === "essentials")])}
-                        className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-[14px] bg-white px-4 text-xs font-black text-[#111827] shadow-[0_12px_30px_rgba(17,24,39,0.08)] ring-1 ring-[#172234]/8"
+                        className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-[14px] bg-white px-4 text-xs font-bold text-[#111827] shadow-[0_1px_2px_rgba(17,24,39,0.04)] ring-1 ring-[#172234]/8"
                       >
                         <Link2 size={14} />
                         Add place
@@ -2176,8 +2476,8 @@ function ModuleSheet({
                 </div>
               </div>
 
-              <div className="sticky bottom-2 lg:static lg:flex lg:justify-end">
-                <InlineSaveButton saving={savingKey === `recommendations:${defaultCategory}`} savingText="Saving..." className="min-h-12 w-full rounded-[16px] bg-[#111827] text-white shadow-[0_18px_50px_rgba(17,24,39,0.26),inset_0_1px_0_rgba(255,255,255,0.12)] lg:w-auto lg:px-8">
+              <div className="sticky bottom-0 -mx-1 bg-gradient-to-t from-sn-surface via-sn-surface to-transparent px-1 pb-1 pt-4">
+                <InlineSaveButton saving={savingKey === `recommendations:${defaultCategory}`} savingText="Saving..." className="min-h-12 w-full bg-sn-ink text-[15px] text-white hover:bg-sn-ink/90">
                   <Save size={16} />
                   Save {activeModule === "restaurants" ? "places" : activeModule === "essentials" ? "essentials" : "activities"}
                 </InlineSaveButton>

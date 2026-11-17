@@ -1,30 +1,23 @@
+import Link from "next/link";
 import {
   ArrowRight,
-  BadgeCheck,
   Bot,
-  CalendarCheck,
-  CheckCircle2,
-  ClipboardCheck,
-  Globe2,
-  Home,
-  Import,
+  Check,
+  ChevronDown,
+  Copy,
   KeyRound,
-  LayoutGrid,
+  Languages,
   Link2,
-  Menu,
-  Palette,
   MessageCircle,
-  MapPinned,
+  Printer,
   QrCode,
-  Sparkles,
   Star,
-  Trophy,
   Wifi
 } from "lucide-react";
 
 import { AppLegalLinks } from "@/components/app-legal-links";
-import { Button } from "@/components/ui/button";
 import { PreviewForm } from "@/components/preview-form";
+import { StickyMobileCta } from "@/components/sticky-mobile-cta";
 import { getAppUrl } from "@/lib/utils";
 
 export const metadata = {
@@ -61,360 +54,227 @@ export const metadata = {
   }
 };
 
+const EXAMPLE_HREF = "/g/example";
+
 const navItems = [
-  { label: "Reviews", href: "#reviews" },
-  { label: "Hosts", href: "#hosts" },
-  { label: "Example", href: "/g/example" },
-  { label: "Guides", href: "/guides" },
-  { label: "Pricing", href: "#pricing" }
-];
-
-const heroHighlights = ["Google review link built in", "Guide live in under 5 minutes", "No app for guests to install"];
-
-const heroStats = [
-  { value: "1 QR", label: "for guide, support and reviews" },
-  { value: "24/7", label: "answers before small issues become bad ratings" },
-  { value: "5-star", label: "review path for happy guests" }
+  { label: "Live demo", href: EXAMPLE_HREF },
+  { label: "How it works", href: "#how" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "Guides", href: "/guides" }
 ];
 
 const hostNames = ["Villa Beti", "Cece's Home", "Villa Yeti"];
 
-const platformCards = [
-  {
-    title: "Airbnb hosts",
-    text: "Reduce repeated messages, keep check-in clean, and guide happy guests to your Airbnb review flow.",
-    icon: Home
-  },
-  {
-    title: "Booking.com owners",
-    text: "Import your listing faster, polish the stay experience, and collect reviews while guests still remember the good parts.",
-    icon: Import
-  },
-  {
-    title: "Villa & apartment managers",
-    text: "Use one QR guide per property for arrival, Wi-Fi, local recommendations, checkout and review links.",
-    icon: MapPinned
-  }
-];
-
-const conversionReasons = [
-  "Guests find the Wi-Fi password without messaging you",
-  "Arrival details stay clear even when plans change",
-  "Review links sit in the guide guests already trust",
-  "AI answers in the guest's language using your property facts"
-];
-
 const steps = [
   {
-    title: "Import your listing",
-    text: "Paste your Booking.com link and prepare your guide faster.",
-    icon: Import
-  },
-  {
-    title: "Customize the guide",
-    text: "Add Wi-Fi, check-in, house rules, recommendations and review links.",
-    icon: ClipboardCheck
-  },
-  {
-    title: "Print one QR code",
-    text: "Place it in the property and guests always see the latest version.",
-    icon: QrCode
-  },
-  {
-    title: "Collect reviews while the stay is fresh",
-    text: "Send happy guests straight to your Google, Booking.com or Airbnb review page.",
-    icon: CalendarCheck
-  },
-  {
-    title: "Answer questions automatically",
-    text: "Guests ask at 2am and get an answer trained only on your property, in their own language.",
-    icon: Bot
-  }
-];
-
-const hostDashboardPanels = [
-  {
-    label: "Smart prefill",
-    title: "Import from Booking.com",
-    text: "Paste a listing link. StayNest pulls the public details it can read.",
-    icon: Import
-  },
-  {
-    label: "Modules",
-    title: "Wi-Fi, rules and check-in",
-    text: "Turn on essentials and add more modules whenever you need them.",
-    icon: LayoutGrid
-  },
-  {
-    label: "Design",
-    title: "Choose your guide style",
-    text: "Preview the mobile guest guide and match it to your property.",
-    icon: Palette
-  },
-  {
-    label: "QR code",
-    title: "Ready to share",
-    text: "Copy the guest link, download the QR, or open the live preview.",
-    icon: QrCode
-  }
-];
-
-const hostDashboardHighlights = [
-  {
-    title: "Import from Booking.com",
-    text: "Save hours of manual work.",
+    title: "Paste your Booking.com link",
+    text: "StayNest reads your listing and fills in the guide for you. No listing? Start from a blank guide.",
     icon: Link2
   },
   {
-    title: "All modules in one place",
-    text: "Wi-Fi, rules, tips, reviews and more.",
-    icon: LayoutGrid
-  },
-  {
-    title: "One QR code, always live",
-    text: "Update anytime. Guests always see it.",
-    icon: QrCode
-  },
-  {
-    title: "Reviews built into checkout",
-    text: "Add your Google review link once and keep pointing guests there.",
-    icon: Star
-  }
-];
-
-const reviewFunnel = [
-  {
-    title: "Guests get answers first",
-    text: "Wi-Fi, arrival, parking, house rules and checkout details are clear before guests need to message you.",
-    icon: MessageCircle
-  },
-  {
-    title: "Small problems get handled",
-    text: "The AI concierge answers in the guest's own language using only your property information.",
-    icon: Bot
-  },
-  {
-    title: "Happy guests find the review link",
-    text: "Your Google, Booking.com or Airbnb review page sits inside the guide when the stay is still fresh.",
-    icon: Star
-  },
-  {
-    title: "More stays become review opportunities",
-    text: "Every QR scan becomes a chance to reduce friction, protect the rating and ask at the right time.",
-    icon: Trophy
-  }
-];
-
-const features = [
-  {
-    title: "More 5-star review moments",
-    text: "Put your review link where satisfied guests already look: inside the same guide they used for Wi-Fi, check-in, checkout and local tips.",
-    icon: Star,
-    featured: true
-  },
-  {
-    title: "AI guest chat",
-    text: "Give guests instant answers about arrival, Wi-Fi, checkout, parking and local recommendations using only your property knowledge.",
-    icon: Bot
-  },
-  {
-    title: "QR guide",
-    text: "Print one QR code and keep the guide live, polished and always up to date.",
-    icon: QrCode
-  },
-  {
-    title: "Booking.com import",
-    text: "Use a listing link to prepare the first version faster, then refine it for your guests.",
-    icon: Import
-  },
-  {
-    title: "Guest instructions",
-    text: "Check-in, Wi-Fi, parking, house rules and emergency details in one mobile guide.",
+    title: "Add Wi-Fi and check-in",
+    text: "The two things every guest asks. Add your review link while you are there.",
     icon: KeyRound
   },
   {
-    title: "Review reminders",
-    text: "Prompt happy guests toward your Google, Booking.com or Airbnb review page at checkout, while the stay is still fresh.",
-    icon: Star
-  },
-  {
-    title: "Multi-language ready",
-    text: "Guests ask in German, Dutch, French or Polish and the assistant answers in the same language.",
-    icon: Globe2
+    title: "Print one QR code",
+    text: "Put it by the door. Edit anything later, the QR code never changes.",
+    icon: Printer
   }
 ];
 
 const planFeatures = [
-  "Review links designed to collect more 5-star reviews",
-  "Mobile QR guest guide with your own branding",
-  "Wi-Fi, check-in, parking and house rules",
-  "Local recommendations guests can actually use",
-  "AI guest chat trained on your property",
-  "Answers in your guest\u2019s own language",
-  "Booking.com listing import",
-  "Unlimited updates \u2014 the QR never changes"
+  "Mobile guest guide with your photos",
+  "Wi-Fi, check-in, house rules, local tips",
+  "AI concierge that replies in the guest's language",
+  "Google, Booking.com and Airbnb review links",
+  "Booking.com import",
+  "Unlimited edits, the QR code never changes"
+];
+
+const faqs = [
+  {
+    q: "Do I need a card to start?",
+    a: "No. The 7-day free trial starts without a card. You only add payment details if you want to keep your guide live after the trial."
+  },
+  {
+    q: "Do my guests need to install an app?",
+    a: "No. Guests scan the QR code or open the link and the guide opens in their phone's browser."
+  },
+  {
+    q: "What does the AI concierge know?",
+    a: "Only what you put in your guide: Wi-Fi, check-in, house rules, your tips and the notes you add for it. It answers in the guest's own language and tells them to contact you for anything it does not know."
+  },
+  {
+    q: "What happens after the trial?",
+    a: "Your guide goes offline for guests and they see a short “temporarily unavailable” page. Everything you set up is saved, and you can subscribe at any time to put it back online. We email you two days before the trial ends."
+  },
+  {
+    q: "Can I cancel?",
+    a: "Any time, from the billing portal. Your guide stays live until the end of the paid year."
+  }
 ];
 
 function Logo() {
   return (
-    <a href="/" className="flex items-center gap-3" aria-label="StayNest home">
+    <Link href="/" className="flex items-center gap-2.5" aria-label="StayNest home">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/staynest-logo.png" alt="StayNest" className="h-12 w-12 object-contain drop-shadow-sm sm:h-14 sm:w-14" />
-      <span className="hidden text-lg font-semibold tracking-tight text-[#172033] sm:inline">StayNest</span>
-    </a>
+      <img src="/staynest-logo.png" alt="" className="h-9 w-9 object-contain" />
+      <span className="text-[17px] font-bold tracking-tight">StayNest</span>
+    </Link>
   );
 }
 
-function HostDashboardShowcase() {
+function PrimaryCta({ href, children, className = "" }: { href: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className="mx-auto mt-16 max-w-5xl lg:mt-20">
-      <div className="hidden md:block">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/landing-dashboard-for-hosts.png"
-          alt="StayNest host dashboard: import listings, manage guide modules, customize design, and share with QR"
-          className="h-auto w-full"
-          width={1024}
-          height={576}
-          loading="lazy"
-        />
-      </div>
+    <Link
+      href={href}
+      className={`focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-sn-ink px-6 text-[15px] font-semibold text-white shadow-[0_12px_32px_rgba(17,24,39,0.22)] transition hover:-translate-y-px hover:bg-sn-ink/90 ${className}`}
+    >
+      {children}
+    </Link>
+  );
+}
 
-      <div className="md:hidden">
-        <div className="text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Built for hosts</p>
-          <h3 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033]">Everything you need in one dashboard</h3>
-          <p className="mx-auto mt-4 max-w-md text-sm font-medium leading-7 text-[#172033]/72">
-            Manage your guide, content and AI concierge from one simple dashboard.
-          </p>
-        </div>
+function SecondaryCta({ href, children, className = "" }: { href: string; children: React.ReactNode; className?: string }) {
+  return (
+    <Link
+      href={href}
+      className={`focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-sn-line/12 bg-white px-6 text-[15px] font-semibold text-sn-ink transition hover:border-sn-line/25 ${className}`}
+    >
+      {children}
+    </Link>
+  );
+}
 
-        {/* Horizontal screenshot carousel */}
-        <div className="-mx-5 mt-10 overflow-x-auto px-5 pb-4 scrollbar-hide" style={{ WebkitOverflowScrolling: "touch" }}>
-          <div className="flex gap-4" style={{ width: "max-content" }}>
-            {[
-              { src: "/landing-mobile-modules.png", label: "Modules", caption: "Build your guide fast" },
-              { src: "/landing-mobile-settings.png", label: "Settings", caption: "Share link and QR code" },
-              { src: "/landing-mobile-ai.png", label: "AI Chat", caption: "Train your AI assistant" }
-            ].map((screen) => (
-              <div key={screen.label} className="w-[220px] shrink-0 sm:w-[260px]">
-                <div className="overflow-hidden rounded-[24px] border border-[#172033]/10 bg-[#172033] p-[5px] shadow-[0_20px_60px_rgba(23,32,51,0.18)]">
-                  <div className="overflow-hidden rounded-[20px]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={screen.src}
-                      alt={`StayNest host app – ${screen.caption}`}
-                      className="block h-auto w-full"
-                      width={520}
-                      height={1000}
-                      loading="lazy"
-                      style={{ imageRendering: "auto" }}
-                    />
-                  </div>
-                </div>
-                <div className="mt-3 text-center">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#6F9287]">{screen.label}</p>
-                  <p className="mt-1 text-sm font-semibold text-[#172033]">{screen.caption}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="mt-10 space-y-7 border-t border-[#D8D1C4]/45 pt-10">
-          {hostDashboardHighlights.map((item) => {
-            const Icon = item.icon;
-            return (
-              <div key={item.title} className="flex items-start gap-4">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[15px] border border-[#C9D8D2] bg-[#F1F5F1] text-[#6F9287]">
-                  <Icon size={20} />
-                </div>
-                <div>
-                  <h4 className="text-base font-semibold text-[#172033]">{item.title}</h4>
-                  <p className="mt-1.5 text-sm font-medium leading-6 text-[#172033]/72">{item.text}</p>
-                </div>
-              </div>
-            );
-          })}
+function LiveDemoPhone() {
+  return (
+    <div className="relative mx-auto w-[300px] sm:w-[330px]">
+      <div className="absolute -inset-10 -z-10 rounded-full bg-[radial-gradient(closest-side,rgba(47,110,106,0.20),transparent)] blur-2xl" aria-hidden="true" />
+      <div className="rounded-[46px] bg-sn-ink p-[10px] shadow-[0_40px_100px_rgba(17,24,39,0.28)]">
+        <div className="relative h-[600px] overflow-hidden rounded-[37px] bg-white sm:h-[660px]">
+          <iframe
+            src={EXAMPLE_HREF}
+            title="Live StayNest example guide"
+            className="pointer-events-none absolute left-0 top-0 h-[750px] w-[390px] origin-top-left scale-[0.7385] border-0 sm:h-[748px] sm:scale-[0.8205] lg:pointer-events-auto"
+            loading="eager"
+          />
+          <Link
+            href={EXAMPLE_HREF}
+            className="absolute inset-0 lg:hidden"
+            aria-label="Open the live example guide"
+          />
         </div>
       </div>
+      <div className="absolute -left-16 top-[42%] hidden rounded-2xl bg-white px-4 py-3 shadow-[0_18px_44px_rgba(17,24,39,0.14)] sm:block">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-sn-muted">Guest asks</p>
+        <p className="mt-1 text-sm font-semibold">&ldquo;Wo ist der Schlüssel?&rdquo;</p>
+      </div>
+      <div className="absolute -right-10 bottom-2 hidden items-center gap-2 rounded-2xl bg-white px-4 py-3 shadow-[0_18px_44px_rgba(17,24,39,0.14)] sm:flex">
+        <span className="flex text-amber-400" aria-hidden="true">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Star key={i} size={14} fill="currentColor" />
+          ))}
+        </span>
+        <span className="text-sm font-semibold">Review link inside</span>
+      </div>
+      <p className="mt-5 text-center text-sm font-medium text-sn-muted">
+        <span className="hidden lg:inline">This is the real guide. Tap around.</span>
+        <Link href={EXAMPLE_HREF} className="font-semibold text-sn-accent underline-offset-4 hover:underline lg:hidden">
+          Open the live demo
+        </Link>
+      </p>
     </div>
   );
 }
 
-function PhoneMockup() {
-  const guideItems = [
-    { label: "AI Guest Chat", icon: MessageCircle, active: true },
-    { label: "Check-in & Wi-Fi", icon: Wifi },
-    { label: "House Rules", icon: Home },
-    { label: "Local Tips", icon: Sparkles },
-    { label: "Reviews", icon: Star }
-  ];
-
+function WifiCard() {
   return (
-    <div className="relative mx-auto w-full max-w-[315px] sm:max-w-[350px] lg:max-w-[370px]">
-      <div className="absolute inset-x-4 bottom-8 top-8 rounded-full bg-[#AFC8BD]/30 blur-[70px]" />
-      <div className="relative rounded-[36px] border border-[#172234]/14 bg-[#172033] p-2 shadow-[0_28px_80px_rgba(31,40,44,0.16)] sm:p-2.5">
-        <div className="overflow-hidden rounded-[28px] bg-[#FBFAF6]">
-          <div className="flex items-center justify-between border-b border-[#D8D1C4]/45 bg-white px-5 py-4">
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#6F9287]">StayNest Example</p>
-              <h2 className="mt-1 font-serif text-xl font-semibold leading-none text-[#172033]">Guest Guide</h2>
-            </div>
-            <div className="grid h-10 w-10 place-items-center rounded-[14px] bg-[#172033] text-white shadow-[0_12px_26px_rgba(23,32,51,0.16)]">
-              <QrCode size={20} />
-            </div>
-          </div>
-
-          <div className="p-3 sm:p-3.5">
-            <div className="relative h-32 overflow-hidden rounded-[22px] bg-[#172033] sm:h-40">
-              <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1200&auto=format&fit=crop')] bg-cover bg-center opacity-90" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#172033]/88 via-[#172033]/20 to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-white/70">Welcome</p>
-                <h3 className="mt-1 font-serif text-2xl font-semibold leading-tight text-white">Mountain villa stay</h3>
-              </div>
-            </div>
-
-            <div className="mt-3 rounded-[20px] border border-[#C9D8D2] bg-[#EFF5F1] p-3.5 text-[#172033] shadow-[0_12px_32px_rgba(23,32,51,0.055)]">
-              <div className="flex items-center gap-3">
-                <div className="grid h-9 w-9 place-items-center rounded-[13px] bg-white text-[#6F9287]">
-                  <Bot size={18} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">AI Guest Chat</p>
-                  <p className="mt-0.5 text-xs font-medium text-[#172033]/72">Ask anything about the stay</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-3 rounded-[20px] border border-[#E7D7A6] bg-[#FFF8DF] p-3.5 text-[#172033] shadow-[0_12px_32px_rgba(23,32,51,0.045)]">
-              <div className="flex items-center gap-3">
-                <div className="grid h-9 w-9 place-items-center rounded-[13px] bg-white text-[#B98A18]">
-                  <Star size={18} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">Enjoyed your stay?</p>
-                  <p className="mt-0.5 text-xs font-medium text-[#172033]/72">Leave a Google review</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-3 grid gap-2">
-              {guideItems.slice(1).map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div key={item.label} className="flex min-h-11 items-center gap-3 rounded-[16px] border border-[#D8D1C4]/50 bg-white px-3 shadow-[0_10px_24px_rgba(23,32,51,0.035)] sm:min-h-12">
-                    <div className="grid h-8 w-8 place-items-center rounded-[11px] bg-[#F1F5F1] text-[#6F9287]">
-                      <Icon size={15} />
-                    </div>
-                    <span className="text-sm font-semibold text-[#172033]">{item.label}</span>
-                    <ArrowRight className="ml-auto text-[#172033]/45" size={15} />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+    <article className="flex flex-col justify-between rounded-[28px] border border-sn-line/8 bg-white p-6 sm:p-7">
+      <div>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-sn-accent-soft text-sn-accent">
+          <Wifi size={20} aria-hidden="true" />
+        </span>
+        <h3 className="mt-5 text-xl font-bold tracking-tight">Wi-Fi in one tap</h3>
+        <p className="mt-2 text-[15px] leading-7 text-sn-muted">The question you get on every arrival, answered before anyone texts you.</p>
+      </div>
+      <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl bg-sn-canvas px-4 py-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">Lakeview_Guest</p>
+          <p className="truncate font-mono text-xs text-sn-muted">Lakeview2026!</p>
         </div>
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-sn-ink px-3 py-1.5 text-xs font-semibold text-white">
+          <Copy size={12} aria-hidden="true" /> Copy
+        </span>
+      </div>
+    </article>
+  );
+}
+
+function ChatCard() {
+  return (
+    <article className="flex flex-col justify-between rounded-[28px] bg-sn-ink p-6 text-white sm:p-7 md:row-span-2">
+      <div>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10">
+          <Bot size={20} aria-hidden="true" />
+        </span>
+        <h3 className="mt-5 text-2xl font-bold tracking-tight sm:text-3xl">An AI concierge that knows your place</h3>
+        <p className="mt-3 text-[15px] leading-7 text-white/70">
+          Guests ask at 2 a.m., in their own language. It answers from your guide only, and sends them to you for anything else.
+        </p>
+      </div>
+      <div className="mt-8 space-y-3 text-sm">
+        <p className="ml-auto w-fit max-w-[85%] rounded-[20px] rounded-br-md bg-white px-4 py-2.5 font-medium text-sn-ink">
+          Bis wann ist der Check-out?
+        </p>
+        <p className="w-fit max-w-[85%] rounded-[20px] rounded-bl-md bg-white/10 px-4 py-2.5 leading-6 text-white/90">
+          Check-out ist bis 10:00. Bitte legt die Schlüssel zurück in die Schlüsselbox. Gute Heimreise!
+        </p>
+        <p className="ml-auto w-fit max-w-[85%] rounded-[20px] rounded-br-md bg-white px-4 py-2.5 font-medium text-sn-ink">
+          Gdzie zjemy dobrą rybę?
+        </p>
+        <p className="w-fit max-w-[85%] rounded-[20px] rounded-bl-md bg-white/10 px-4 py-2.5 leading-6 text-white/90">
+          Polecamy Harbor Grill, świeża ryba z jeziora. Zarezerwujcie stolik na zachód słońca.
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function ReviewCard() {
+  return (
+    <article className="flex flex-col justify-between rounded-[28px] border border-sn-line/8 bg-white p-6 sm:p-7">
+      <div>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-50 text-amber-500">
+          <Star size={20} aria-hidden="true" />
+        </span>
+        <h3 className="mt-5 text-xl font-bold tracking-tight">More 5-star reviews</h3>
+        <p className="mt-2 text-[15px] leading-7 text-sn-muted">Smoother stays, then your review link right where happy guests already look.</p>
+      </div>
+      <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl bg-sn-canvas px-4 py-3">
+        <div>
+          <p className="text-sm font-semibold">Enjoyed your stay?</p>
+          <p className="text-xs text-sn-muted">Leave a Google review</p>
+        </div>
+        <span className="flex text-amber-400" aria-hidden="true">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Star key={i} size={15} fill="currentColor" />
+          ))}
+        </span>
+      </div>
+    </article>
+  );
+}
+
+function SmallFeature({ icon: Icon, title, text }: { icon: typeof Wifi; title: string; text: string }) {
+  return (
+    <div className="flex gap-4 rounded-[24px] border border-sn-line/8 bg-white p-5">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sn-canvas text-sn-ink">
+        <Icon size={18} aria-hidden="true" />
+      </span>
+      <div>
+        <h3 className="font-semibold">{title}</h3>
+        <p className="mt-1 text-sm leading-6 text-sn-muted">{text}</p>
       </div>
     </div>
   );
@@ -425,327 +285,212 @@ export default function LandingPage() {
   const startTrialHref = `${appUrl}/register?plan=ai`;
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#FBFAF6] text-[#172033]">
-      <div className="fixed inset-0 -z-10 bg-[linear-gradient(rgba(116,103,84,0.022)_1px,transparent_1px),linear-gradient(90deg,rgba(116,103,84,0.022)_1px,transparent_1px)] bg-[size:48px_48px]" />
-
-      <header className="sticky top-0 z-50 border-b border-[#D8D1C4]/45 bg-[#FBFAF6]/88 backdrop-blur-2xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:h-[72px] lg:px-8">
+    <main className="min-h-screen overflow-x-hidden bg-sn-canvas pb-24 text-sn-ink sm:pb-0">
+      <header className="sticky top-0 z-50 border-b border-sn-line/6 bg-sn-canvas/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 lg:px-8">
           <Logo />
-
-          <nav className="hidden items-center gap-8 lg:flex" aria-label="Main navigation">
+          <nav className="hidden items-center gap-8 md:flex" aria-label="Main navigation">
             {navItems.map((item) => (
-              <a key={item.label} href={item.href} className="text-sm font-semibold text-[#172033]/72 transition hover:text-[#172033]">
+              <Link key={item.label} href={item.href} className="text-sm font-medium text-sn-muted transition hover:text-sn-ink">
                 {item.label}
-              </a>
+              </Link>
             ))}
           </nav>
-
-          <div className="hidden items-center gap-3 lg:flex">
-            <Button href={`${appUrl}/login`} variant="ghost" className="rounded-full px-4 font-semibold text-[#172033]/72">
-              Owner Login
-            </Button>
-            <Button href={startTrialHref} className="gap-2 rounded-full px-5 shadow-[0_14px_34px_rgba(23,32,51,0.16)]">
-              Start Free Trial <ArrowRight size={16} />
-            </Button>
+          <div className="flex items-center gap-2">
+            <Link href={`${appUrl}/login`} className="rounded-full px-4 py-2 text-sm font-semibold text-sn-ink/80 transition hover:text-sn-ink">
+              Log in
+            </Link>
+            <Link
+              href={startTrialHref}
+              className="hidden rounded-full bg-sn-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-sn-ink/90 sm:inline-flex"
+            >
+              Start free
+            </Link>
           </div>
-
-          <details className="group relative lg:hidden">
-            <summary className="grid h-11 w-11 cursor-pointer list-none place-items-center rounded-full border border-[#D8D1C4]/70 bg-white text-[#172033] shadow-[0_12px_30px_rgba(23,32,51,0.08)] marker:hidden">
-              <Menu size={20} />
-            </summary>
-            <div className="absolute right-0 top-14 w-[min(300px,calc(100vw-40px))] rounded-[22px] border border-[#D8D1C4]/60 bg-white p-3 shadow-[0_24px_64px_rgba(23,32,51,0.12)]">
-              {navItems.map((item) => (
-                <a key={item.label} href={item.href} className="block rounded-[14px] px-4 py-3 text-sm font-semibold text-[#172033]/72 hover:bg-[#FBFAF6]">
-                  {item.label}
-                </a>
-              ))}
-              <div className="mt-2 grid gap-2 border-t border-[#D8D1C4]/55 pt-3">
-                <Button href={`${appUrl}/login`} variant="secondary" className="w-full rounded-full">
-                  Owner Login
-                </Button>
-                <Button href={startTrialHref} className="w-full rounded-full">
-                  Start Free Trial
-                </Button>
-              </div>
-            </div>
-          </details>
         </div>
       </header>
 
-      <section className="relative overflow-hidden">
-        <div className="mx-auto grid max-w-7xl gap-12 px-5 pb-16 pt-12 sm:pt-16 lg:grid-cols-[1.03fr_0.97fr] lg:items-center lg:px-8 lg:pb-24 lg:pt-20">
-          <div>
-            <p className="inline-flex rounded-full border border-[#C9D8D2] bg-white/82 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6F9287] shadow-[0_10px_26px_rgba(23,32,51,0.035)]">
-              Google reviews, Booking.com reviews, Airbnb reviews
-            </p>
-            <h1 className="mt-6 max-w-4xl font-serif text-[2.75rem] font-semibold leading-[1.05] tracking-tight text-[#172033] sm:text-5xl lg:text-[3.75rem]">
-              Get more <span className="text-[#5C8377]">5-star reviews</span> from guests who had a smoother stay.
-            </h1>
-            <p className="mt-6 max-w-2xl text-base font-medium leading-8 text-[#172033]/72 sm:text-lg sm:leading-9">
-              StayNest gives every guest one QR code for Wi-Fi, check-in, parking, house rules, checkout, local tips, AI help and your review links. Fewer unanswered questions means fewer avoidable complaints, better guest experience, and more chances to collect Google, Booking.com and Airbnb reviews.
-            </p>
-            <p className="mt-4 max-w-2xl text-sm font-bold leading-7 text-[#172033]/82">
-              Built for rental owners who want more reviews without awkward messages, paper binders or repeated WhatsApp replies.
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button href={startTrialHref} className="min-h-12 w-full gap-2 rounded-full px-6 text-sm shadow-[0_14px_34px_rgba(23,32,51,0.16)] sm:w-auto">
-                Start collecting better reviews <ArrowRight size={18} />
-              </Button>
-              <Button href="/g/example" variant="secondary" className="min-h-12 w-full rounded-full border-[#D8D1C4]/70 px-6 text-sm shadow-[0_10px_24px_rgba(23,32,51,0.045)] sm:w-auto">
-                See Example Guide
-              </Button>
-            </div>
-
-            <PreviewForm />
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              {heroStats.map((item) => (
-                <div key={item.value} className="rounded-[18px] border border-[#D8D1C4]/65 bg-white/86 p-4 shadow-[0_12px_32px_rgba(23,32,51,0.04)]">
-                  <p className="font-serif text-2xl font-semibold text-[#5C8377]">{item.value}</p>
-                  <p className="mt-1 text-xs font-bold leading-5 text-[#172033]/68">{item.label}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              {heroHighlights.map((item) => (
-                <div key={item} className="flex items-center gap-2 text-sm font-semibold text-[#172033]/72">
-                  <span className="grid h-7 w-7 place-items-center rounded-full border border-[#D8D1C4]/70 bg-white text-[#6F9287]">
-                    <CheckCircle2 size={14} />
-                  </span>
-                  {item}
-                </div>
-              ))}
-            </div>
+      <section className="mx-auto grid max-w-6xl items-center gap-14 px-5 pb-20 pt-12 sm:pt-16 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:pb-28 lg:pt-20">
+        <div className="text-center lg:text-left">
+          <p className="inline-flex items-center gap-2 rounded-full border border-sn-line/10 bg-white px-3.5 py-1.5 text-[13px] font-medium text-sn-muted">
+            <span className="h-1.5 w-1.5 rounded-full bg-sn-accent" aria-hidden="true" />
+            For Airbnb, Booking.com and villa hosts
+          </p>
+          <h1 className="mx-auto mt-6 max-w-2xl text-[2.6rem] font-extrabold leading-[1.04] tracking-[-0.035em] sm:text-6xl lg:mx-0 lg:text-[3.6rem] xl:text-[4rem]">
+            Fewer guest messages.
+            <span className="block text-sn-accent">More 5-star reviews.</span>
+          </h1>
+          <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-sn-muted lg:mx-0">
+            One QR code gives guests Wi-Fi, check-in, house rules, your local tips and an AI concierge that replies in their language. Then it points happy guests to your review page.
+          </p>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+            <PrimaryCta href={startTrialHref}>
+              Create my guide free <ArrowRight size={17} aria-hidden="true" />
+            </PrimaryCta>
+            <SecondaryCta href={EXAMPLE_HREF}>See the live demo</SecondaryCta>
           </div>
-
-          <PhoneMockup />
+          <ul className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-sn-muted lg:justify-start">
+            {["7 days free", "No card needed", "Ready in minutes"].map((item) => (
+              <li key={item} className="flex items-center gap-1.5">
+                <Check size={15} className="text-sn-accent" aria-hidden="true" />
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
+        <LiveDemoPhone />
       </section>
 
-      <section id="reviews" className="border-y border-[#D8D1C4]/45 bg-[#F1F5F1] py-16 lg:py-20">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Review growth system</p>
-            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">
-              More 5-star reviews start before checkout day
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm font-medium leading-7 text-[#172033]/72 sm:text-base">
-              Guests review the whole stay: how easy arrival felt, how quickly they found Wi-Fi, whether the rules were clear, and whether small questions became stress. StayNest improves those moments, then makes the review link easy to find.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            {reviewFunnel.map((item) => {
-              const Icon = item.icon;
-              return (
-                <article key={item.title} className="rounded-[24px] border border-[#C9D8D2] bg-white p-5 shadow-[0_14px_42px_rgba(23,32,51,0.045)]">
-                  <div className="grid h-11 w-11 place-items-center rounded-[15px] bg-[#172033] text-white">
-                    <Icon size={19} />
-                  </div>
-                  <h3 className="mt-6 text-lg font-semibold tracking-tight text-[#172033]">{item.title}</h3>
-                  <p className="mt-3 text-sm font-medium leading-7 text-[#172033]/72">{item.text}</p>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section id="hosts" className="border-y border-[#D8D1C4]/45 bg-white/64 py-14 lg:py-[72px]">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="mx-auto max-w-5xl text-center">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Trusted by hosts in Mavrovo</p>
-            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl">Built for hosts who live by reviews</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm font-medium leading-7 text-[#172033]/72 sm:text-base">
-              StayNest was created from real short-term rental experience: fewer repeated questions, clearer stays, and an easier path for happy guests to leave a review.
-            </p>
-          </div>
-
-          <div className="mx-auto mt-9 grid max-w-4xl gap-3 sm:grid-cols-3">
+      <section className="border-y border-sn-line/6 bg-white py-6">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-3 px-5 text-sm text-sn-muted sm:flex-row sm:gap-8">
+          <span>Guests already use it at</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
             {hostNames.map((name) => (
-              <div key={name} className="flex min-h-16 items-center justify-center gap-3 rounded-[20px] border border-[#D8D1C4]/60 bg-white px-4 text-center text-base font-semibold text-[#172033] shadow-[0_12px_32px_rgba(23,32,51,0.04)]">
-                <Home size={17} className="text-[#6F9287]" />
+              <span key={name} className="text-base font-semibold tracking-tight text-sn-ink/80">
                 {name}
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-10 grid gap-4 lg:grid-cols-3">
-            {platformCards.map((item) => {
-              const Icon = item.icon;
-              return (
-                <article key={item.title} className="rounded-[24px] border border-[#D8D1C4]/55 bg-[#FBFAF6] p-6 shadow-[0_14px_42px_rgba(23,32,51,0.045)]">
-                  <div className="grid h-12 w-12 place-items-center rounded-[16px] bg-[#172033] text-white">
-                    <Icon size={20} />
-                  </div>
-                  <h3 className="mt-6 text-xl font-semibold tracking-tight text-[#172033]">{item.title}</h3>
-                  <p className="mt-3 text-sm font-medium leading-7 text-[#172033]/72">{item.text}</p>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-[#172033] py-16 text-white lg:py-24">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:px-8">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#AFC8BD]">Why reviews improve</p>
-            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
-              Better ratings come from fewer tiny guest frustrations.
-            </h2>
-            <p className="mt-5 text-base font-medium leading-8 text-white/72">
-              Most bad reviews are not about one disaster. They are about small moments: unclear arrival, missing Wi-Fi, no checkout instructions, slow replies, or guests not knowing where to leave feedback. StayNest makes those moments calmer.
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {conversionReasons.map((item) => (
-              <div key={item} className="flex min-h-24 items-start gap-3 rounded-[20px] border border-white/10 bg-white/[0.07] p-4">
-                <BadgeCheck className="mt-0.5 shrink-0 text-[#AFC8BD]" size={20} />
-                <p className="text-sm font-semibold leading-6 text-white/84">{item}</p>
-              </div>
+              </span>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-16 lg:py-24">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">How it works</p>
-            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">From listing to review-ready guest guide in minutes</h2>
-          </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <article key={step.title} className="rounded-[24px] border border-[#D8D1C4]/55 bg-white p-5 shadow-[0_14px_42px_rgba(23,32,51,0.045)]">
-                  <div className="flex items-center justify-between">
-                    <div className="grid h-11 w-11 place-items-center rounded-[15px] border border-[#C9D8D2] bg-[#F1F5F1] text-[#6F9287]">
-                      <Icon size={19} />
-                    </div>
-                    <span className="font-serif text-lg font-semibold text-[#B2A995]">0{index + 1}</span>
-                  </div>
-                  <h3 className="mt-6 text-lg font-semibold text-[#172033]">{step.title}</h3>
-                  <p className="mt-3 text-sm font-medium leading-7 text-[#172033]/72">{step.text}</p>
-                </article>
-              );
-            })}
-          </div>
-
-          <HostDashboardShowcase />
+      <section className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-extrabold tracking-[-0.03em] sm:text-5xl">Guests ask. StayNest answers.</h2>
+          <p className="mt-4 text-lg leading-8 text-sn-muted">Everything a guest needs, on their phone, in one place.</p>
         </div>
-      </section>
-
-      <section id="features" className="border-y border-[#D8D1C4]/45 bg-white py-16 lg:py-24">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Features</p>
-              <h2 className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">Everything guests need before they decide what to rate you</h2>
+        <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <ChatCard />
+          <WifiCard />
+          <ReviewCard />
+          <div className="grid gap-4 md:col-span-2">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <SmallFeature icon={KeyRound} title="Check-in" text="Arrival steps, parking and check-out in plain words." />
+              <SmallFeature icon={MessageCircle} title="Your tips" text="Restaurants, beaches and the pharmacy, with maps." />
+              <SmallFeature icon={Languages} title="Any language" text="Guests ask in their language and get answers in it." />
             </div>
-            <Button href="/g/example" variant="secondary" className="w-full rounded-full border-[#D8D1C4]/70 shadow-[0_10px_24px_rgba(23,32,51,0.045)] sm:w-fit">
-              See Example Guide
-            </Button>
-          </div>
-
-          <div className="mt-10 grid gap-4 lg:grid-cols-3">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <article
-                  key={feature.title}
-                  className={`rounded-[24px] border p-6 shadow-[0_14px_42px_rgba(23,32,51,0.045)] ${
-                    feature.featured
-                      ? "border-[#C9D8D2] bg-[linear-gradient(145deg,#FFFFFF_0%,#F0F6F2_100%)] text-[#172033] lg:row-span-2"
-                      : "border-[#D8D1C4]/55 bg-[#FBFAF6] text-[#172033]"
-                  }`}
-                >
-                  <div className={`grid h-11 w-11 place-items-center rounded-[15px] ${feature.featured ? "bg-white text-[#6F9287] shadow-[0_10px_24px_rgba(23,32,51,0.045)]" : "bg-white text-[#6F9287]"}`}>
-                    <Icon size={20} />
-                  </div>
-                  <h3 className={`${feature.featured ? "mt-9 font-serif text-3xl font-semibold" : "mt-6 text-lg font-semibold"} tracking-tight`}>{feature.title}</h3>
-                  <p className={`${feature.featured ? "mt-4 text-base leading-8 text-[#172033]/72" : "mt-3 text-sm leading-7 text-[#172033]/72"} font-medium`}>{feature.text}</p>
-                  {feature.featured ? (
-                    <div className="mt-9 rounded-[20px] border border-[#D8D1C4]/55 bg-white/78 p-4">
-                      <p className="text-sm font-semibold">Reviews without awkward follow-up</p>
-                      <p className="mt-2 text-sm font-medium leading-6 text-[#172033]/72">Guests get helped first, then find the review link naturally when they are ready to check out.</p>
-                    </div>
-                  ) : null}
-                </article>
-              );
-            })}
           </div>
         </div>
       </section>
 
-      <section id="pricing" className="py-16 lg:py-24">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Pricing</p>
-            <h2 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">A tiny yearly cost for more review opportunities</h2>
-          </div>
-
-          <div className="mx-auto mt-10 max-w-xl">
-            <article className="relative rounded-[28px] border border-[#AFC8BD] bg-white p-6 shadow-[0_18px_54px_rgba(23,32,51,0.07)] ring-1 ring-[#AFC8BD]/60 sm:p-8">
-              <p className="absolute right-6 top-6 rounded-full bg-[#EFF5F1] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#6F9287] ring-1 ring-[#C9D8D2]">
-                Everything included
-              </p>
-              <div className="pr-32">
-                <h3 className="font-serif text-3xl font-semibold text-[#172033]">StayNest Annual</h3>
-                <p className="mt-3 text-sm font-medium leading-6 text-[#172033]/72">
-                  One plan, one price, billed once a year. Review links, QR guide and AI guest chat are all included.
-                </p>
-              </div>
-              <div className="mt-7 flex items-end gap-2">
-                <span className="text-5xl font-semibold tracking-tight text-[#172033]">€20</span>
-                <span className="pb-2 text-sm font-semibold text-[#172033]/72">/year</span>
-              </div>
-              <p className="mt-4 inline-flex rounded-full bg-[#F1F5F1] px-3 py-1 text-xs font-semibold text-[#6F9287] ring-1 ring-[#C9D8D2]/70">
-                Less than one night&rsquo;s cleaning fee
-              </p>
-              <div className="mt-7 grid gap-3">
-                {planFeatures.map((item) => (
-                  <div key={item} className="flex items-center gap-3 text-sm font-medium text-[#172033]/72">
-                    <CheckCircle2 size={18} className="shrink-0 text-[#6F9287]" />
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <Button href={`${appUrl}/register`} className="mt-8 w-full rounded-full shadow-[0_14px_34px_rgba(23,32,51,0.14)]">
-                Start 7 days free
-              </Button>
-              <p className="mt-3 text-center text-xs font-semibold text-[#172033]/72">
-                7 days free, no card needed. Then €20 per year, cancel any time.
-              </p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-5 pb-16 lg:px-8 lg:pb-24">
-        <div className="mx-auto grid max-w-7xl gap-8 overflow-hidden rounded-[32px] border border-[#D8D1C4]/55 bg-white p-6 shadow-[0_22px_70px_rgba(23,32,51,0.06)] sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
+      <section className="bg-white py-20 lg:py-28">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 lg:grid-cols-2 lg:px-8">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#6F9287]">Start hosting smarter</p>
-            <h2 className="mt-3 max-w-2xl font-serif text-3xl font-semibold tracking-tight text-[#172033] sm:text-4xl lg:text-5xl">Ready to turn better stays into better reviews?</h2>
-            <p className="mt-4 max-w-2xl text-base font-medium leading-8 text-[#172033]/72">
-              Create your guide, print one QR code and give every happy guest a clear path to your review page.
+            <h2 className="text-3xl font-extrabold tracking-[-0.03em] sm:text-5xl">See your own place in StayNest.</h2>
+            <p className="mt-4 max-w-lg text-lg leading-8 text-sn-muted">
+              Paste your Booking.com link and get a preview of your guide in about a minute.
             </p>
           </div>
+          <PreviewForm />
+        </div>
+      </section>
 
-          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
-            <Button href={startTrialHref} className="min-h-12 w-full rounded-full shadow-[0_14px_34px_rgba(23,32,51,0.14)] sm:w-auto">
-              Start Free Trial
-            </Button>
-            <Button href="/g/example" variant="secondary" className="min-h-12 w-full rounded-full border-[#D8D1C4]/70 shadow-[0_10px_24px_rgba(23,32,51,0.045)] sm:w-auto">
-              See Example Guide
-            </Button>
+      <section id="how" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-20 lg:px-8 lg:py-28">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-extrabold tracking-[-0.03em] sm:text-5xl">Live in three steps</h2>
+          <p className="mt-4 text-lg leading-8 text-sn-muted">Most hosts finish before their coffee gets cold.</p>
+        </div>
+        <ol className="mt-12 grid gap-4 md:grid-cols-3">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            return (
+              <li key={step.title} className="rounded-[28px] border border-sn-line/8 bg-white p-7">
+                <div className="flex items-center justify-between">
+                  <span className="grid h-11 w-11 place-items-center rounded-2xl bg-sn-ink text-white">
+                    <Icon size={19} aria-hidden="true" />
+                  </span>
+                  <span className="text-4xl font-extrabold tracking-tight text-sn-line/10">{index + 1}</span>
+                </div>
+                <h3 className="mt-6 text-lg font-bold">{step.title}</h3>
+                <p className="mt-2 text-[15px] leading-7 text-sn-muted">{step.text}</p>
+              </li>
+            );
+          })}
+        </ol>
+        <div className="mt-10 flex justify-center">
+          <PrimaryCta href={startTrialHref}>
+            Start my free week <ArrowRight size={17} aria-hidden="true" />
+          </PrimaryCta>
+        </div>
+      </section>
+
+      <section id="pricing" className="scroll-mt-20 bg-white py-20 lg:py-28">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 lg:grid-cols-2 lg:px-8">
+          <div>
+            <h2 className="text-3xl font-extrabold tracking-[-0.03em] sm:text-5xl">One plan. Everything in.</h2>
+            <p className="mt-4 max-w-lg text-lg leading-8 text-sn-muted">
+              No tiers to compare and no per-guest fees. Try it for a week, then keep it for less than one cleaning fee a year.
+            </p>
+            <div className="mt-8 flex items-center gap-3 text-sm text-sn-muted">
+              <QrCode size={18} className="text-sn-accent" aria-hidden="true" />
+              Your printed QR code keeps working for as long as you are subscribed.
+            </div>
+          </div>
+          <article className="rounded-[32px] bg-sn-ink p-8 text-white shadow-[0_40px_100px_rgba(17,24,39,0.25)] sm:p-10">
+            <p className="text-sm font-semibold text-white/60">StayNest</p>
+            <div className="mt-3 flex items-end gap-2">
+              <span className="text-6xl font-extrabold tracking-tight">€20</span>
+              <span className="pb-2 text-white/60">per year</span>
+            </div>
+            <p className="mt-2 text-sm text-white/60">About €1.70 a month, billed once a year.</p>
+            <ul className="mt-8 grid gap-3">
+              {planFeatures.map((item) => (
+                <li key={item} className="flex items-start gap-3 text-[15px] text-white/85">
+                  <Check size={18} className="mt-0.5 shrink-0 text-[#8FD3C9]" aria-hidden="true" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Link
+              href={startTrialHref}
+              className="focus-ring mt-9 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold text-sn-ink transition hover:bg-white/90"
+            >
+              Start 7 days free <ArrowRight size={17} aria-hidden="true" />
+            </Link>
+            <p className="mt-3 text-center text-xs text-white/55">No card needed. Cancel any time.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-3xl px-5 py-20 lg:py-28">
+        <h2 className="text-center text-3xl font-extrabold tracking-[-0.03em] sm:text-4xl">Questions</h2>
+        <div className="mt-10 divide-y divide-sn-line/8 rounded-[28px] border border-sn-line/8 bg-white">
+          {faqs.map((faq) => (
+            <details key={faq.q} className="group px-6 py-1">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3 text-[15px] font-semibold [&::-webkit-details-marker]:hidden">
+                {faq.q}
+                <ChevronDown size={18} className="shrink-0 text-sn-muted transition group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <p className="pb-5 text-[15px] leading-7 text-sn-muted">{faq.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section className="px-5 pb-16 lg:px-8">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-[36px] bg-sn-ink px-6 py-16 text-center text-white sm:px-12 lg:py-20">
+          <h2 className="mx-auto max-w-2xl text-3xl font-extrabold tracking-[-0.03em] sm:text-5xl">Your next guest arrives soon. Be ready.</h2>
+          <p className="mx-auto mt-4 max-w-lg text-lg leading-8 text-white/65">Set up your guide today and print the QR code before check-in.</p>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link
+              href={startTrialHref}
+              className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-sn-ink transition hover:bg-white/90"
+            >
+              Create my guide free <ArrowRight size={17} aria-hidden="true" />
+            </Link>
+            <Link
+              href={EXAMPLE_HREF}
+              className="focus-ring inline-flex min-h-12 items-center justify-center rounded-full border border-white/20 px-6 text-[15px] font-semibold text-white transition hover:border-white/40"
+            >
+              See the live demo
+            </Link>
           </div>
         </div>
       </section>
-      <AppLegalLinks className="mx-auto max-w-7xl px-5 pb-10 text-[#172033]/72 lg:px-8" />
+
+      <AppLegalLinks className="mx-auto max-w-6xl px-5 pb-10 text-sn-muted lg:px-8" />
+
+      <StickyMobileCta href={startTrialHref} label="Create my guide free" />
     </main>
   );
 }

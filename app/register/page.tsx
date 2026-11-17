@@ -1,16 +1,16 @@
-import { CheckCircle2, Home } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { AppLegalLinks } from "@/components/app-legal-links";
-import { Button } from "@/components/ui/button";
 import { GoogleMark } from "@/components/google-mark";
 import { InAppBrowserNotice } from "@/components/in-app-browser-notice";
 import { LoadingLink } from "@/components/loading-link";
 import { SubmitButton } from "@/components/submit-button";
 import { TurnstileWidget } from "@/components/turnstile-widget";
-import { Field, inputClass, Panel } from "@/components/ui/panel";
+import { Field, inputClass } from "@/components/ui/panel";
 import { registerOwner } from "@/app/auth-actions";
 import { findReferrer } from "@/lib/referral-service";
 import { normalizeReferralCode } from "@/lib/referrals";
 import { normalizePlanKey, planOption } from "@/lib/billing";
+import { passwordRulesText } from "@/lib/password-policy";
 
 export const metadata = {
   title: "Start getting more 5-star reviews",
@@ -23,14 +23,11 @@ export const metadata = {
 };
 
 const planFeatures = [
+  "A mobile guest guide with one QR code",
+  "Wi-Fi, check-in, house rules and your local tips",
+  "An AI concierge that answers in the guest's language",
   "Google, Booking.com and Airbnb review links",
-  "Checkout prompts for happy guests",
-  "Mobile QR guest guide",
-  "Wi-Fi, check-in, parking and house rules",
-  "Local recommendations that improve each stay",
-  "AI guest chat trained on your property",
-  "Answers in your guest\u2019s own language",
-  "Booking.com listing import"
+  "Fill it in from your Booking.com listing"
 ];
 
 type RegisterPageProps = {
@@ -49,32 +46,29 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   const referralCode = referrer ? normalizeReferralCode(searchParams?.ref) : null;
   const googleHref = `/auth/google?plan=${selectedPlan}${previewToken ? `&previewToken=${encodeURIComponent(previewToken)}` : ""}${referralCode ? `&ref=${referralCode}` : ""}`;
   const selectedOption = planOption(selectedPlan);
-  const selectedTier = selectedOption.tier;
 
   return (
-    <main className="min-h-screen bg-mist px-5 py-8 text-ink">
-      <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-5xl items-center gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-        <Panel className="order-2 lg:order-1">
-          <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-[8px] bg-lagoon text-white">
-              <Home size={20} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">Create your owner account</h1>
-              <p className="text-sm text-ink/60">
-                {referrer ? "Start your 3-month free trial. No card needed." : "Start your 7-day free trial. No card needed."}
-              </p>
-            </div>
-          </div>
+    <main className="min-h-screen bg-sn-canvas px-5 py-8 text-sn-ink sm:py-12">
+      <div className="mx-auto grid max-w-5xl items-start gap-6 lg:grid-cols-[1fr_0.9fr] lg:gap-10">
+        <section className="rounded-[28px] border border-sn-line/8 bg-white p-6 shadow-[0_24px_70px_rgba(17,24,39,0.06)] sm:p-8">
+          <a href="/" className="inline-flex items-center gap-2 text-sm font-bold">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/staynest-logo.png" alt="" className="h-8 w-8 object-contain" />
+            StayNest
+          </a>
+          <h1 className="mt-6 text-3xl font-extrabold tracking-[-0.02em]">Create your guest guide</h1>
+          <p className="mt-2 text-[15px] text-sn-muted">
+            {referrer ? "3 months free" : "7 days free"}. No card needed. Ready in minutes.
+          </p>
 
           {referrer ? (
-            <div className="mt-5 rounded-[12px] border border-[#5F9D99]/30 bg-[#5F9D99]/10 px-4 py-3 text-sm font-semibold text-[#2F6B67]">
+            <div className="mt-5 rounded-2xl bg-sn-accent-soft px-4 py-3 text-sm font-semibold text-sn-accent">
               {referrer.name.split(" ")[0] || "A StayNest host"} invited you: your free trial is 3 months instead of 7 days.
             </div>
           ) : null}
 
           {searchParams?.error ? (
-            <div className="mt-5 rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+            <div role="alert" className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
               {searchParams.error}
             </div>
           ) : null}
@@ -88,7 +82,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
             loadingText="Opening Google..."
             eventName="register_google_started"
             eventParams={{ plan: selectedPlan, preview: Boolean(previewToken) }}
-            className="focus-ring inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-ink/10 transition hover:bg-white/80"
+            className="focus-ring mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-[15px] font-semibold text-sn-ink ring-1 ring-sn-line/15 transition hover:ring-sn-line/30"
           >
             <span className="grid h-6 w-6 place-items-center rounded-full bg-white">
               <GoogleMark />
@@ -96,74 +90,62 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
             Continue with Google
           </LoadingLink>
 
-          <div className="my-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-wide text-ink/45">
-            <div className="h-px flex-1 bg-ink/10" />
-            Or use email
-            <div className="h-px flex-1 bg-ink/10" />
+          <div className="my-6 flex items-center gap-3 text-xs font-medium text-sn-muted">
+            <div className="h-px flex-1 bg-sn-line/10" />
+            or with email
+            <div className="h-px flex-1 bg-sn-line/10" />
           </div>
 
           <form action={registerOwner} className="grid gap-4">
             <input type="hidden" name="plan" value={selectedPlan} />
             {previewToken && <input type="hidden" name="previewToken" value={previewToken} />}
             {referralCode && <input type="hidden" name="ref" value={referralCode} />}
-            <Field label="Full name">
+            <Field label="Your name">
               <input name="name" className={inputClass} autoComplete="name" required />
             </Field>
             <Field label="Email">
               <input name="email" className={inputClass} type="email" autoComplete="email" required />
             </Field>
             <Field label="Password">
-              <input name="password" className={inputClass} type="password" autoComplete="new-password" required />
+              <input name="password" className={inputClass} type="password" autoComplete="new-password" minLength={8} required aria-describedby="password-rules" />
             </Field>
-            <Field label="Confirm password">
-              <input name="confirmPassword" className={inputClass} type="password" autoComplete="new-password" required />
-            </Field>
+            <p id="password-rules" className="-mt-2 text-xs leading-5 text-sn-muted">{passwordRulesText()}</p>
             <TurnstileWidget className="mt-1" />
-            <SubmitButton pendingText="Creating account..." className="mt-2 min-h-12 rounded-[16px] font-black">
-              Start my review-ready guide
+            <SubmitButton pendingText="Creating your guide..." className="mt-1 min-h-12 rounded-full bg-sn-ink text-[15px] font-semibold text-white hover:bg-sn-ink/90">
+              Create my free guide
             </SubmitButton>
           </form>
 
-          <p className="mt-5 text-center text-sm text-ink/55">
+          <p className="mt-5 text-center text-sm text-sn-muted">
             Already have an account?{" "}
-            <a href="/login" className="font-semibold text-lagoon">
+            <a href="/login" className="font-semibold text-sn-accent">
               Log in
             </a>
           </p>
-          <AppLegalLinks className="mt-6 border-t border-ink/10 pt-5" />
-        </Panel>
+        </section>
 
-        <Panel className="order-1 bg-ink text-white lg:order-2">
-          <p className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-white/70">
-            Review growth plan
-          </p>
-          <div className="mt-5 flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-3xl font-extrabold">{selectedOption.name}</h2>
-              <p className="mt-2 text-white/65">
-                {referrer ? "3 months free" : "7 days free"}, then {selectedOption.price} per year to keep your QR guide, AI answers and review links live.
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold">{selectedOption.price}</p>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/60">per year</p>
-            </div>
-          </div>
-          {selectedOption.savings ? (
-            <p className="mt-4 rounded-full bg-white/10 px-3 py-2 text-sm font-bold text-white">
-              {selectedOption.savings} yearly, {selectedOption.comparison}.
-            </p>
-          ) : null}
-          <div className="mt-6 grid gap-3">
+        <aside className="rounded-[28px] bg-sn-ink p-6 text-white sm:p-8 lg:sticky lg:top-12">
+          <p className="text-sm font-semibold text-white/60">What you get</p>
+          <ul className="mt-5 grid gap-4">
             {planFeatures.map((item) => (
-              <div key={item} className="flex gap-3 rounded-[8px] bg-white/8 p-3 text-sm font-medium text-white/82">
-                <CheckCircle2 className="mt-0.5 shrink-0 text-white" size={17} />
+              <li key={item} className="flex gap-3 text-[15px] text-white/85">
+                <CheckCircle2 className="mt-0.5 shrink-0 text-[#8FD3C9]" size={18} aria-hidden="true" />
                 {item}
-              </div>
+              </li>
             ))}
+          </ul>
+          <div className="mt-8 border-t border-white/10 pt-6">
+            <p className="text-sm text-white/60">
+              {referrer ? "3 months free" : "7 days free"}, then
+            </p>
+            <p className="mt-1 text-3xl font-extrabold tracking-tight">
+              {selectedOption.price} <span className="text-base font-medium text-white/60">per year</span>
+            </p>
+            <p className="mt-2 text-sm text-white/60">If you do not subscribe, nothing is charged. Your guide simply pauses.</p>
           </div>
-        </Panel>
+        </aside>
       </div>
+      <AppLegalLinks className="mx-auto mt-10 max-w-5xl text-sn-muted" />
     </main>
   );
 }

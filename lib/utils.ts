@@ -10,7 +10,8 @@ function envUrl(value: string | undefined, fallback: string) {
 }
 
 export function getSiteUrl() {
-  return envUrl(process.env.NEXT_PUBLIC_SITE_URL, process.env.NODE_ENV === "production" ? "https://www.staynest.site" : "http://localhost:3000");
+  const url = envUrl(process.env.NEXT_PUBLIC_SITE_URL, process.env.NODE_ENV === "production" ? "https://www.staynest.site" : "http://localhost:3000");
+  return url === "https://staynest.site" ? "https://www.staynest.site" : url;
 }
 
 export function getAppUrl() {

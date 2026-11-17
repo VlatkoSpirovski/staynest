@@ -2,12 +2,15 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Home, KeyRound, Map, Phone, Pill, ShieldAlert, Star, Utensils, Wifi } from "lucide-react";
+import { ArrowRight, Home, KeyRound, Map, Phone, Pill, ShieldAlert, Star, Utensils, Wifi } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
 import { GuestChatLauncher } from "@/components/guest-chat-launcher";
 import { MenuLink, PoweredByStayNest } from "@/app/stay/[slug]/guide-ui";
 import { GuestGuideSectionContent, type GuestGuideSectionProperty } from "@/components/guest-guide-section";
+import { CopyButton } from "@/components/copy-button";
+import { examplePublicGuide } from "@/lib/example-public-guide";
+import { getAppUrl } from "@/lib/utils";
 import { getGuideTheme, guideThemeStyle } from "@/themes";
 
 type GuestProperty = GuestGuideSectionProperty & {
@@ -53,6 +56,14 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
     { id: "emergency", href: `${baseHref}/emergency`, icon: <ShieldAlert size={21} />, title: t.menu.emergency.title, subtitle: t.menu.emergency.subtitle }
   ], [baseHref, t]);
   const sectionIds = useMemo(() => new Set(menuItems.map((item) => item.id)), [menuItems]);
+  const showWifiCard = Boolean(property.wifiName);
+  const visibleMenuItems = showWifiCard ? menuItems.filter((item) => item.id !== "wifi") : menuItems;
+  const isExample = property.slug === examplePublicGuide.slug;
+  const [embedded, setEmbedded] = useState(true);
+
+  useEffect(() => {
+    setEmbedded(window.self !== window.top);
+  }, []);
 
   useEffect(() => {
     menuItems.forEach((item) => router.prefetch(item.href));
@@ -96,7 +107,7 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
     );
   }
 
-  function HeroImage({ className = "" }: { className?: string }) {
+  function HeroImage({ className = "", overlay = true }: { className?: string; overlay?: boolean }) {
     const canOptimizeCover = property.coverImageUrl && !property.coverImageUrl.startsWith("data:");
     return (
       <div className={`${/\b(absolute|fixed)\b/.test(className) ? "" : "relative "}overflow-hidden ${className}`} style={{ background: "var(--guide-hero-fallback)" }}>
@@ -105,7 +116,34 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
         ) : property.coverImageUrl ? (
           <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${property.coverImageUrl})`, filter: "var(--guide-hero-image-filter)" }} />
         ) : null}
-        <div className="absolute inset-0" style={{ background: "var(--guide-hero-overlay)" }} />
+        {overlay ? <div className="absolute inset-0" style={{ background: "var(--guide-hero-overlay)" }} /> : null}
+      </div>
+    );
+  }
+
+  function WifiCard() {
+    return (
+      <div
+        className={`${layout === "modern" ? "" : "col-span-2 "}rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] p-4 text-left text-[var(--guide-text)]`}
+        style={{ background: "var(--guide-card-bg)", boxShadow: "var(--guide-card-shadow), var(--guide-card-inset-shadow)", backdropFilter: "var(--guide-card-backdrop)" }}
+      >
+        <div className="flex items-center gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[var(--guide-icon-radius)] bg-[var(--guide-icon-bg)] text-[var(--guide-accent)] shadow-[var(--guide-icon-shadow)]">
+            <Wifi size={21} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-black tracking-tight">{property.wifiName}</p>
+            <p className="truncate font-mono text-[13px] font-semibold text-[var(--guide-muted)]">{property.wifiPassword || t.content.askHost}</p>
+          </div>
+        </div>
+        {property.wifiPassword ? (
+          <CopyButton
+            value={property.wifiPassword}
+            label={t.content.copyWifiPassword}
+            copiedLabel={t.content.passwordCopied}
+            className="mt-3 w-full rounded-[var(--guide-button-radius)] border-0 bg-[var(--guide-button-bg)] text-[var(--guide-button-text)] hover:bg-[var(--guide-button-bg)] hover:opacity-90"
+          />
+        ) : null}
       </div>
     );
   }
@@ -113,7 +151,8 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
   function MenuGrid() {
     return (
       <section className={menuClass}>
-        {menuItems.map((item) => (
+        {showWifiCard ? <WifiCard /> : null}
+        {visibleMenuItems.map((item) => (
           <MenuLink
             key={item.href}
             {...item}
@@ -127,6 +166,21 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
           />
         ))}
       </section>
+    );
+  }
+
+  function DemoBar() {
+    if (!isExample || embedded) return null;
+    return (
+      <a
+        href={`${getAppUrl()}/register?plan=ai`}
+        className="sticky top-0 z-40 flex items-center justify-center gap-2 bg-[#111827] px-4 py-2.5 text-center text-[13px] font-semibold text-white"
+        style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
+      >
+        <span className="text-white/70">This is a demo guide.</span>
+        Make one for your place, free
+        <ArrowRight size={14} aria-hidden="true" />
+      </a>
     );
   }
 
@@ -155,6 +209,7 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
   if (layout === "modern") {
     return (
       <main className="min-h-screen text-[var(--guide-text)]" style={{ ...themeStyle, background: "var(--guide-app-bg)" }}>
+        <DemoBar />
         <div className="mx-auto min-h-screen max-w-[430px] shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)", fontFamily: "var(--guide-body-font)" }}>
           <header className="flex items-center gap-3 border-b border-[var(--guide-section-divider)] px-5 py-5">
             <div className="flex min-w-0 items-center gap-3">
@@ -175,7 +230,7 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
           </section>
 
           <div className="px-5">
-            <HeroImage className="h-[var(--guide-hero-height)] rounded-[var(--guide-hero-radius)] shadow-[0_18px_48px_rgba(17,24,39,0.10)]" />
+            <HeroImage overlay={false} className="h-[var(--guide-hero-height)] rounded-[var(--guide-hero-radius)] shadow-[0_18px_48px_rgba(17,24,39,0.10)]" />
           </div>
 
           <MenuGrid />
@@ -189,6 +244,7 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
   if (layout === "mediterranean") {
     return (
       <main className="min-h-screen text-[var(--guide-text)]" style={{ ...themeStyle, background: "var(--guide-app-bg)" }}>
+        <DemoBar />
         <div className="mx-auto min-h-screen max-w-[430px] px-4 py-4 shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)", fontFamily: "var(--guide-body-font)" }}>
           <header className="mb-4 flex items-center gap-3 px-1">
             <LogoMark soft />
@@ -214,6 +270,7 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
   if (layout === "darkLuxury") {
     return (
       <main className="min-h-screen text-[var(--guide-text)]" style={{ ...themeStyle, background: "var(--guide-app-bg)" }}>
+        <DemoBar />
         <div className="mx-auto min-h-screen max-w-[430px] shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)", fontFamily: "var(--guide-body-font)" }}>
           <section className="relative min-h-[var(--guide-hero-height)] overflow-hidden text-[var(--guide-hero-text)]">
             <HeroImage className="absolute inset-0" />
@@ -240,6 +297,7 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
 
   return (
     <main className="min-h-screen text-[var(--guide-text)]" style={{ ...themeStyle, background: "var(--guide-app-bg)" }}>
+        <DemoBar />
       <div className="mx-auto min-h-screen max-w-[430px] shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)", fontFamily: "var(--guide-body-font)" }}>
         <div className="px-4 pt-4">
         <section className="relative min-h-[var(--guide-hero-height)] overflow-hidden rounded-[var(--guide-hero-radius)] text-white shadow-[0_26px_74px_rgba(76,55,37,0.20)]">

@@ -10,6 +10,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        sn: {
+          canvas: "rgb(var(--sn-canvas) / <alpha-value>)",
+          surface: "rgb(var(--sn-surface) / <alpha-value>)",
+          ink: "rgb(var(--sn-ink) / <alpha-value>)",
+          muted: "rgb(var(--sn-muted) / <alpha-value>)",
+          line: "rgb(var(--sn-line) / <alpha-value>)",
+          accent: "rgb(var(--sn-accent) / <alpha-value>)",
+          "accent-soft": "rgb(var(--sn-accent-soft) / <alpha-value>)",
+          warn: "rgb(var(--sn-warn) / <alpha-value>)",
+          danger: "rgb(var(--sn-danger) / <alpha-value>)"
+        },
         ink: "#111827",
         mist: "#fafafa",
         ivory: "#fafafa",

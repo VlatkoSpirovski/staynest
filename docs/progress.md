@@ -82,3 +82,13 @@ Before deploying:
 
 ## Next: Stage 2 (rest)
 Design system and redesign of the existing screens (landing, auth, dashboard editor, admin, public guide), light and dark mode, mobile, accessibility, checked in the browser.
+
+## Stage 2: conversion redesign (17.11.2026, local)
+
+- Landing rebuilt: one message ("Fewer guest messages. More 5-star reviews."), the real example guide running live inside a phone frame (interactive on desktop), "see your own place" Booking.com preview, three steps, one price, FAQ, final call to action; mobile sticky button appears after scrolling (`components/sticky-mobile-cta.tsx`).
+- Guest guide: Wi-Fi with one-tap copy right on the home screen (all templates); Modern no longer washes out the cover photo; footer links "Powered by StayNest" to the site; the demo guide shows a "Make one for your place" bar when opened directly (not inside the landing frame).
+- Dashboard: Home tab is state-based. New host: Booking.com import first, or start from scratch. Setting up: 4 essentials with a "Next" button. Essentials done: share card with QR, download, copy link and printing tips, then optional extras with the reason each one helps. Content tab grouped (Essentials / Feel at home / Reviews and help). Design tab: accent colour and serif/rounded options exposed, sticky Apply bar only when something changed. Settings renamed Share and reuses the share card. "Not set up yet" instead of "Live for guests" when there is no guide; no subscribe button before a guide exists.
+- Fixed: template preview photo had zero height (relative overrode absolute, same bug as the guide on 13.11); Design tab claimed unsaved changes when the saved accent was not one of the theme options.
+- Signup: three fields (password confirmation dropped on signup only; reset and change password still confirm), password rules shown up front.
+- Checked: tsc, next lint (only existing img warnings), 32 Vitest tests, screenshots desktop 1440 and mobile 390 of every changed screen with no horizontal overflow, real local signup lands in the new dashboard. `next build` not run (dev server was using `.next`).
+- Host app pass (same day): login rebuilt ("Welcome back", one button); edit sheets are a side panel on desktop and a bottom sheet on phones, one column, a "what guests see" line per section, example text in every field, Escape and an icon to close, one save button style; saves show a toast at the top that fades out (errors stay until dismissed); trial banner only on Home unless 2 days or less are left or it ended; phone header shows the property, its status and a Guest view link; lighter tab bar. Real save tested locally (toast shown, row updated).

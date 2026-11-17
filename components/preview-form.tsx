@@ -1,51 +1,44 @@
 "use client";
 
 import { useFormState } from "react-dom";
-import { Sparkles } from "lucide-react";
+import { Link2 } from "lucide-react";
 import { SubmitButton } from "@/components/submit-button";
 import { generatePreviewFromUrl } from "@/app/preview-actions";
-import { Field, inputClass, Panel } from "@/components/ui/panel";
 
 export function PreviewForm() {
   const [state, formAction] = useFormState(generatePreviewFromUrl, { error: "" });
 
   return (
-    <Panel className="mt-12 bg-white p-6 shadow-[0_20px_60px_rgba(23,32,51,0.06)] rounded-[24px] border border-[#D8D1C4]/55 max-w-xl">
-      <div className="flex items-center gap-3">
-        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#EFF5F1] text-[#6F9287]">
-          <Sparkles size={18} />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-[#172033]">See your property inside StayNest</h3>
-          <p className="text-sm font-medium text-[#172033]/60">Preview a review-ready guest guide from your Booking.com listing.</p>
-        </div>
-      </div>
-
-      <form action={formAction} className="mt-6 grid gap-4">
-        {state.error ? (
-          <div className="rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
-            {state.error}
-          </div>
-        ) : null}
-
-        <Field label="Booking.com listing URL">
+    <form action={formAction} className="w-full">
+      <label htmlFor="preview-listing-url" className="sr-only">
+        Booking.com listing URL
+      </label>
+      <div className="flex flex-col gap-2 rounded-[22px] border border-sn-line/10 bg-white p-2 shadow-[0_18px_50px_rgba(17,24,39,0.08)] sm:flex-row sm:items-center sm:rounded-full">
+        <div className="flex min-h-12 flex-1 items-center gap-2 px-3">
+          <Link2 size={18} className="shrink-0 text-sn-accent" aria-hidden="true" />
           <input
+            id="preview-listing-url"
             name="listingUrl"
             type="url"
-            placeholder="https://www.booking.com/hotel/..."
-            className={inputClass}
             required
+            placeholder="Paste your Booking.com link"
+            className="min-w-0 flex-1 bg-transparent text-[15px] font-medium text-sn-ink outline-none placeholder:text-sn-muted/70"
           />
-        </Field>
-
-        <SubmitButton pendingText="Reading listing and building preview..." className="min-h-12 w-full rounded-[14px] text-sm shadow-[0_12px_28px_rgba(23,32,51,0.12)]">
-          Generate review-ready preview
+        </div>
+        <SubmitButton
+          pendingText="Building your preview..."
+          className="min-h-12 rounded-full bg-sn-ink px-6 text-[15px] font-semibold text-white hover:bg-sn-ink/90"
+        >
+          See my guide
         </SubmitButton>
-
-        <p className="text-center text-xs font-semibold text-[#172033]/45 uppercase tracking-wider mt-1">
-          No registration required.
+      </div>
+      {state.error ? (
+        <p role="alert" className="mt-3 rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700">
+          {state.error}
         </p>
-      </form>
-    </Panel>
+      ) : (
+        <p className="mt-3 text-sm text-sn-muted">Free preview of your own property. No account needed.</p>
+      )}
+    </form>
   );
 }
