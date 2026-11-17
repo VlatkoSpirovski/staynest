@@ -27,7 +27,12 @@ export type GuestMessages = {
     essentials: { title: string; subtitle: string };
     reviews: { title: string; subtitle: string };
     emergency: { title: string; subtitle: string };
+    explore: { title: string; subtitle: string };
   };
+  heroTagline: string;
+  guestGuide: string;
+  readMore: string;
+  showLess: string;
   chat: {
     stayAssistant: string;
     propertyBot: (name: string) => string;
@@ -43,9 +48,10 @@ export type GuestMessages = {
     thinking: string;
     errorAnswer: string;
     errorNow: string;
+    conciergeHint: string;
   };
   sections: Record<
-    "wifi" | "contact" | "arrival" | "house" | "restaurants" | "activities" | "essentials" | "reviews" | "emergency",
+    "wifi" | "contact" | "arrival" | "house" | "restaurants" | "activities" | "essentials" | "reviews" | "emergency" | "explore",
     { eyebrow: string; title: string }
   >;
   content: {
@@ -75,6 +81,13 @@ export type GuestMessages = {
     emergencyFallback: string;
     openMap: string;
     whatsappStaying: (property: string) => string;
+    showPassword: string;
+    hidePassword: string;
+    reviewOn: (platform: string) => string;
+    noPlaces: string;
+    eat: string;
+    doNearby: string;
+    usefulPlaces: string;
   };
 };
 
@@ -85,6 +98,10 @@ const en: GuestMessages = {
   heroDescription: "Your digital concierge for Wi-Fi, arrival, house info, local tips and direct host contact.",
   poweredBy: "Powered by",
   back: "Back",
+  heroTagline: "Everything for a smooth stay",
+  guestGuide: "Guest guide",
+  readMore: "Read more",
+  showLess: "Show less",
   heroEyebrow: { classic: "Welcome", modern: "Arrival ready", darkLuxury: "Private retreat", mediterranean: "Welcome by the sea" },
   menu: {
     wifi: { title: "Wi-Fi", subtitle: "Connect" },
@@ -95,7 +112,8 @@ const en: GuestMessages = {
     activities: { title: "Activities", subtitle: "Things to do" },
     essentials: { title: "Essentials", subtitle: "Nearby help" },
     reviews: { title: "Reviews", subtitle: "Share your stay" },
-    emergency: { title: "Emergency", subtitle: "Important contacts" }
+    emergency: { title: "Emergency", subtitle: "Important contacts" },
+    explore: { title: "Explore", subtitle: "Eat, see, essentials" }
   },
   chat: {
     stayAssistant: "Stay assistant",
@@ -111,7 +129,8 @@ const en: GuestMessages = {
     askAnything: "Ask anything...",
     thinking: "Thinking...",
     errorAnswer: "I could not answer that. Please contact your host.",
-    errorNow: "I could not answer right now. Please contact your host."
+    errorNow: "I could not answer right now. Please contact your host.",
+    conciergeHint: "Answers in seconds, in your language"
   },
   sections: {
     wifi: { eyebrow: "Wi-Fi", title: "Connect to the internet." },
@@ -122,7 +141,8 @@ const en: GuestMessages = {
     activities: { eyebrow: "Activities", title: "Things to do nearby." },
     essentials: { eyebrow: "Essentials", title: "Useful places nearby." },
     reviews: { eyebrow: "Reviews", title: "Enjoying your stay?" },
-    emergency: { eyebrow: "Emergency", title: "Important information." }
+    emergency: { eyebrow: "Emergency", title: "Important information." },
+    explore: { eyebrow: "Explore", title: "Around the house." }
   },
   content: {
     network: "Network",
@@ -144,13 +164,20 @@ const en: GuestMessages = {
     noRestaurants: "Your host has not added restaurant recommendations yet.",
     noActivities: "Your host has not added activities yet.",
     noEssentials: "Your host has not added essential places yet.",
-    leaveReview: "Enjoying your stay?",
-    reviewBlurb: "If everything was great, a quick review helps future guests and means a lot to your host.",
+    leaveReview: "How was your stay?",
+    reviewBlurb: "Honest reviews help future guests choose and help your host improve. Thank you for taking a minute.",
     noReviewLinks: "Review links will appear here once your host adds them.",
     emergencyContacts: "Emergency contacts",
     emergencyFallback: "For emergencies, call the local emergency number. Contact your host for property issues.",
     openMap: "Open map",
-    whatsappStaying: (property) => `Hi, I am staying at ${property} and need help.`
+    whatsappStaying: (property) => `Hi, I am staying at ${property} and need help.`,
+    showPassword: "Show",
+    hidePassword: "Hide",
+    reviewOn: (platform) => `Review on ${platform}`,
+    noPlaces: "Your host has not added any places yet.",
+    eat: "Eat and drink",
+    doNearby: "Things to do",
+    usefulPlaces: "Useful places"
   }
 };
 
@@ -161,6 +188,10 @@ const de: GuestMessages = {
   heroDescription: "Ihr digitaler Concierge für WLAN, Anreise, Hausinfos, lokale Tipps und den direkten Kontakt zum Gastgeber.",
   poweredBy: "Bereitgestellt von",
   back: "Zurück",
+  heroTagline: "Alles für einen entspannten Aufenthalt",
+  guestGuide: "Gästemappe",
+  readMore: "Mehr lesen",
+  showLess: "Weniger",
   heroEyebrow: { classic: "Willkommen", modern: "Bereit für Ihre Ankunft", darkLuxury: "Privater Rückzugsort", mediterranean: "Willkommen am Meer" },
   menu: {
     wifi: { title: "WLAN", subtitle: "Verbinden" },
@@ -171,7 +202,8 @@ const de: GuestMessages = {
     activities: { title: "Aktivitäten", subtitle: "Was man unternehmen kann" },
     essentials: { title: "Wichtiges", subtitle: "Hilfe in der Nähe" },
     reviews: { title: "Bewertungen", subtitle: "Teilen Sie Ihren Aufenthalt" },
-    emergency: { title: "Notfall", subtitle: "Wichtige Kontakte" }
+    emergency: { title: "Notfall", subtitle: "Wichtige Kontakte" },
+    explore: { title: "Entdecken", subtitle: "Essen, Ausflüge, Wichtiges" }
   },
   chat: {
     stayAssistant: "Aufenthalts-Assistent",
@@ -187,7 +219,8 @@ const de: GuestMessages = {
     askAnything: "Fragen Sie etwas...",
     thinking: "Einen Moment...",
     errorAnswer: "Das konnte ich nicht beantworten. Bitte kontaktieren Sie Ihren Gastgeber.",
-    errorNow: "Ich kann gerade nicht antworten. Bitte kontaktieren Sie Ihren Gastgeber."
+    errorNow: "Ich kann gerade nicht antworten. Bitte kontaktieren Sie Ihren Gastgeber.",
+    conciergeHint: "Antworten in Sekunden, in Ihrer Sprache"
   },
   sections: {
     wifi: { eyebrow: "WLAN", title: "Mit dem Internet verbinden." },
@@ -198,7 +231,8 @@ const de: GuestMessages = {
     activities: { eyebrow: "Aktivitäten", title: "Unternehmungen in der Nähe." },
     essentials: { eyebrow: "Wichtiges", title: "Nützliche Orte in der Nähe." },
     reviews: { eyebrow: "Bewertungen", title: "Gefällt Ihnen Ihr Aufenthalt?" },
-    emergency: { eyebrow: "Notfall", title: "Wichtige Informationen." }
+    emergency: { eyebrow: "Notfall", title: "Wichtige Informationen." },
+    explore: { eyebrow: "Entdecken", title: "Rund um die Unterkunft." }
   },
   content: {
     network: "Netzwerk",
@@ -220,13 +254,20 @@ const de: GuestMessages = {
     noRestaurants: "Ihr Gastgeber hat noch keine Restaurant-Tipps hinzugefügt.",
     noActivities: "Ihr Gastgeber hat noch keine Aktivitäten hinzugefügt.",
     noEssentials: "Ihr Gastgeber hat noch keine wichtigen Orte hinzugefügt.",
-    leaveReview: "Gefällt Ihnen Ihr Aufenthalt?",
-    reviewBlurb: "Wenn alles gepasst hat, hilft eine kurze Bewertung künftigen Gästen und bedeutet Ihrem Gastgeber viel.",
+    leaveReview: "Wie war Ihr Aufenthalt?",
+    reviewBlurb: "Ehrliche Bewertungen helfen künftigen Gästen bei der Wahl und Ihrem Gastgeber, besser zu werden. Danke, dass Sie sich kurz Zeit nehmen.",
     noReviewLinks: "Bewertungslinks erscheinen hier, sobald Ihr Gastgeber sie hinzufügt.",
     emergencyContacts: "Notfallkontakte",
     emergencyFallback: "Im Notfall wählen Sie die örtliche Notrufnummer. Bei Problemen mit der Unterkunft kontaktieren Sie Ihren Gastgeber.",
     openMap: "Karte öffnen",
-    whatsappStaying: (property) => `Hallo, ich wohne gerade in ${property} und brauche Hilfe.`
+    whatsappStaying: (property) => `Hallo, ich wohne gerade in ${property} und brauche Hilfe.`,
+    showPassword: "Anzeigen",
+    hidePassword: "Verbergen",
+    reviewOn: (platform) => `Auf ${platform} bewerten`,
+    noPlaces: "Ihr Gastgeber hat noch keine Orte hinzugefügt.",
+    eat: "Essen und Trinken",
+    doNearby: "Unternehmungen",
+    usefulPlaces: "Nützliche Orte"
   }
 };
 
@@ -237,6 +278,10 @@ const fr: GuestMessages = {
   heroDescription: "Votre concierge numérique pour le Wi-Fi, l'arrivée, le logement, les bonnes adresses et le contact direct avec votre hôte.",
   poweredBy: "Propulsé par",
   back: "Retour",
+  heroTagline: "Tout pour un séjour serein",
+  guestGuide: "Guide du séjour",
+  readMore: "Lire la suite",
+  showLess: "Réduire",
   heroEyebrow: { classic: "Bienvenue", modern: "Prêt pour votre arrivée", darkLuxury: "Retraite privée", mediterranean: "Bienvenue au bord de la mer" },
   menu: {
     wifi: { title: "Wi-Fi", subtitle: "Se connecter" },
@@ -247,7 +292,8 @@ const fr: GuestMessages = {
     activities: { title: "Activités", subtitle: "Que faire" },
     essentials: { title: "Essentiels", subtitle: "Aide à proximité" },
     reviews: { title: "Avis", subtitle: "Partagez votre séjour" },
-    emergency: { title: "Urgence", subtitle: "Contacts importants" }
+    emergency: { title: "Urgence", subtitle: "Contacts importants" },
+    explore: { title: "Explorer", subtitle: "Manger, visiter, essentiels" }
   },
   chat: {
     stayAssistant: "Assistant de séjour",
@@ -263,7 +309,8 @@ const fr: GuestMessages = {
     askAnything: "Posez votre question...",
     thinking: "Un instant...",
     errorAnswer: "Je n'ai pas pu répondre. Veuillez contacter votre hôte.",
-    errorNow: "Je ne peux pas répondre pour le moment. Veuillez contacter votre hôte."
+    errorNow: "Je ne peux pas répondre pour le moment. Veuillez contacter votre hôte.",
+    conciergeHint: "Réponses en quelques secondes, dans votre langue"
   },
   sections: {
     wifi: { eyebrow: "Wi-Fi", title: "Se connecter à Internet." },
@@ -274,7 +321,8 @@ const fr: GuestMessages = {
     activities: { eyebrow: "Activités", title: "Que faire à proximité." },
     essentials: { eyebrow: "Essentiels", title: "Adresses utiles à proximité." },
     reviews: { eyebrow: "Avis", title: "Vous appréciez votre séjour ?" },
-    emergency: { eyebrow: "Urgence", title: "Informations importantes." }
+    emergency: { eyebrow: "Urgence", title: "Informations importantes." },
+    explore: { eyebrow: "Explorer", title: "Autour du logement." }
   },
   content: {
     network: "Réseau",
@@ -296,13 +344,20 @@ const fr: GuestMessages = {
     noRestaurants: "Votre hôte n'a pas encore ajouté de restaurants.",
     noActivities: "Votre hôte n'a pas encore ajouté d'activités.",
     noEssentials: "Votre hôte n'a pas encore ajouté d'adresses utiles.",
-    leaveReview: "Vous appréciez votre séjour ?",
-    reviewBlurb: "Si tout s'est bien passé, un petit avis aide les futurs voyageurs et compte beaucoup pour votre hôte.",
+    leaveReview: "Comment s'est passé votre séjour ?",
+    reviewBlurb: "Les avis honnêtes aident les futurs voyageurs à choisir et votre hôte à s'améliorer. Merci de prendre une minute.",
     noReviewLinks: "Les liens d'avis apparaîtront ici dès que votre hôte les aura ajoutés.",
     emergencyContacts: "Contacts d'urgence",
     emergencyFallback: "En cas d'urgence, appelez le numéro d'urgence local. Pour un problème dans le logement, contactez votre hôte.",
     openMap: "Ouvrir la carte",
-    whatsappStaying: (property) => `Bonjour, je séjourne à ${property} et j'ai besoin d'aide.`
+    whatsappStaying: (property) => `Bonjour, je séjourne à ${property} et j'ai besoin d'aide.`,
+    showPassword: "Afficher",
+    hidePassword: "Masquer",
+    reviewOn: (platform) => `Laisser un avis sur ${platform}`,
+    noPlaces: "Votre hôte n'a pas encore ajouté d'adresses.",
+    eat: "Manger et boire",
+    doNearby: "À faire",
+    usefulPlaces: "Adresses utiles"
   }
 };
 
@@ -313,6 +368,10 @@ const it: GuestMessages = {
   heroDescription: "Il tuo concierge digitale per Wi-Fi, arrivo, informazioni sulla casa, consigli locali e contatto diretto con l'host.",
   poweredBy: "Realizzato con",
   back: "Indietro",
+  heroTagline: "Tutto per un soggiorno sereno",
+  guestGuide: "Guida per gli ospiti",
+  readMore: "Leggi tutto",
+  showLess: "Mostra meno",
   heroEyebrow: { classic: "Benvenuti", modern: "Pronto per il tuo arrivo", darkLuxury: "Rifugio privato", mediterranean: "Benvenuti al mare" },
   menu: {
     wifi: { title: "Wi-Fi", subtitle: "Connettiti" },
@@ -323,7 +382,8 @@ const it: GuestMessages = {
     activities: { title: "Attività", subtitle: "Cosa fare" },
     essentials: { title: "Servizi utili", subtitle: "Aiuto nelle vicinanze" },
     reviews: { title: "Recensioni", subtitle: "Racconta il tuo soggiorno" },
-    emergency: { title: "Emergenza", subtitle: "Contatti importanti" }
+    emergency: { title: "Emergenza", subtitle: "Contatti importanti" },
+    explore: { title: "Esplora", subtitle: "Mangiare, vedere, servizi" }
   },
   chat: {
     stayAssistant: "Assistente del soggiorno",
@@ -339,7 +399,8 @@ const it: GuestMessages = {
     askAnything: "Chiedi qualcosa...",
     thinking: "Un momento...",
     errorAnswer: "Non sono riuscito a rispondere. Contatta il tuo host.",
-    errorNow: "Non riesco a rispondere ora. Contatta il tuo host."
+    errorNow: "Non riesco a rispondere ora. Contatta il tuo host.",
+    conciergeHint: "Risposte in pochi secondi, nella tua lingua"
   },
   sections: {
     wifi: { eyebrow: "Wi-Fi", title: "Connettiti a Internet." },
@@ -350,7 +411,8 @@ const it: GuestMessages = {
     activities: { eyebrow: "Attività", title: "Cosa fare nei dintorni." },
     essentials: { eyebrow: "Servizi utili", title: "Luoghi utili nelle vicinanze." },
     reviews: { eyebrow: "Recensioni", title: "Ti piace il soggiorno?" },
-    emergency: { eyebrow: "Emergenza", title: "Informazioni importanti." }
+    emergency: { eyebrow: "Emergenza", title: "Informazioni importanti." },
+    explore: { eyebrow: "Esplora", title: "Intorno alla casa." }
   },
   content: {
     network: "Rete",
@@ -372,13 +434,20 @@ const it: GuestMessages = {
     noRestaurants: "L'host non ha ancora aggiunto ristoranti.",
     noActivities: "L'host non ha ancora aggiunto attività.",
     noEssentials: "L'host non ha ancora aggiunto servizi utili.",
-    leaveReview: "Ti piace il soggiorno?",
-    reviewBlurb: "Se è andato tutto bene, una breve recensione aiuta i futuri ospiti e significa molto per il tuo host.",
+    leaveReview: "Com’è andato il soggiorno?",
+    reviewBlurb: "Le recensioni oneste aiutano i futuri ospiti a scegliere e il tuo host a migliorare. Grazie per il tuo minuto.",
     noReviewLinks: "I link per le recensioni appariranno qui quando l'host li aggiungerà.",
     emergencyContacts: "Contatti di emergenza",
     emergencyFallback: "In caso di emergenza chiama il numero di emergenza locale. Per problemi con l'alloggio contatta l'host.",
     openMap: "Apri la mappa",
-    whatsappStaying: (property) => `Ciao, sto soggiornando a ${property} e ho bisogno di aiuto.`
+    whatsappStaying: (property) => `Ciao, sto soggiornando a ${property} e ho bisogno di aiuto.`,
+    showPassword: "Mostra",
+    hidePassword: "Nascondi",
+    reviewOn: (platform) => `Recensisci su ${platform}`,
+    noPlaces: "L'host non ha ancora aggiunto luoghi.",
+    eat: "Mangiare e bere",
+    doNearby: "Cosa fare",
+    usefulPlaces: "Luoghi utili"
   }
 };
 
@@ -389,6 +458,10 @@ const es: GuestMessages = {
   heroDescription: "Tu conserje digital para el Wi-Fi, la llegada, la casa, recomendaciones locales y el contacto directo con el anfitrión.",
   poweredBy: "Con la tecnología de",
   back: "Volver",
+  heroTagline: "Todo para una estancia tranquila",
+  guestGuide: "Guía para huéspedes",
+  readMore: "Leer más",
+  showLess: "Ver menos",
   heroEyebrow: { classic: "Bienvenidos", modern: "Listo para tu llegada", darkLuxury: "Refugio privado", mediterranean: "Bienvenidos al mar" },
   menu: {
     wifi: { title: "Wi-Fi", subtitle: "Conectarse" },
@@ -399,7 +472,8 @@ const es: GuestMessages = {
     activities: { title: "Actividades", subtitle: "Qué hacer" },
     essentials: { title: "Esenciales", subtitle: "Ayuda cercana" },
     reviews: { title: "Reseñas", subtitle: "Comparte tu estancia" },
-    emergency: { title: "Emergencia", subtitle: "Contactos importantes" }
+    emergency: { title: "Emergencia", subtitle: "Contactos importantes" },
+    explore: { title: "Explorar", subtitle: "Comer, visitar, esenciales" }
   },
   chat: {
     stayAssistant: "Asistente de la estancia",
@@ -415,7 +489,8 @@ const es: GuestMessages = {
     askAnything: "Pregunta lo que quieras...",
     thinking: "Un momento...",
     errorAnswer: "No he podido responder. Por favor, contacta con tu anfitrión.",
-    errorNow: "Ahora mismo no puedo responder. Por favor, contacta con tu anfitrión."
+    errorNow: "Ahora mismo no puedo responder. Por favor, contacta con tu anfitrión.",
+    conciergeHint: "Respuestas en segundos, en tu idioma"
   },
   sections: {
     wifi: { eyebrow: "Wi-Fi", title: "Conéctate a Internet." },
@@ -426,7 +501,8 @@ const es: GuestMessages = {
     activities: { eyebrow: "Actividades", title: "Qué hacer cerca." },
     essentials: { eyebrow: "Esenciales", title: "Lugares útiles cerca." },
     reviews: { eyebrow: "Reseñas", title: "¿Disfrutas de tu estancia?" },
-    emergency: { eyebrow: "Emergencia", title: "Información importante." }
+    emergency: { eyebrow: "Emergencia", title: "Información importante." },
+    explore: { eyebrow: "Explorar", title: "Alrededor del alojamiento." }
   },
   content: {
     network: "Red",
@@ -448,13 +524,20 @@ const es: GuestMessages = {
     noRestaurants: "Tu anfitrión aún no ha añadido restaurantes.",
     noActivities: "Tu anfitrión aún no ha añadido actividades.",
     noEssentials: "Tu anfitrión aún no ha añadido lugares útiles.",
-    leaveReview: "¿Disfrutas de tu estancia?",
-    reviewBlurb: "Si todo ha ido bien, una breve reseña ayuda a futuros huéspedes y significa mucho para tu anfitrión.",
+    leaveReview: "¿Qué tal tu estancia?",
+    reviewBlurb: "Las opiniones sinceras ayudan a futuros huéspedes a elegir y a tu anfitrión a mejorar. Gracias por dedicarle un minuto.",
     noReviewLinks: "Los enlaces de reseñas aparecerán aquí cuando tu anfitrión los añada.",
     emergencyContacts: "Contactos de emergencia",
     emergencyFallback: "En caso de emergencia, llama al número de emergencias local. Para problemas con el alojamiento, contacta con tu anfitrión.",
     openMap: "Abrir mapa",
-    whatsappStaying: (property) => `Hola, me estoy alojando en ${property} y necesito ayuda.`
+    whatsappStaying: (property) => `Hola, me estoy alojando en ${property} y necesito ayuda.`,
+    showPassword: "Mostrar",
+    hidePassword: "Ocultar",
+    reviewOn: (platform) => `Opinar en ${platform}`,
+    noPlaces: "Tu anfitrión aún no ha añadido lugares.",
+    eat: "Comer y beber",
+    doNearby: "Qué hacer",
+    usefulPlaces: "Lugares útiles"
   }
 };
 
@@ -465,6 +548,10 @@ const nl: GuestMessages = {
   heroDescription: "Je digitale conciërge voor wifi, aankomst, info over het huis, lokale tips en direct contact met je gastheer.",
   poweredBy: "Mogelijk gemaakt door",
   back: "Terug",
+  heroTagline: "Alles voor een zorgeloos verblijf",
+  guestGuide: "Gastengids",
+  readMore: "Lees meer",
+  showLess: "Minder",
   heroEyebrow: { classic: "Welkom", modern: "Klaar voor je aankomst", darkLuxury: "Privé toevluchtsoord", mediterranean: "Welkom aan zee" },
   menu: {
     wifi: { title: "Wifi", subtitle: "Verbinden" },
@@ -475,7 +562,8 @@ const nl: GuestMessages = {
     activities: { title: "Activiteiten", subtitle: "Wat te doen" },
     essentials: { title: "Handig", subtitle: "Hulp in de buurt" },
     reviews: { title: "Reviews", subtitle: "Deel je verblijf" },
-    emergency: { title: "Noodgeval", subtitle: "Belangrijke contacten" }
+    emergency: { title: "Noodgeval", subtitle: "Belangrijke contacten" },
+    explore: { title: "Ontdekken", subtitle: "Eten, uitjes, handig" }
   },
   chat: {
     stayAssistant: "Verblijfsassistent",
@@ -491,7 +579,8 @@ const nl: GuestMessages = {
     askAnything: "Stel een vraag...",
     thinking: "Even denken...",
     errorAnswer: "Dat kon ik niet beantwoorden. Neem contact op met je gastheer.",
-    errorNow: "Ik kan nu niet antwoorden. Neem contact op met je gastheer."
+    errorNow: "Ik kan nu niet antwoorden. Neem contact op met je gastheer.",
+    conciergeHint: "Antwoord binnen seconden, in jouw taal"
   },
   sections: {
     wifi: { eyebrow: "Wifi", title: "Verbinden met internet." },
@@ -502,7 +591,8 @@ const nl: GuestMessages = {
     activities: { eyebrow: "Activiteiten", title: "Wat te doen in de buurt." },
     essentials: { eyebrow: "Handig", title: "Handige plekken in de buurt." },
     reviews: { eyebrow: "Reviews", title: "Geniet je van je verblijf?" },
-    emergency: { eyebrow: "Noodgeval", title: "Belangrijke informatie." }
+    emergency: { eyebrow: "Noodgeval", title: "Belangrijke informatie." },
+    explore: { eyebrow: "Ontdekken", title: "Rondom de accommodatie." }
   },
   content: {
     network: "Netwerk",
@@ -524,13 +614,20 @@ const nl: GuestMessages = {
     noRestaurants: "Je gastheer heeft nog geen restaurants toegevoegd.",
     noActivities: "Je gastheer heeft nog geen activiteiten toegevoegd.",
     noEssentials: "Je gastheer heeft nog geen handige plekken toegevoegd.",
-    leaveReview: "Geniet je van je verblijf?",
-    reviewBlurb: "Was alles top? Een korte review helpt toekomstige gasten en betekent veel voor je gastheer.",
+    leaveReview: "Hoe was je verblijf?",
+    reviewBlurb: "Eerlijke reviews helpen toekomstige gasten kiezen en je gastheer verbeteren. Bedankt dat je even de tijd neemt.",
     noReviewLinks: "Reviewlinks verschijnen hier zodra je gastheer ze toevoegt.",
     emergencyContacts: "Noodcontacten",
     emergencyFallback: "Bel bij nood het lokale alarmnummer. Neem voor problemen met de accommodatie contact op met je gastheer.",
     openMap: "Kaart openen",
-    whatsappStaying: (property) => `Hoi, ik verblijf in ${property} en heb hulp nodig.`
+    whatsappStaying: (property) => `Hoi, ik verblijf in ${property} en heb hulp nodig.`,
+    showPassword: "Tonen",
+    hidePassword: "Verbergen",
+    reviewOn: (platform) => `Review op ${platform}`,
+    noPlaces: "Je gastheer heeft nog geen plekken toegevoegd.",
+    eat: "Eten en drinken",
+    doNearby: "Wat te doen",
+    usefulPlaces: "Handige plekken"
   }
 };
 

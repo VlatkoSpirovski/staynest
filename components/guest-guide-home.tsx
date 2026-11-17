@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Home, KeyRound, Map, Phone, Pill, ShieldAlert, Star, Utensils, Wifi } from "lucide-react";
+import { ArrowRight, Compass, Home, KeyRound, Phone, ShieldAlert, Star } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { GuestLanguageProvider, GuestLanguageSwitcher, useGuestLanguage } from "@/components/guest-language";
+import { GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
 import { GuestChatLauncher } from "@/components/guest-chat-launcher";
-import { MenuLink, PoweredByStayNest } from "@/app/stay/[slug]/guide-ui";
+import { PoweredByStayNest } from "@/app/stay/[slug]/guide-ui";
 import { GuestGuideSectionContent, type GuestGuideSectionProperty } from "@/components/guest-guide-section";
-import { CopyButton } from "@/components/copy-button";
+import { GuideRowCard, GuideTileCard, GuideTopBar, GuideWifiCard } from "@/components/guide-kit";
 import { examplePublicGuide } from "@/lib/example-public-guide";
 import { getAppUrl } from "@/lib/utils";
 import { getGuideTheme, guideThemeStyle } from "@/themes";
@@ -22,7 +22,17 @@ type GuestProperty = GuestGuideSectionProperty & {
   templateId: string;
   designSerif: boolean;
   designRounded: boolean;
+  welcomeMessage?: string | null;
 };
+
+const SECTION_IDS = new Set(["wifi", "contact", "arrival", "house", "restaurants", "activities", "essentials", "reviews", "emergency", "explore"]);
+
+function firstSentence(value: string | null | undefined) {
+  const text = (value || "").replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  const match = text.match(/^.*?[.!?](\s|$)/);
+  return (match ? match[0] : text).trim();
+}
 
 export function GuestGuideHome({ property, basePath }: { property: GuestProperty; basePath?: string }) {
   return (
@@ -36,298 +46,170 @@ function GuestGuideHomeContent({ property, basePath }: { property: GuestProperty
   const { t } = useGuestLanguage();
   const router = useRouter();
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [embedded, setEmbedded] = useState(true);
   const baseHref = basePath || `/stay/${property.slug}`;
   const theme = getGuideTheme(property.templateId);
-  const layout = theme.layout;
   const themeStyle = guideThemeStyle(theme, {
     accentColor: property.accentColor,
     designSerif: property.designSerif,
     designRounded: property.designRounded
   }) as React.CSSProperties;
-  const menuItems = useMemo(() => [
-    { id: "wifi", href: `${baseHref}/wifi`, icon: <Wifi size={21} />, title: t.menu.wifi.title, subtitle: t.menu.wifi.subtitle },
-    { id: "contact", href: `${baseHref}/contact`, icon: <Phone size={21} />, title: t.menu.contact.title, subtitle: t.menu.contact.subtitle },
-    { id: "arrival", href: `${baseHref}/arrival`, icon: <KeyRound size={21} />, title: t.menu.arrival.title, subtitle: t.menu.arrival.subtitle },
-    { id: "house", href: `${baseHref}/house`, icon: <Home size={21} />, title: t.menu.house.title, subtitle: t.menu.house.subtitle },
-    { id: "restaurants", href: `${baseHref}/restaurants`, icon: <Utensils size={21} />, title: t.menu.restaurants.title, subtitle: t.menu.restaurants.subtitle },
-    { id: "activities", href: `${baseHref}/activities`, icon: <Map size={21} />, title: t.menu.activities.title, subtitle: t.menu.activities.subtitle },
-    { id: "essentials", href: `${baseHref}/essentials`, icon: <Pill size={21} />, title: t.menu.essentials.title, subtitle: t.menu.essentials.subtitle },
-    { id: "reviews", href: `${baseHref}/reviews`, icon: <Star size={21} />, title: t.menu.reviews.title, subtitle: t.menu.reviews.subtitle },
-    { id: "emergency", href: `${baseHref}/emergency`, icon: <ShieldAlert size={21} />, title: t.menu.emergency.title, subtitle: t.menu.emergency.subtitle }
-  ], [baseHref, t]);
-  const sectionIds = useMemo(() => new Set(menuItems.map((item) => item.id)), [menuItems]);
-  const showWifiCard = Boolean(property.wifiName);
-  const visibleMenuItems = showWifiCard ? menuItems.filter((item) => item.id !== "wifi") : menuItems;
   const isExample = property.slug === examplePublicGuide.slug;
-  const [embedded, setEmbedded] = useState(true);
+
+  const visibleRecommendations = property.recommendations.filter((item) => item.isVisible);
+  const tiles = useMemo(
+    () =>
+      [
+        { id: "contact", show: Boolean(property.hostPhone || property.hostEmail), icon: <Phone size={18} />, title: t.menu.contact.title },
+        { id: "house", show: Boolean(property.parkingInfo || property.houseRules || property.guideSections.length), icon: <Home size={18} />, title: t.menu.house.title },
+        { id: "explore", show: visibleRecommendations.length > 0, icon: <Compass size={18} />, title: t.menu.explore.title },
+        { id: "reviews", show: property.reviewLinks.length > 0, icon: <Star size={18} />, title: t.menu.reviews.title },
+        { id: "emergency", show: true, icon: <ShieldAlert size={18} />, title: t.menu.emergency.title }
+      ].filter((tile) => tile.show),
+    [property, t, visibleRecommendations.length]
+  );
+  const firstRow = tiles.length >= 3 ? tiles.slice(0, 3) : tiles;
+  const secondRow = tiles.length >= 3 ? tiles.slice(3) : [];
 
   useEffect(() => {
     setEmbedded(window.self !== window.top);
   }, []);
 
   useEffect(() => {
-    menuItems.forEach((item) => router.prefetch(item.href));
-  }, [menuItems, router]);
+    ["arrival", "wifi", ...tiles.map((tile) => tile.id)].forEach((id) => router.prefetch(`${baseHref}/${id}`));
+  }, [baseHref, router, tiles]);
 
   useEffect(() => {
     function syncSectionFromUrl() {
       const section = window.location.pathname.split("/").filter(Boolean).at(-1) || "";
-      setSelectedSection(sectionIds.has(section) ? section : null);
+      setSelectedSection(SECTION_IDS.has(section) ? section : null);
     }
-
     syncSectionFromUrl();
     window.addEventListener("popstate", syncSectionFromUrl);
-
     return () => window.removeEventListener("popstate", syncSectionFromUrl);
-  }, [sectionIds]);
-  const menuClass =
-    layout === "modern"
-      ? "grid gap-[var(--guide-menu-gap)] px-[var(--guide-menu-padding)] py-4"
-      : layout === "darkLuxury"
-        ? "grid grid-cols-2 gap-[var(--guide-menu-gap)] px-[var(--guide-menu-padding)] pb-6 pt-5"
-        : layout === "mediterranean"
-          ? "grid grid-cols-2 gap-[var(--guide-menu-gap)] px-[var(--guide-menu-padding)] pb-6 pt-5"
-          : "grid grid-cols-2 gap-[var(--guide-menu-gap)] px-[var(--guide-menu-padding)] py-5";
+  }, []);
 
-  function LogoMark({ soft = false }: { soft?: boolean }) {
-    const canOptimizeLogo = property.logoUrl && !property.logoUrl.startsWith("data:");
-    return (
-      <div
-        className={`${soft ? "h-14 w-14 rounded-[20px]" : "h-16 w-16 rounded-[22px]"} grid shrink-0 place-items-center overflow-hidden border border-[var(--guide-card-border)] p-1.5 text-sm font-black text-[var(--guide-text)] shadow-[0_18px_42px_rgba(0,0,0,0.14)]`}
-        style={{ background: "var(--guide-elevated-bg)" }}
-      >
-        {canOptimizeLogo ? (
-          <Image src={property.logoUrl || ""} alt={`${property.name} logo`} width={64} height={64} className="h-full w-full rounded-[inherit] object-cover" sizes="64px" />
-        ) : property.logoUrl ? (
-          <img src={property.logoUrl} alt={`${property.name} logo`} className="h-full w-full rounded-[inherit] object-cover" />
-        ) : (
-          <Home size={soft ? 22 : 25} />
-        )}
-      </div>
-    );
+  function open(id: string) {
+    return (event: React.MouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault();
+      setSelectedSection(id);
+      window.history.pushState(null, "", `${baseHref}/${id}`);
+      window.scrollTo({ top: 0 });
+    };
   }
 
-  function HeroImage({ className = "", overlay = true }: { className?: string; overlay?: boolean }) {
-    const canOptimizeCover = property.coverImageUrl && !property.coverImageUrl.startsWith("data:");
-    return (
-      <div className={`${/\b(absolute|fixed)\b/.test(className) ? "" : "relative "}overflow-hidden ${className}`} style={{ background: "var(--guide-hero-fallback)" }}>
-        {canOptimizeCover ? (
-          <Image src={property.coverImageUrl || ""} alt="" fill priority className="object-cover" sizes="430px" style={{ filter: "var(--guide-hero-image-filter)" }} />
-        ) : property.coverImageUrl ? (
-          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${property.coverImageUrl})`, filter: "var(--guide-hero-image-filter)" }} />
-        ) : null}
-        {overlay ? <div className="absolute inset-0" style={{ background: "var(--guide-hero-overlay)" }} /> : null}
-      </div>
-    );
-  }
-
-  function WifiCard() {
-    return (
-      <div
-        className={`${layout === "modern" ? "" : "col-span-2 "}rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] p-4 text-left text-[var(--guide-text)]`}
-        style={{ background: "var(--guide-card-bg)", boxShadow: "var(--guide-card-shadow), var(--guide-card-inset-shadow)", backdropFilter: "var(--guide-card-backdrop)" }}
-      >
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[var(--guide-icon-radius)] bg-[var(--guide-icon-bg)] text-[var(--guide-accent)] shadow-[var(--guide-icon-shadow)]">
-            <Wifi size={21} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-black tracking-tight">{property.wifiName}</p>
-            <p className="truncate font-mono text-[13px] font-semibold text-[var(--guide-muted)]">{property.wifiPassword || t.content.askHost}</p>
-          </div>
-        </div>
-        {property.wifiPassword ? (
-          <CopyButton
-            value={property.wifiPassword}
-            label={t.content.copyWifiPassword}
-            copiedLabel={t.content.passwordCopied}
-            className="mt-3 w-full rounded-[var(--guide-button-radius)] border-0 bg-[var(--guide-button-bg)] text-[var(--guide-button-text)] hover:bg-[var(--guide-button-bg)] hover:opacity-90"
-          />
-        ) : null}
-      </div>
-    );
-  }
-
-  function MenuGrid() {
-    return (
-      <section className={menuClass}>
-        {showWifiCard ? <WifiCard /> : null}
-        {visibleMenuItems.map((item) => (
-          <MenuLink
-            key={item.href}
-            {...item}
-            variant={layout}
-            onClick={(event) => {
-              event.preventDefault();
-              setSelectedSection(item.id);
-              window.history.pushState(null, "", item.href);
-              window.scrollTo({ top: 0 });
-            }}
-          />
-        ))}
-      </section>
-    );
-  }
-
-  function DemoBar() {
-    if (!isExample || embedded) return null;
-    return (
-      <a
-        href={`${getAppUrl()}/register?plan=ai`}
-        className="sticky top-0 z-40 flex items-center justify-center gap-2 bg-[#111827] px-4 py-2.5 text-center text-[13px] font-semibold text-white"
-        style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
-      >
-        <span className="text-white/70">This is a demo guide.</span>
-        Make one for your place, free
-        <ArrowRight size={14} aria-hidden="true" />
-      </a>
-    );
-  }
-
-  function Footer() {
-    return (
-      <div className="px-5 pb-[4.75rem] pt-0">
-        <GuestLanguageSwitcher className="mb-4" />
-        <PoweredByStayNest label={t.poweredBy} />
-      </div>
-    );
-  }
+  const chat = (
+    <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} chatApiUrl={basePath ? `/api/preview/${property.slug}/chat` : undefined} />
+  );
 
   if (selectedSection) {
     return (
-      <GuestGuideSectionContent
-        property={property}
-        section={selectedSection}
-        onBack={() => {
-          setSelectedSection(null);
-          window.history.replaceState(null, "", baseHref);
-          window.scrollTo({ top: 0 });
-        }}
-      />
+      <>
+        <GuestGuideSectionContent
+          property={property}
+          section={selectedSection}
+          onBack={() => {
+            setSelectedSection(null);
+            window.history.replaceState(null, "", baseHref);
+            window.scrollTo({ top: 0 });
+          }}
+        />
+        <div style={themeStyle}>{chat}</div>
+      </>
     );
   }
 
-  if (layout === "modern") {
-    return (
-      <main className="min-h-screen text-[var(--guide-text)]" style={{ ...themeStyle, background: "var(--guide-app-bg)" }}>
-        <DemoBar />
-        <div className="mx-auto min-h-screen max-w-[430px] shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)", fontFamily: "var(--guide-body-font)" }}>
-          <header className="flex items-center gap-3 border-b border-[var(--guide-section-divider)] px-5 py-5">
-            <div className="flex min-w-0 items-center gap-3">
-              <LogoMark soft />
-              <div className="min-w-0">
-                <p className="text-sm font-black tracking-tight">{property.name}</p>
-                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--guide-muted)]">{t.yourStaySimplified}</p>
-              </div>
-            </div>
-          </header>
-
-          <section className="px-5 pb-4 pt-6">
-            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[var(--guide-accent)]">{t.heroEyebrow[layout]}</p>
-            <h1 className="mt-3 text-[2.65rem] font-black leading-[0.95] tracking-tight text-[var(--guide-text)]" style={{ fontFamily: "var(--guide-heading-font)" }}>
-              {t.welcomeTo} {property.name}
-            </h1>
-            <p className="mt-4 max-w-[330px] text-sm font-semibold leading-7 text-[var(--guide-muted)]">{t.heroDescription}</p>
-          </section>
-
-          <div className="px-5">
-            <HeroImage overlay={false} className="h-[var(--guide-hero-height)] rounded-[var(--guide-hero-radius)] shadow-[0_18px_48px_rgba(17,24,39,0.10)]" />
-          </div>
-
-          <MenuGrid />
-          <Footer />
-          <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} chatApiUrl={basePath ? `/api/preview/${property.slug}/chat` : undefined} />
-        </div>
-      </main>
-    );
-  }
-
-  if (layout === "mediterranean") {
-    return (
-      <main className="min-h-screen text-[var(--guide-text)]" style={{ ...themeStyle, background: "var(--guide-app-bg)" }}>
-        <DemoBar />
-        <div className="mx-auto min-h-screen max-w-[430px] px-4 py-4 shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)", fontFamily: "var(--guide-body-font)" }}>
-          <header className="mb-4 flex items-center gap-3 px-1">
-            <LogoMark soft />
-          </header>
-
-          <section className="relative overflow-hidden rounded-[var(--guide-hero-radius)] text-[var(--guide-hero-text)] shadow-[0_24px_70px_rgba(64,99,112,0.18)]">
-            <HeroImage className="h-[var(--guide-hero-height)]" />
-            <div className="absolute inset-x-0 bottom-0 p-6">
-              <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white/82">{t.heroEyebrow[layout]}</p>
-              <h1 className="mt-2 text-5xl font-semibold leading-[0.9]" style={{ fontFamily: "var(--guide-heading-font)" }}>{property.name}</h1>
-              <p className="mt-4 max-w-[290px] text-sm font-semibold leading-6 text-white/84">{t.heroDescription}</p>
-            </div>
-          </section>
-
-          <MenuGrid />
-          <Footer />
-          <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} chatApiUrl={basePath ? `/api/preview/${property.slug}/chat` : undefined} />
-        </div>
-      </main>
-    );
-  }
-
-  if (layout === "darkLuxury") {
-    return (
-      <main className="min-h-screen text-[var(--guide-text)]" style={{ ...themeStyle, background: "var(--guide-app-bg)" }}>
-        <DemoBar />
-        <div className="mx-auto min-h-screen max-w-[430px] shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)", fontFamily: "var(--guide-body-font)" }}>
-          <section className="relative min-h-[var(--guide-hero-height)] overflow-hidden text-[var(--guide-hero-text)]">
-            <HeroImage className="absolute inset-0" />
-            <div className="absolute inset-x-10 top-10 h-px bg-[linear-gradient(90deg,transparent,var(--guide-accent),transparent)] opacity-70" />
-            <div className="relative flex min-h-[var(--guide-hero-height)] flex-col justify-between px-5 py-6">
-              <div className="flex items-start justify-between gap-3">
-                <LogoMark />
-              </div>
-              <div className="pb-3">
-                <p className="text-[11px] font-black uppercase tracking-[0.34em] text-[var(--guide-accent)]">{t.heroEyebrow[layout]}</p>
-                <h1 className="mt-3 text-5xl font-semibold leading-none" style={{ fontFamily: "var(--guide-heading-font)" }}>{property.name}</h1>
-                <p className="mt-5 max-w-[300px] text-sm font-semibold leading-7 text-[var(--guide-hero-text)] opacity-80">{t.heroDescription}</p>
-              </div>
-            </div>
-          </section>
-
-          <MenuGrid />
-          <Footer />
-          <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} chatApiUrl={basePath ? `/api/preview/${property.slug}/chat` : undefined} />
-        </div>
-      </main>
-    );
-  }
+  const canOptimizeCover = Boolean(property.coverImageUrl && !property.coverImageUrl.startsWith("data:"));
+  const welcome = (property.welcomeMessage || "").trim();
+  const checkInLine = firstSentence(property.checkInInfo) || t.menu.arrival.subtitle;
+  const checkOutLine = firstSentence(property.checkOutInfo);
 
   return (
     <main className="min-h-screen text-[var(--guide-text)]" style={{ ...themeStyle, background: "var(--guide-app-bg)" }}>
-        <DemoBar />
-      <div className="mx-auto min-h-screen max-w-[430px] shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)", fontFamily: "var(--guide-body-font)" }}>
-        <div className="px-4 pt-4">
-        <section className="relative min-h-[var(--guide-hero-height)] overflow-hidden rounded-[var(--guide-hero-radius)] text-white shadow-[0_26px_74px_rgba(76,55,37,0.20)]">
-          <HeroImage className="absolute inset-0" />
-          <div className="relative flex min-h-[var(--guide-hero-height)] flex-col justify-between px-5 py-6">
-            <div className="flex items-start gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <LogoMark />
-                <div className="min-w-0">
-                  <p className="text-2xl font-semibold leading-tight">{t.digitalConcierge}</p>
-                  <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.32em] text-white/80">{t.yourStaySimplified}</p>
-                </div>
-              </div>
-            </div>
+      {isExample && !embedded ? (
+        <a
+          href={`${getAppUrl()}/register?plan=ai`}
+          className="sticky top-0 z-40 flex items-center justify-center gap-2 bg-[#111827] px-4 py-2.5 text-center text-[13px] font-semibold text-white"
+          style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
+        >
+          <span className="hidden text-white/70 min-[360px]:inline">This is a demo guide.</span>
+          Make one for your place, free
+          <ArrowRight size={14} aria-hidden="true" />
+        </a>
+      ) : null}
 
-            <div className="pb-3">
-              <p className="text-3xl leading-tight" style={{ fontFamily: "var(--guide-heading-font)" }}>{t.welcomeTo}</p>
-              <h1 className="text-5xl font-bold leading-none" style={{ fontFamily: "var(--guide-heading-font)" }}>{property.name}</h1>
-              <p className="mt-5 max-w-[310px] text-base leading-8 text-white/88">{t.heroDescription}</p>
-            </div>
+      <div className="guide-enter mx-auto min-h-screen w-full max-w-[430px] shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)", fontFamily: "var(--guide-body-font)" }}>
+        <GuideTopBar name={property.name} logoUrl={property.logoUrl} />
+
+        <div className="px-4 sm:px-5">
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[var(--guide-hero-radius)]" style={{ background: "var(--guide-hero-fallback)" }}>
+            {canOptimizeCover ? (
+              <Image src={property.coverImageUrl || ""} alt="" fill priority className="object-cover" sizes="(max-width: 430px) 100vw, 430px" style={{ filter: "var(--guide-hero-image-filter)" }} />
+            ) : property.coverImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={property.coverImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            ) : null}
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/45 to-transparent" aria-hidden="true" />
+            <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#1F2937] backdrop-blur">
+              {t.heroEyebrow[theme.layout]}
+            </span>
           </div>
-        </section>
+
+          <h1 className="mt-5 break-words text-[2rem] font-bold leading-[1.08] tracking-tight text-[var(--guide-text)]" style={{ fontFamily: "var(--guide-heading-font)" }}>
+            {property.name}
+          </h1>
+          {welcome ? (
+            <div className="mt-2">
+              <p className={`whitespace-pre-line text-[15px] leading-6 text-[var(--guide-muted)] ${welcomeOpen ? "" : "line-clamp-2"}`}>{welcome}</p>
+              {welcome.length > 110 ? (
+                <button
+                  type="button"
+                  onClick={() => setWelcomeOpen((value) => !value)}
+                  aria-expanded={welcomeOpen}
+                  className="mt-1 text-sm font-bold text-[var(--guide-accent)] underline-offset-4 hover:underline focus:outline-none focus-visible:underline"
+                >
+                  {welcomeOpen ? t.showLess : t.readMore}
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <p className="mt-2 text-[15px] leading-6 text-[var(--guide-muted)]">{t.heroTagline}</p>
+          )}
+
+          <div className="mt-5 grid gap-3">
+            {property.wifiName ? <GuideWifiCard network={property.wifiName} password={property.wifiPassword} /> : null}
+            <GuideRowCard
+              href={`${baseHref}/arrival`}
+              onNavigate={open("arrival")}
+              icon={<KeyRound size={20} />}
+              eyebrow={t.menu.arrival.title}
+              title={checkInLine}
+              subtitle={checkOutLine || t.menu.arrival.subtitle}
+            />
+            {firstRow.length ? (
+              <nav aria-label={t.guestGuide} className="grid gap-3">
+                <div className={`grid gap-3 ${firstRow.length === 3 ? "grid-cols-3" : firstRow.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
+                  {firstRow.map((tile) => (
+                    <GuideTileCard key={tile.id} href={`${baseHref}/${tile.id}`} onNavigate={open(tile.id)} icon={tile.icon} title={tile.title} />
+                  ))}
+                </div>
+                {secondRow.length ? (
+                  <div className={`grid gap-3 ${secondRow.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
+                    {secondRow.map((tile) => (
+                      <GuideTileCard key={tile.id} href={`${baseHref}/${tile.id}`} onNavigate={open(tile.id)} icon={tile.icon} title={tile.title} />
+                    ))}
+                  </div>
+                ) : null}
+              </nav>
+            ) : null}
+          </div>
         </div>
 
-        <MenuGrid />
-
-        <Footer />
-
-        <GuestChatLauncher slug={property.slug} propertyName={property.name} context={property} chatApiUrl={basePath ? `/api/preview/${property.slug}/chat` : undefined} />
+        <div className="px-5 pb-28 pt-8">
+          <PoweredByStayNest label={t.poweredBy} />
+        </div>
+        {chat}
       </div>
     </main>
   );

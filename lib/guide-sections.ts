@@ -8,7 +8,8 @@ export const GUIDE_SECTION_IDS = new Set([
   "activities",
   "essentials",
   "reviews",
-  "emergency"
+  "emergency",
+  "explore"
 ]);
 
 /**

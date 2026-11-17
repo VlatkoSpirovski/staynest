@@ -68,34 +68,28 @@ export function DetailShell({
   title: string;
   children: React.ReactNode;
 }) {
+  const backClass =
+    "inline-flex min-h-10 items-center gap-2 rounded-full border border-[var(--guide-card-border)] bg-[var(--guide-elevated-bg)] pl-2.5 pr-4 text-sm font-bold text-[var(--guide-text)] transition hover:-translate-x-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--guide-accent)] motion-reduce:transition-none";
   return (
     <main className="min-h-screen text-[var(--guide-text)]" style={{ background: "var(--guide-app-bg)", fontFamily: "var(--guide-body-font)" }}>
-      <div className="mx-auto min-h-screen max-w-[430px] px-5 py-5 shadow-[var(--guide-shell-shadow)]" style={{ background: "var(--guide-shell-bg)" }}>
+      <div className="guide-enter mx-auto min-h-screen w-full max-w-[430px] px-4 pb-28 pt-4 shadow-[var(--guide-shell-shadow)] sm:px-5" style={{ background: "var(--guide-shell-bg)" }}>
         {onBack ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex min-h-11 items-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-elevated-bg)] px-4 text-sm font-bold text-[var(--guide-text)] shadow-sm ring-1 ring-[var(--guide-card-border)]"
-          >
-            <ArrowLeft size={16} />
+          <button type="button" onClick={onBack} className={backClass}>
+            <ArrowLeft size={16} aria-hidden="true" />
             {backLabel}
           </button>
         ) : (
-          <Link
-            href={backHref}
-            prefetch
-            className="inline-flex min-h-11 items-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-elevated-bg)] px-4 text-sm font-bold text-[var(--guide-text)] shadow-sm ring-1 ring-[var(--guide-card-border)]"
-          >
-            <ArrowLeft size={16} />
+          <Link href={backHref} prefetch className={backClass}>
+            <ArrowLeft size={16} aria-hidden="true" />
             {backLabel}
           </Link>
         )}
-        <div className="mt-8">
-          <p className="text-[10px] font-black uppercase tracking-[0.32em] text-[var(--guide-accent)]">{eyebrow}</p>
-          <h1 className="mt-3 text-4xl font-black leading-[1.02] tracking-tight text-[var(--guide-text)]" style={{ fontFamily: "var(--guide-heading-font)" }}>{title}</h1>
+        <div className="mt-6">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--guide-accent)]">{eyebrow}</p>
+          <h1 className="mt-2 break-words text-[1.85rem] font-bold leading-[1.1] tracking-tight text-[var(--guide-text)]" style={{ fontFamily: "var(--guide-heading-font)" }}>{title}</h1>
         </div>
-        <div className="mt-7 grid gap-5">{children}</div>
-        <PoweredByStayNest className="mt-8 pb-6" label={poweredByLabel} />
+        <div className="mt-6 grid gap-3">{children}</div>
+        <PoweredByStayNest className="mt-10" label={poweredByLabel} />
       </div>
     </main>
   );
@@ -103,15 +97,19 @@ export function DetailShell({
 
 export function MiniCard({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
   return (
-    <article className="rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] p-5 text-left text-[var(--guide-text)] shadow-[var(--guide-card-shadow)] backdrop-blur-xl" style={{ background: "var(--guide-card-bg)", boxShadow: "var(--guide-card-shadow), var(--guide-card-inset-shadow)", backdropFilter: "var(--guide-card-backdrop)" }}>
-      <h2 className="text-xl font-black tracking-tight text-[var(--guide-text)]">{title}</h2>
-      <div className="mt-3 text-[15px] leading-7 text-[var(--guide-muted)]">{children}</div>
+    <article className="rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] p-4 text-left text-[var(--guide-text)] sm:p-5" style={{ background: "var(--guide-card-bg)", boxShadow: "var(--guide-card-shadow), var(--guide-card-inset-shadow)" }}>
+      <h2 className="text-base font-bold tracking-tight text-[var(--guide-text)]">{title}</h2>
+      <div className="mt-2 break-words text-[15px] leading-7 text-[var(--guide-muted)]">{children}</div>
     </article>
   );
 }
 
+export function GuideSubheading({ children }: { children: React.ReactNode }) {
+  return <h2 className="mt-3 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--guide-muted)] first:mt-0">{children}</h2>;
+}
+
 export function EmptyNote({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-[var(--guide-card-radius)] border border-dashed border-[var(--guide-card-border)] p-4 text-sm leading-6 text-[var(--guide-muted)]" style={{ background: "var(--guide-card-bg)" }}>{children}</div>;
+  return <div role="status" className="rounded-[var(--guide-card-radius)] border border-dashed border-[var(--guide-card-border)] px-4 py-6 text-center text-sm leading-6 text-[var(--guide-muted)]" style={{ background: "var(--guide-card-bg)" }}>{children}</div>;
 }
 
 export function PoweredByStayNest({ className = "", label = "Powered by" }: { className?: string; label?: string }) {

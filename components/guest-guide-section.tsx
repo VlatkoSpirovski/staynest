@@ -3,11 +3,11 @@
 import { Car, MessageCircle, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { CopyButton } from "@/components/copy-button";
 import { EssentialPlaceCard } from "@/components/essential-place-card";
 import { GuestLanguageProvider, useGuestLanguage } from "@/components/guest-language";
 import { PlaceCard } from "@/components/place-card";
-import { DetailShell, EmptyNote, MiniCard } from "@/app/stay/[slug]/guide-ui";
+import { DetailShell, EmptyNote, GuideSubheading, MiniCard } from "@/app/stay/[slug]/guide-ui";
+import { GuideWifiCard } from "@/components/guide-kit";
 import { isEssentialCategory } from "@/lib/place-recommendation";
 import { getGuideTheme, guideThemeStyle } from "@/themes";
 
@@ -70,6 +70,7 @@ export type GuestGuideSectionProperty = {
   guideSections: GuideSection[];
   recommendations: Recommendation[];
   reviewLinks: ReviewLink[];
+  welcomeMessage?: string | null;
 };
 
 function whatsappUrl(phone: string | null | undefined, propertyName: string, template: (property: string) => string) {
@@ -116,19 +117,7 @@ export function GuestGuideSectionContent({ property, section, onBack, basePath }
     <div style={themeStyle}>
       <DetailShell backHref={backHref} backLabel={t.back} onBack={onBack} poweredByLabel={t.poweredBy} eyebrow={meta.eyebrow} title={meta.title}>
         {section === "wifi" ? (
-          <>
-            <MiniCard title={t.content.network}>
-              <p className="font-semibold text-[var(--guide-text)]">{property.wifiName || t.content.askHost}</p>
-            </MiniCard>
-            <MiniCard title={t.content.password}>
-              <div className="grid gap-3">
-                <p className="font-semibold text-[var(--guide-text)]">{property.wifiPassword || t.content.askHost}</p>
-                {property.wifiPassword ? (
-                  <CopyButton value={property.wifiPassword} label={t.content.copyWifiPassword} copiedLabel={t.content.passwordCopied} />
-                ) : null}
-              </div>
-            </MiniCard>
-          </>
+          property.wifiName ? <GuideWifiCard network={property.wifiName} password={property.wifiPassword} /> : <EmptyNote>{t.content.askHost}</EmptyNote>
         ) : null}
 
         {section === "contact" ? (
@@ -164,19 +153,48 @@ export function GuestGuideSectionContent({ property, section, onBack, basePath }
         ) : null}
 
         {section === "house" ? (
-          <>
-            <MiniCard title={t.content.parking}>
-              <p>{property.parkingInfo || t.content.parkingFallback}</p>
-            </MiniCard>
-            <MiniCard title={t.content.houseRules}>
-              <p className="whitespace-pre-line">{property.houseRules || t.content.houseRulesFallback}</p>
-            </MiniCard>
-            {property.guideSections.map((item) => (
-              <MiniCard key={item.id} title={item.title}>
-                <p className="whitespace-pre-line">{item.content}</p>
-              </MiniCard>
-            ))}
-          </>
+          property.parkingInfo || property.houseRules || property.guideSections.length ? (
+            <>
+              {property.houseRules ? (
+                <MiniCard title={t.content.houseRules}>
+                  <p className="whitespace-pre-line">{property.houseRules}</p>
+                </MiniCard>
+              ) : null}
+              {property.parkingInfo ? (
+                <MiniCard title={t.content.parking}>
+                  <p className="whitespace-pre-line">{property.parkingInfo}</p>
+                </MiniCard>
+              ) : null}
+              {property.guideSections.map((item) => (
+                <MiniCard key={item.id} title={item.title}>
+                  <p className="whitespace-pre-line">{item.content}</p>
+                </MiniCard>
+              ))}
+            </>
+          ) : (
+            <EmptyNote>{t.content.houseRulesFallback}</EmptyNote>
+          )
+        ) : null}
+
+        {section === "explore" ? (
+          restaurantRecommendations.length || activityRecommendations.length || essentialRecommendations.length ? (
+            <>
+              {restaurantRecommendations.length ? <GuideSubheading>{t.content.eat}</GuideSubheading> : null}
+              {restaurantRecommendations.map((item) => (
+                <PlaceCard key={item.id} item={item} openMapLabel={t.content.openMap} />
+              ))}
+              {activityRecommendations.length ? <GuideSubheading>{t.content.doNearby}</GuideSubheading> : null}
+              {activityRecommendations.map((item) => (
+                <PlaceCard key={item.id} item={item} openMapLabel={t.content.openMap} />
+              ))}
+              {essentialRecommendations.length ? <GuideSubheading>{t.content.usefulPlaces}</GuideSubheading> : null}
+              {essentialRecommendations.map((item) => (
+                <EssentialPlaceCard key={item.id} item={item} />
+              ))}
+            </>
+          ) : (
+            <EmptyNote>{t.content.noPlaces}</EmptyNote>
+          )
         ) : null}
 
         {section === "restaurants" ? (
@@ -217,8 +235,14 @@ export function GuestGuideSectionContent({ property, section, onBack, basePath }
               <p>{t.content.reviewBlurb}</p>
               <div className="mt-4 grid gap-2">
                 {property.reviewLinks.map((link) => (
-                  <a key={link.id} href={link.url} className="rounded-[var(--guide-button-radius)] bg-[var(--guide-button-bg)] px-4 py-3 text-center text-sm font-bold text-[var(--guide-button-text)]">
-                    Leave a {link.platform.charAt(0) + link.platform.slice(1).toLowerCase()} review
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-12 items-center justify-center rounded-[var(--guide-button-radius)] bg-[var(--guide-button-bg)] px-4 text-center text-sm font-bold text-[var(--guide-button-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--guide-accent)] focus-visible:ring-offset-2"
+                  >
+                    {t.content.reviewOn(link.platform === "BOOKING" ? "Booking.com" : link.platform.charAt(0) + link.platform.slice(1).toLowerCase())}
                   </a>
                 ))}
               </div>

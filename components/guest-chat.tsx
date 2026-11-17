@@ -1,8 +1,9 @@
 "use client";
 
-import { MessageCircle, Send, Sparkles, X } from "lucide-react";
+import { Send, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useGuestLanguage } from "@/components/guest-language";
+import { GuideConciergeButton, GuideConciergeDock } from "@/components/guide-kit";
 import { cn } from "@/lib/utils";
 
 type ChatRecommendation = {
@@ -230,11 +231,11 @@ export function GuestChat({ slug, propertyName, context, chatApiUrl, initialOpen
   }
 
   return (
-    <div className="pointer-events-none fixed bottom-3 right-3 z-30 w-[min(390px,calc(100vw-20px))] sm:right-[max(12px,calc(50%-215px))]">
-      <div className="pointer-events-auto ml-auto flex w-full max-w-[min(100%,320px)] flex-col items-end gap-2">
+    <GuideConciergeDock>
       {open ? (
         <section
-          className="w-full overflow-hidden rounded-[var(--guide-card-radius)] border text-[var(--guide-text)] shadow-[var(--guide-chat-shadow)]"
+          aria-label={botLabel}
+          className="guide-enter w-full overflow-hidden rounded-[var(--guide-card-radius)] border text-[var(--guide-text)] shadow-[var(--guide-chat-shadow)]"
           style={{ background: "var(--guide-chat-bg)", borderColor: "var(--guide-chat-border)" }}
         >
           <div className="flex items-center justify-between bg-[var(--guide-button-bg)] px-4 py-3 text-[var(--guide-button-text)]">
@@ -242,11 +243,11 @@ export function GuestChat({ slug, propertyName, context, chatApiUrl, initialOpen
               <p className="text-xs font-bold uppercase tracking-[0.18em] opacity-60">{t.chat.stayAssistant}</p>
               <h2 className="font-bold">{botLabel}</h2>
             </div>
-            <button type="button" onClick={() => setOpen(false)} className="grid h-9 w-9 place-items-center rounded-full bg-white/10">
+            <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-full bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
               <X size={17} />
             </button>
           </div>
-          <div className="grid max-h-80 gap-3 overflow-y-auto p-4">
+          <div className="grid max-h-[min(55vh,420px)] gap-3 overflow-y-auto p-4" aria-live="polite">
             {messages.length === 1 ? (
               <div className="grid place-items-center py-4 text-center">
                 <div
@@ -305,22 +306,15 @@ export function GuestChat({ slug, propertyName, context, chatApiUrl, initialOpen
               className="min-h-11 min-w-0 flex-1 rounded-[var(--guide-button-radius)] border border-[var(--guide-chat-border)] px-4 text-sm text-[var(--guide-text)] outline-none focus:ring-2 focus:ring-[var(--guide-accent)]/30"
               style={chatElevatedStyle}
               placeholder={t.chat.askAnything}
+              aria-label={t.chat.askAnything}
             />
-            <button type="button" onClick={() => sendMessage()} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[var(--guide-button-bg)] text-[var(--guide-button-text)]">
+            <button type="button" onClick={() => sendMessage()} aria-label="Send" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[var(--guide-button-bg)] text-[var(--guide-button-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--guide-accent)]">
               <Send size={16} />
             </button>
           </div>
         </section>
       ) : null}
-        <button
-          type="button"
-          onClick={() => setOpen(open ? false : true)}
-          className="inline-flex min-h-12 max-w-full items-center gap-2 rounded-[var(--guide-button-radius)] bg-[var(--guide-button-bg)] px-5 text-sm font-bold text-[var(--guide-button-text)] shadow-[0_18px_45px_rgba(31,41,51,0.25)]"
-        >
-          <MessageCircle size={17} />
-          <span className="truncate">{askLabel}</span>
-        </button>
-      </div>
-    </div>
+        <GuideConciergeButton label={askLabel} hint={t.chat.conciergeHint} onClick={() => setOpen(!open)} expanded={open} />
+    </GuideConciergeDock>
   );
 }

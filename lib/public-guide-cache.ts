@@ -5,7 +5,7 @@ import { examplePublicGuide, isExamplePublicGuide } from "@/lib/example-public-g
 import { prisma } from "@/lib/prisma";
 
 const PUBLIC_GUIDE_REVALIDATE_SECONDS = 60 * 60 * 24;
-const PUBLIC_GUIDE_CACHE_VERSION = "v2";
+const PUBLIC_GUIDE_CACHE_VERSION = "v2-welcome";
 
 export function publicGuideCacheTag(slug: string) {
   return `public-guide:${slug}`;
@@ -32,6 +32,7 @@ export function getCachedPublicGuideHome(slug: string) {
         select: {
           slug: true,
           name: true,
+          welcomeMessage: true,
           logoUrl: true,
           coverImageUrl: true,
           accentColor: true,
@@ -62,6 +63,7 @@ export function getCachedPublicGuideSection(slug: string) {
         select: {
           slug: true,
           name: true,
+          welcomeMessage: true,
           logoUrl: true,
           coverImageUrl: true,
           accentColor: true,

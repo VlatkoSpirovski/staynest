@@ -1932,6 +1932,13 @@ function TemplateChoiceCard({
   );
 }
 
+const previewEyebrow: Record<GuideTheme["layout"], string> = {
+  classic: "Welcome",
+  modern: "Arrival ready",
+  darkLuxury: "Private retreat",
+  mediterranean: "Welcome by the sea"
+};
+
 function TemplatePhonePreview({
   theme,
   property,
@@ -1949,170 +1956,91 @@ function TemplatePhonePreview({
 }) {
   const style = guideThemeStyle(theme, { accentColor, designSerif, designRounded }) as React.CSSProperties;
   const displayName = property.name || theme.preview.propertyName;
-  const previewCards: Array<{ title: string; subtitle: string; icon: typeof Home }> = [
-    { title: "Wi-Fi", subtitle: "Connect", icon: Wifi },
-    { title: "Contact", subtitle: "We are here", icon: Phone },
-    { title: "Check-in", subtitle: "Arrival", icon: KeyRound },
-    { title: "House Guide", subtitle: "About", icon: Home }
+  const surface = { background: "var(--guide-card-bg)", boxShadow: "var(--guide-card-shadow), var(--guide-card-inset-shadow)" };
+  const iconBox = { background: "var(--guide-icon-bg)" };
+  const tiles = [
+    { label: "Contact", icon: Phone },
+    { label: "House", icon: Home },
+    { label: "Explore", icon: MapPin }
   ];
-  const heightClass = compact ? "h-[388px]" : "h-[520px]";
-
-  function PreviewLogo({ small = false }: { small?: boolean }) {
-    return (
-      <div
-        className={`${small ? "h-9 w-9 rounded-[13px]" : "h-12 w-12 rounded-[18px]"} grid shrink-0 place-items-center overflow-hidden p-1 text-[10px] font-bold text-[var(--guide-text)] shadow-[0_12px_34px_rgba(0,0,0,0.16)] ring-1 ring-[var(--guide-card-border)]`}
-        style={{ background: "var(--guide-elevated-bg)" }}
-      >
-        {property.logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={property.logoUrl} alt="" className="h-full w-full rounded-[inherit] object-cover" />
-        ) : (
-          theme.preview.logoText
-        )}
-      </div>
-    );
-  }
-
-  function HeroLayer({ className = "" }: { className?: string }) {
-    return (
-      <div className={`${/\b(absolute|fixed)\b/.test(className) ? "" : "relative "}overflow-hidden ${className}`} style={{ background: theme.preview.heroBackground }}>
-        {property.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={property.coverImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ filter: "var(--guide-hero-image-filter)" }} />
-        ) : null}
-        {theme.layout === "modern" && property.coverImageUrl ? null : <div className="absolute inset-0" style={{ background: "var(--guide-hero-overlay)" }} />}
-      </div>
-    );
-  }
-
-  function MiniMenu({ variant = theme.layout }: { variant?: GuideTheme["layout"] }) {
-    return (
-      <>
-        {previewCards.map((item) => {
-          const Icon = item.icon;
-          if (variant === "modern") {
-            return (
-              <div
-                key={item.title}
-                className="flex min-h-[54px] items-center gap-2 rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] px-3 text-left shadow-[var(--guide-card-shadow)] backdrop-blur-xl"
-                style={{ background: "var(--guide-card-bg)", boxShadow: "var(--guide-card-shadow), var(--guide-card-inset-shadow)", backdropFilter: "var(--guide-card-backdrop)" }}
-              >
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--guide-icon-radius)] text-[var(--guide-accent)]" style={{ background: "var(--guide-icon-bg)" }}>
-                  <Icon size={13} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-[11px] font-bold">{item.title}</span>
-                  <span className="block truncate text-[9px] font-semibold text-[var(--guide-muted)]">{item.subtitle}</span>
-                </span>
-              </div>
-            );
-          }
-
-          return (
-            <div
-              key={item.title}
-              className={`${compact ? "min-h-[74px] p-3" : "min-h-[108px] p-4"} rounded-[var(--guide-card-radius)] border border-[var(--guide-card-border)] ${variant === "darkLuxury" ? "text-left" : "text-center"} shadow-[var(--guide-card-shadow)] backdrop-blur-xl`}
-              style={{ background: "var(--guide-card-bg)", boxShadow: "var(--guide-card-shadow), var(--guide-card-inset-shadow)", backdropFilter: "var(--guide-card-backdrop)" }}
-            >
-              <span className={`${compact ? "h-8 w-8" : "h-11 w-11"} ${variant === "darkLuxury" ? "" : "mx-auto"} grid place-items-center rounded-[var(--guide-icon-radius)] text-[var(--guide-accent)] shadow-[var(--guide-icon-shadow)]`} style={{ background: "var(--guide-icon-bg)" }}>
-                <Icon size={compact ? 14 : 17} />
-              </span>
-              <p className={`${compact ? "mt-2 text-[11px]" : "mt-3 text-sm"} font-bold`}>{item.title}</p>
-              <p className={`${compact ? "text-[10px]" : "text-xs"} mt-1 font-semibold text-[var(--guide-muted)]`}>{item.subtitle}</p>
-            </div>
-          );
-        })}
-      </>
-    );
-  }
-
-  if (theme.layout === "modern") {
-    return (
-      <div style={{ ...style, background: "var(--guide-shell-bg)" }} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
-        <header className={`${compact ? "px-4 py-3" : "px-5 py-4"} flex items-center justify-between border-b border-[var(--guide-section-divider)]`}>
-          <div className="flex items-center gap-2">
-            <PreviewLogo small={compact} />
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--guide-muted)]">Stay guide</p>
-              <p className={`${compact ? "text-xs" : "text-sm"} font-bold`}>{displayName}</p>
-            </div>
-          </div>
-        </header>
-        <section className={`${compact ? "p-4" : "p-5"}`}>
-          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
-          <h3 className={`${compact ? "mt-2 text-2xl" : "mt-3 text-3xl"} font-bold leading-[0.95] tracking-tight`} style={{ fontFamily: "var(--guide-heading-font)" }}>
-            Welcome to {displayName}
-          </h3>
-          <HeroLayer className={`${compact ? "mt-3 h-28" : "mt-4 h-36"} rounded-[var(--guide-hero-radius)]`} />
-        </section>
-        <section className={`${compact ? "px-4" : "px-5"} grid gap-2`}>
-          <MiniMenu variant="modern" />
-        </section>
-      </div>
-    );
-  }
-
-  if (theme.layout === "mediterranean") {
-    return (
-      <div style={{ ...style, background: "var(--guide-shell-bg)" }} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] p-3 text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
-        <header className="mb-3 flex items-center justify-between">
-          <PreviewLogo small={compact} />
-        </header>
-        <section className="relative overflow-hidden rounded-[var(--guide-hero-radius)]">
-          <HeroLayer className={compact ? "h-32" : "h-44"} />
-          <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-            <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-white/82">{theme.preview.eyebrow}</p>
-            <h3 className={`${compact ? "text-2xl" : "text-4xl"} font-semibold leading-none`} style={{ fontFamily: "var(--guide-heading-font)" }}>{displayName}</h3>
-          </div>
-        </section>
-        <section className={`${compact ? "mt-3 gap-2" : "mt-4 gap-3"} grid grid-cols-2`}>
-          <MiniMenu variant="mediterranean" />
-        </section>
-      </div>
-    );
-  }
-
-  if (theme.layout === "darkLuxury") {
-    return (
-      <div style={{ ...style, background: "var(--guide-shell-bg)" }} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-[#D6AF6F]/20`}>
-        <section className={`${compact ? "h-40" : "h-56"} relative overflow-hidden`}>
-          <HeroLayer className="absolute inset-0" />
-          <div className={`${compact ? "p-4" : "p-5"} relative flex h-full flex-col justify-between`}>
-            <div className="flex items-start justify-between">
-              <PreviewLogo small={compact} />
-            </div>
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-[var(--guide-accent)]">{theme.preview.eyebrow}</p>
-              <h3 className={`${compact ? "text-3xl" : "text-4xl"} font-semibold leading-none`} style={{ fontFamily: "var(--guide-heading-font)" }}>{displayName}</h3>
-            </div>
-          </div>
-        </section>
-        <section className={`${compact ? "gap-2 p-3" : "gap-3 p-4"} grid grid-cols-2`}>
-          <MiniMenu variant="darkLuxury" />
-        </section>
-      </div>
-    );
-  }
 
   return (
-    <div style={{ ...style, background: "var(--guide-shell-bg)" }} className={`${heightClass} overflow-hidden rounded-[var(--guide-shell-radius)] text-[var(--guide-text)] shadow-[var(--guide-shell-shadow)] ring-1 ring-black/5`}>
-      <section className={`${compact ? "h-44" : "h-64"} relative overflow-hidden`}>
-        <HeroLayer className="absolute inset-0" />
-        <div className={`${compact ? "p-4" : "p-5"} relative flex h-full flex-col justify-between text-white`}>
-          <div className="flex items-start justify-between gap-3">
-            <PreviewLogo small={compact} />
-          </div>
-          <div>
-            <p className={`${compact ? "text-sm" : "text-xl"} leading-tight`} style={{ fontFamily: "var(--guide-heading-font)" }}>Welcome to</p>
-            <h3 className={`${compact ? "text-2xl" : "text-4xl"} font-bold leading-none`} style={{ fontFamily: "var(--guide-heading-font)" }}>{displayName}</h3>
-            <p className={`${compact ? "mt-2 text-[11px] leading-4" : "mt-4 text-sm leading-6"} max-w-[260px] font-semibold text-white/82`}>Your polished mobile guide for Wi-Fi, arrival, house info and more.</p>
+    <div
+      style={{ ...style, background: "var(--guide-shell-bg)", fontFamily: "var(--guide-body-font)" }}
+      className={`${compact ? "h-[388px]" : "h-[520px]"} overflow-hidden rounded-[var(--guide-shell-radius)] text-[var(--guide-text)] ring-1 ring-black/5`}
+      aria-hidden="true"
+    >
+      <div className="flex items-center justify-between gap-2 px-3 pb-2 pt-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-[30%] border border-[var(--guide-card-border)] text-[9px] font-bold" style={{ background: "var(--guide-elevated-bg)" }}>
+            {property.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={property.logoUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              theme.preview.logoText
+            )}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-[11px] font-bold leading-tight">{displayName}</p>
+            <p className="text-[7px] font-bold uppercase tracking-[0.16em] text-[var(--guide-muted)]">Guest guide</p>
           </div>
         </div>
-      </section>
+        <span className="rounded-full border border-[var(--guide-card-border)] px-2 py-0.5 text-[8px] font-bold" style={{ background: "var(--guide-elevated-bg)" }}>EN</span>
+      </div>
 
-      <section className={`${compact ? "grid-cols-2 gap-2 p-3" : "grid-cols-2 gap-3 p-5"} grid`}>
-        <MiniMenu variant="classic" />
-      </section>
+      <div className="px-3">
+        <div className="relative aspect-[16/9] overflow-hidden rounded-[calc(var(--guide-hero-radius)*0.6)]" style={{ background: theme.preview.heroBackground }}>
+          {property.coverImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={property.coverImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ filter: "var(--guide-hero-image-filter)" }} />
+          ) : null}
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent" />
+          <span className="absolute bottom-1.5 left-1.5 rounded-full bg-white/90 px-1.5 py-0.5 text-[6px] font-bold uppercase tracking-[0.14em] text-[#1F2937]">
+            {previewEyebrow[theme.layout]}
+          </span>
+        </div>
+
+        <p className="mt-2.5 truncate text-[19px] font-bold leading-tight tracking-tight" style={{ fontFamily: "var(--guide-heading-font)" }}>
+          {displayName}
+        </p>
+        <p className="text-[9px] text-[var(--guide-muted)]">Everything for a smooth stay</p>
+
+        <div className="mt-2.5 grid gap-1.5">
+          <div className="rounded-[calc(var(--guide-card-radius)*0.6)] border border-[var(--guide-card-border)] p-2" style={surface}>
+            <div className="flex items-center gap-2">
+              <span className="grid h-6 w-6 place-items-center rounded-[calc(var(--guide-icon-radius)*0.6)] text-[var(--guide-accent)]" style={iconBox}>
+                <Wifi size={12} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[6px] font-bold uppercase tracking-[0.14em] text-[var(--guide-accent)]">Wi-Fi</p>
+                <p className="truncate text-[9px] font-bold">{property.wifiName || "Guest_WiFi"}</p>
+              </div>
+            </div>
+            <div className="mt-1.5 rounded-[var(--guide-button-radius)] py-1 text-center text-[8px] font-bold" style={{ background: "var(--guide-button-bg)", color: "var(--guide-button-text)" }}>
+              Copy Wi-Fi password
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-[calc(var(--guide-card-radius)*0.6)] border border-[var(--guide-card-border)] p-2" style={surface}>
+            <span className="grid h-6 w-6 place-items-center rounded-[calc(var(--guide-icon-radius)*0.6)] text-[var(--guide-accent)]" style={iconBox}>
+              <KeyRound size={12} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[6px] font-bold uppercase tracking-[0.14em] text-[var(--guide-accent)]">Check-in/out</p>
+              <p className="truncate text-[9px] font-bold">Check-in from 15:00</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {tiles.map(({ label, icon: Icon }) => (
+              <div key={label} className="grid place-items-center gap-1 rounded-[calc(var(--guide-card-radius)*0.6)] border border-[var(--guide-card-border)] py-2" style={surface}>
+                <span className="grid h-5 w-5 place-items-center rounded-[calc(var(--guide-icon-radius)*0.6)] text-[var(--guide-accent)]" style={iconBox}>
+                  <Icon size={10} />
+                </span>
+                <span className="text-[7px] font-bold">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2326,6 +2254,7 @@ function ModuleSheet({
                       <Field label="Check-in">
                         <textarea name="checkInInfo" className={`${textareaClass} min-h-28 bg-sn-canvas`} defaultValue={property.checkInInfo || ""} placeholder="Check-in from 15:00. The key box is left of the door; we send the code the day before." />
                       </Field>
+                      <p className="mt-2 text-xs leading-5 text-sn-muted">Tip: anyone with your guide link can read it. Send door or lockbox codes in your booking message instead of writing them here.</p>
                     </div>
                     <div className="p-4">
                       <Field label="Checkout">
