@@ -504,7 +504,7 @@ export async function savePropertyInline(formData: FormData) {
     return {
       ok: true,
       data: { property },
-      message: "Guest experience saved."
+      message: "Saved. Guests see it now."
     };
   } catch (error) {
     return {
@@ -583,7 +583,7 @@ export async function savePropertyDesignInline(formData: FormData) {
     return {
       ok: true,
       data: { property },
-      message: "Template updated successfully."
+      message: "Style applied."
     };
   } catch (error) {
     return {
@@ -1037,7 +1037,7 @@ export async function saveReviewLinksInline(formData: FormData) {
     return {
       ok: true,
       data: { reviewLinks },
-      message: "Review path saved."
+      message: "Review link saved."
     };
   } catch (error) {
     return {
