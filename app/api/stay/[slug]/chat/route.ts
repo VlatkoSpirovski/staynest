@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { reasoningOptions } from "@/lib/listing-import";
 import { getGuestMessages } from "@/lib/guest-i18n";
 import { canServePublicGuide } from "@/lib/public-guide-access";
 import { getCachedPublicGuideChatContext } from "@/lib/public-guide-cache";
@@ -139,7 +140,8 @@ export async function POST(request: Request, { params }: RouteContext) {
     },
     body: JSON.stringify({
       model: openAiModel(),
-      max_output_tokens: 220,
+      ...reasoningOptions(openAiModel(), "minimal"),
+      max_output_tokens: 900,
       instructions:
         "You are StayNest's guest assistant. Answer only from the provided property context. " +
         "Reply in the same language the guest wrote in; if that is unclear, use the language hinted by the guest's browser, otherwise English. " +

@@ -7,6 +7,10 @@ export function openAiModel() {
   return model && model !== "gpt-5.4-mini" ? model : "gpt-5-mini";
 }
 
+export function reasoningOptions(model: string, effort: "minimal" | "low") {
+  return /^(gpt-5|o\d)/i.test(model) ? { reasoning: { effort } } : {};
+}
+
 export async function openAiErrorMessage(response: Response) {
   const body = (await response.json().catch(() => null)) as { error?: { message?: string; code?: string; type?: string } } | null;
   const message = body?.error?.message || `${response.status} ${response.statusText}`;

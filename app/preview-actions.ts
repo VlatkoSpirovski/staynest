@@ -15,6 +15,7 @@ import {
   isPrivateHostname,
   isThinOrBlockedText,
   openAiModel,
+  reasoningOptions,
   parsedImportedListing,
   extractResponseText,
   hasUsableImport,

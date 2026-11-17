@@ -21,6 +21,7 @@ import {
   joinKnowledge,
   openAiErrorMessage,
   openAiModel,
+  reasoningOptions,
   parsedImportedListing,
   titleFromListingUrl,
   unsupportedListingHost,
