@@ -142,6 +142,19 @@ export default function GuidePage({ params }: PageProps) {
           </div>
         </section>
 
+        {guide.product ? (
+          <Link
+            href={guide.product.href}
+            className="mt-12 flex items-center justify-between gap-4 rounded-[20px] border border-[#D8D1C4]/60 bg-white p-5 transition hover:shadow-[0_12px_32px_rgba(23,32,51,0.08)]"
+          >
+            <span>
+              <span className="block text-xs font-bold uppercase tracking-[0.14em] text-[#3F6F6B]">{guide.product.label}</span>
+              <span className="mt-1 block text-base font-semibold leading-6">{guide.product.text}</span>
+            </span>
+            <span aria-hidden="true" className="text-xl text-[#3F6F6B]">&rarr;</span>
+          </Link>
+        ) : null}
+
         <TrialCallout />
 
         {related.length ? (

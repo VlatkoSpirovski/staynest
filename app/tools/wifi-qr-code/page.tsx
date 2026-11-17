@@ -6,7 +6,7 @@ import { getSiteUrl } from "@/lib/utils";
 
 const title = "Free Wi-Fi QR code generator for guests";
 const description =
-  "Create a free Wi-Fi QR code your guests scan to join the network: no app, no typing. Made in your browser, so your password never leaves your device. Ideal for Airbnb and holiday rentals.";
+  "Free Wi-Fi QR code generator: guests scan to join your network, no typing. Made in your browser, so your password never leaves your device. For Airbnb hosts.";
 
 const faq = [
   {

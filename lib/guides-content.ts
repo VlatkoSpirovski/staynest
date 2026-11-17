@@ -18,9 +18,11 @@ export type GuideArticle = {
   sections: GuideSection[];
   faq: { question: string; answer: string }[];
   related: string[];
+  product?: { label: string; text: string; href: string };
 };
 
 export const GUIDES_UPDATED = "2026-11-13";
+export const GUIDES_INDEX_UPDATED = "2026-11-17";
 
 export const guides: GuideArticle[] = [
   {
@@ -142,7 +144,8 @@ Thank you for staying with us! If you enjoyed it, a review helps us a lot: [link
         answer: "You can thank guests and share a link to your listing. Do not offer anything in exchange for a review or ask only happy guests to review, because Airbnb and Booking.com prohibit incentivised or selective review requests."
       }
     ],
-    related: ["house-manual-template", "check-in-instructions-template", "get-more-airbnb-reviews"]
+    related: ["house-manual-template", "check-in-instructions-template", "get-more-airbnb-reviews"],
+    product: { label: "QR code guest guide", text: "Turn this welcome book into a guide guests open by scanning one QR code.", href: "/qr-code-guest-guide" },
   },
   {
     slug: "house-manual-template",
@@ -246,7 +249,8 @@ Questions? [host name], [phone]`
         answer: "Somewhere guests find it without asking: a printed copy in the kitchen, and a QR code at the entrance that opens the digital version on their phone."
       }
     ],
-    related: ["airbnb-welcome-book", "house-rules-template", "digital-guest-guide"]
+    related: ["airbnb-welcome-book", "house-rules-template", "digital-guest-guide"],
+    product: { label: "AI guest assistant", text: "Put your house manual in StayNest and let the AI concierge answer questions from it.", href: "/ai-guest-assistant" },
   },
   {
     slug: "check-in-instructions-template",
@@ -316,7 +320,8 @@ Arriving late or lost? Call or message [name] on [phone].`
         answer: "Send step-by-step instructions with photos or landmarks, include a plan B, and put Wi-Fi, parking and the door steps in one guide the guest can open at any time."
       }
     ],
-    related: ["airbnb-welcome-book", "wifi-qr-code-for-guests", "house-manual-template"]
+    related: ["airbnb-welcome-book", "wifi-qr-code-for-guests", "house-manual-template"],
+    product: { label: "QR code guest guide", text: "Check-in steps on the first screen of a guide guests open with one scan.", href: "/qr-code-guest-guide" },
   },
   {
     slug: "wifi-qr-code-for-guests",
@@ -382,7 +387,8 @@ Arriving late or lost? Call or message [name] on [phone].`
         answer: "Usually the network name or password has a typo, different capitals or a trailing space, or the security type is wrong. Generate it again with the exact values and test it on two phones."
       }
     ],
-    related: ["check-in-instructions-template", "airbnb-welcome-book", "digital-guest-guide"]
+    related: ["check-in-instructions-template", "airbnb-welcome-book", "digital-guest-guide"],
+    product: { label: "QR code guest guide", text: "Go one step further: one QR code for Wi-Fi, check-in, rules and tips.", href: "/qr-code-guest-guide" },
   },
   {
     slug: "get-more-airbnb-reviews",
@@ -572,12 +578,13 @@ Thank you for treating our home like your own.`
         answer: "Only recommend places you genuinely like, and be transparent if you have a business relationship. Guests notice when tips feel like adverts."
       }
     ],
-    related: ["airbnb-welcome-book", "get-more-airbnb-reviews", "digital-guest-guide"]
+    related: ["airbnb-welcome-book", "get-more-airbnb-reviews", "digital-guest-guide"],
+    product: { label: "AI guest assistant", text: "Your recommendations become answers when guests ask the AI concierge.", href: "/ai-guest-assistant" },
   },
   {
     slug: "digital-guest-guide",
     title: "Digital guest guide vs printed welcome book",
-    metaTitle: "Digital Guest Guide vs Printed Welcome Book for Hosts",
+    metaTitle: "Digital vs Printed Welcome Book: Which Is Better for Hosts?",
     description:
       "Should you use a digital guest guide, a printed welcome book or both? A practical comparison for holiday rental hosts: updates, languages, cost and guest experience.",
     category: "Guest guide",
@@ -639,7 +646,243 @@ Thank you for treating our home like your own.`
         answer: "Put the Wi-Fi details on a printed page or a Wi-Fi QR code, so the guest can connect first and then open the digital guide."
       }
     ],
-    related: ["airbnb-welcome-book", "wifi-qr-code-for-guests", "house-manual-template"]
+    related: ["airbnb-welcome-book", "wifi-qr-code-for-guests", "house-manual-template"],
+    product: { label: "QR code guest guide", text: "See how a QR code guest guide works in practice.", href: "/qr-code-guest-guide" },
+  },
+  {
+    slug: "reduce-guest-questions",
+    title: "How to reduce repetitive guest questions",
+    metaTitle: "How to Reduce Repetitive Guest Questions",
+    description:
+      "Most guest messages are the same ten questions. Here is how to answer them before they are asked: the timing, the order and the tools that stop the 11 pm Wi-Fi message.",
+    category: "Guest experience",
+    updated: "2026-11-17",
+    readMinutes: 6,
+    intro: [
+      "Short answer: write down the questions you get every week, answer each one once in a guide guests open without asking you, and send that guide at the moment each question comes up.",
+      "Hosts usually get the same few questions on repeat: the Wi-Fi, how to get in, where to park, what time check-out is, where the towels are and where to eat. None of them need you personally. They need an answer that is easy to find at the moment the guest needs it."
+    ],
+    sections: [
+      {
+        heading: "Start with your real list",
+        paragraphs: [
+          "Scroll through your last twenty conversations and write down every question a guest asked. Group them. Most hosts end up with the same short list, and that list is what your guide has to answer first."
+        ],
+        list: [
+          "What is the Wi-Fi password?",
+          "How do I get in, and where is the key?",
+          "Where can we park?",
+          "What time is check-out, and what should we do before leaving?",
+          "Where are the extra towels, blankets or the hair dryer?",
+          "How does the heating, air conditioning or coffee machine work?",
+          "Where should we eat, and where is the nearest supermarket or pharmacy?"
+        ]
+      },
+      {
+        heading: "Answer each question where it is asked",
+        paragraphs: [
+          "A question gets asked when the guest cannot find the answer in five seconds. Put each answer at the place and time the question appears."
+        ],
+        list: [
+          "Before arrival: send check-in steps and parking two or three days ahead, with the guide link",
+          "At the door: a QR code that opens the guide, so the first question is answered in the hallway",
+          "Next to the router: the Wi-Fi details or a Wi-Fi QR code",
+          "In the kitchen: a short note on the coffee machine and bins",
+          "The evening before check-out: a short message with the check-out steps"
+        ]
+      },
+      {
+        heading: "Write answers people can follow",
+        paragraphs: [
+          "Use short steps, name landmarks and say what happens if something goes wrong. “The key box is on the left of the green gate; press the code firmly” prevents more calls than “self check-in via key box”."
+        ]
+      },
+      {
+        heading: "Cover the questions in other languages",
+        paragraphs: [
+          "Guests who are not comfortable in English ask more questions, because they are less sure they understood. A guide that shows in their language, or an assistant that answers in it, removes a lot of those messages."
+        ]
+      },
+      {
+        heading: "Let an assistant handle the long tail",
+        paragraphs: [
+          "Even a complete guide does not cover everything. An AI assistant that only answers from your guide can take care of the odd questions at odd hours, and tell the guest to contact you when it does not know. Keep your phone and WhatsApp easy to find for anything urgent."
+        ]
+      },
+      {
+        heading: "Copy-ready FAQ block for your guide",
+        template: `QUICK ANSWERS – [PROPERTY NAME]
+
+Wi-Fi: [network] / [password]
+Check-in: from [time]. [one sentence on how to get in]
+Parking: [where, free or paid]
+Check-out: by [time]. Keys [where], windows closed, rubbish in [place].
+Towels and blankets: [where]
+Heating / AC: [how to switch on]
+Coffee machine: [one-line instruction]
+Nearest supermarket: [name, walking time]
+Nearest pharmacy: [name, distance]
+Emergency: 112. For the property, call [name] on [phone].`
+      }
+    ],
+    faq: [
+      {
+        question: "Will guests read a guide instead of messaging me?",
+        answer: "They use whatever answers their question fastest. If the guide link arrives before check-in and a QR code is by the door, the guide is faster than waiting for your reply."
+      },
+      {
+        question: "Should I stop answering messages personally?",
+        answer: "No. Guests should always be able to reach you. The goal is that they only need to for things that really need you."
+      }
+    ],
+    related: ["check-in-instructions-template", "house-manual-template", "checkout-instructions-template"],
+    product: { label: "AI guest assistant", text: "Let an assistant answer the questions your guide does not cover, in the guest's language.", href: "/ai-guest-assistant" }
+  },
+  {
+    slug: "checkout-instructions-template",
+    title: "Check-out instructions for guests: template and examples",
+    metaTitle: "Check-out Instructions Template for Holiday Rentals",
+    description:
+      "What to ask guests to do before they leave, how to phrase it so it does not feel like a chore list, when to send it, and a short template you can copy.",
+    category: "Templates",
+    updated: "2026-11-17",
+    readMinutes: 4,
+    intro: [
+      "Short answer: tell guests the check-out time, where the keys go and three or four small tasks at most, and send it the evening before departure.",
+      "Check-out is the last thing guests remember before they write a review. Long chore lists feel unfair to guests who paid a cleaning fee, and unclear instructions lead to locked-out cleaners and lost keys."
+    ],
+    sections: [
+      {
+        heading: "What to include",
+        list: [
+          "The check-out time, written as a time, not “morning”",
+          "Where the keys go, or how to lock a smart lock",
+          "Windows, lights, heating or air conditioning",
+          "What to do with rubbish and recycling",
+          "Anything specific to your place, such as the dishwasher or a gate that must be closed",
+          "Who to contact if something is broken or they want a late check-out"
+        ]
+      },
+      {
+        heading: "What to leave out",
+        paragraphs: [
+          "Asking guests to strip beds, vacuum or do a full clean is a common reason for unhappy reviews when there is also a cleaning fee. Keep the list to things only the guest can do, like returning the key, and leave the cleaning to your cleaner."
+        ]
+      },
+      {
+        heading: "When to send it",
+        paragraphs: [
+          "The evening before check-out works best: early enough to plan, late enough to remember. Keep the same instructions in your guest guide so guests can check them again on the morning they leave."
+        ]
+      },
+      {
+        heading: "Check-out template",
+        template: `CHECK-OUT – [PROPERTY NAME]
+
+Check-out is by [time] on [day].
+
+Before you leave:
+1. Close the windows and switch off the heating / AC
+2. Put rubbish in [place] and recycling in [place]
+3. Leave the keys [where] / lock the door with [how]
+
+Need a late check-out or found something broken?
+Message [name] on [phone].
+
+Thank you for staying with us. Safe travels!`
+      }
+    ],
+    faq: [
+      {
+        question: "Can I ask guests to start the dishwasher?",
+        answer: "Many hosts do, and most guests are fine with one or two small tasks like that. Keep the list short and say thank you."
+      },
+      {
+        question: "How do I handle late check-out requests?",
+        answer: "Mention in your instructions whether late check-out is possible and who to ask. It removes the guesswork and the awkward message on the last morning."
+      }
+    ],
+    related: ["check-in-instructions-template", "house-rules-template", "airbnb-welcome-message-examples"],
+    product: { label: "QR code guest guide", text: "Keep check-out steps in a guide guests can check again on the morning they leave.", href: "/qr-code-guest-guide" }
+  },
+  {
+    slug: "airbnb-welcome-message-examples",
+    title: "Welcome messages for guests: examples for every stage",
+    metaTitle: "Airbnb Welcome Message Examples & Templates",
+    description:
+      "Copy-ready guest messages for booking confirmation, a few days before arrival, the arrival day and the evening before check-out, with notes on what each one should do.",
+    category: "Templates",
+    updated: "2026-11-17",
+    readMinutes: 5,
+    intro: [
+      "Short answer: send four short messages, each with one job: confirm the booking, prepare the arrival, help on the day and make check-out easy.",
+      "Long messages get skimmed and important details get lost. Short messages with one clear purpose, plus a link to your guide for everything else, work better."
+    ],
+    sections: [
+      {
+        heading: "1. Booking confirmation",
+        paragraphs: ["Goal: make the guest feel welcome and tell them what happens next."],
+        template: `Hi [guest name], thank you for booking [property name]!
+
+We look forward to hosting you on [dates]. A few days before you arrive, I will send you the check-in steps and your guest guide.
+
+If you have any questions in the meantime, just message me here.
+
+[Your name]`
+      },
+      {
+        heading: "2. A few days before arrival",
+        paragraphs: ["Goal: everything the guest needs to plan the trip, in one place."],
+        template: `Hi [guest name], your stay at [property name] is coming up!
+
+Check-in is from [time]. Here is your guest guide with directions, parking, Wi-Fi and how to get in:
+[guide link]
+
+Could you let me know roughly when you will arrive?
+
+See you soon,
+[Your name]`
+      },
+      {
+        heading: "3. Arrival day",
+        paragraphs: ["Goal: the two or three details that matter in the next hour. Send door codes here rather than putting them in a public guide."],
+        template: `Good morning [guest name]!
+
+Your key box code is [code]. The box is [location].
+Wi-Fi: [network] / [password]
+
+Everything else is in your guide: [guide link]
+I am reachable on [phone] if anything comes up. Have a great trip!`
+      },
+      {
+        heading: "4. The evening before check-out",
+        paragraphs: ["Goal: a calm, short check-out and a friendly last impression."],
+        template: `Hi [guest name], I hope you enjoyed your stay!
+
+Check-out is by [time] tomorrow. Before you go, please [two or three short steps] and leave the keys [where].
+
+Safe travels, and thank you for staying with us.
+[Your name]`
+      },
+      {
+        heading: "About asking for reviews",
+        paragraphs: [
+          "Asking every guest for an honest review is fine. Asking only the guests who seem happy, or offering anything in return for a good rating, goes against the review rules of the major platforms. A neutral line like “your honest feedback helps future guests” is enough."
+        ]
+      }
+    ],
+    faq: [
+      {
+        question: "Should I use scheduled messages?",
+        answer: "Yes, if your platform or channel manager supports them. Schedule the four messages once and adjust the details per booking."
+      },
+      {
+        question: "Why not put the door code in the guide?",
+        answer: "A guide link can be shared or seen by others. Sending the code in a private message on the arrival day is safer."
+      }
+    ],
+    related: ["check-in-instructions-template", "checkout-instructions-template", "get-more-airbnb-reviews"],
+    product: { label: "QR code guest guide", text: "One guide link for all four messages, always up to date.", href: "/qr-code-guest-guide" }
   }
 ];
 

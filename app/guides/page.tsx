@@ -7,7 +7,7 @@ import { getSiteUrl } from "@/lib/utils";
 export const metadata = {
   title: "Host guides: welcome books, house manuals and guest guides",
   description:
-    "Free guides and templates for Airbnb, Booking.com and villa hosts: welcome book, house manual, check-in instructions, house rules, Wi-Fi QR codes and getting more 5-star reviews.",
+    "Free guides and templates for holiday rental hosts: welcome book, house manual, check-in and check-out instructions, house rules, guest messages and Wi-Fi QR codes.",
   alternates: { canonical: "/guides" },
   openGraph: {
     title: "Host guides and templates · StayNest",

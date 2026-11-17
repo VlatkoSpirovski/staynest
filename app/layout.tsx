@@ -24,6 +24,10 @@ export const metadata: Metadata = {
     index: true,
     follow: true
   },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined
+  },
   openGraph: {
     type: "website",
     siteName: "StayNest",
