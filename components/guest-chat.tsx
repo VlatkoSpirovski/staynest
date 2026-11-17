@@ -97,6 +97,13 @@ function aiKnowledgeAnswer(message: string, aiKnowledge?: string | null) {
   return best.section.length > 650 ? `${best.section.slice(0, 647).trim()}...` : best.section;
 }
 
+const NON_ENGLISH_HINT =
+  /[äöüßàâçéèêëîïôûùœæñáíóúìòąćęłńśźżčšžđ¿¡]|\b(wann|wo|wie|ist|der|die|das|und|ich|gibt|où|est|quand|comment|quel|quelle|dove|quando|come|che|cuándo|dónde|cómo|hay|qué|waar|wanneer|hoe|het|een|gdzie|kiedy|jak|czy|kde|kada|gde|kako)\b/i;
+
+export function canAnswerLocally(message: string, locale: string) {
+  return locale === "en" && !NON_ENGLISH_HINT.test(message);
+}
+
 function localAnswer(message: string, propertyName: string, context?: GuestChatContext) {
   if (!context) return "";
 
@@ -161,7 +168,7 @@ function localAnswer(message: string, propertyName: string, context?: GuestChatC
 }
 
 export function GuestChat({ slug, propertyName, context, chatApiUrl, initialOpen = false }: { slug: string; propertyName: string; context?: GuestChatContext; chatApiUrl?: string; initialOpen?: boolean }) {
-  const { t } = useGuestLanguage();
+  const { t, locale } = useGuestLanguage();
   const botLabel = useMemo(() => t.chat.propertyBot(propertyName.trim() || "house"), [propertyName, t]);
   const askLabel = propertyName.trim() ? t.chat.askProperty(propertyName.trim()) : t.chat.askYourHost;
 
@@ -189,7 +196,7 @@ export function GuestChat({ slug, propertyName, context, chatApiUrl, initialOpen
     setMessage("");
     setMessages((current) => [...current, { role: "guest", text: trimmed }]);
 
-    const instantAnswer = localAnswer(trimmed, propertyName, context);
+    const instantAnswer = canAnswerLocally(trimmed, locale) ? localAnswer(trimmed, propertyName, context) : "";
     if (instantAnswer) {
       setMessages((current) => [...current, { role: "assistant", text: instantAnswer }]);
       return;
