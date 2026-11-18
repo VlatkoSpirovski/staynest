@@ -23,6 +23,7 @@ import {
   Palette,
   Pill,
   Plus,
+  Printer,
   QrCode,
   Save,
   Settings,
@@ -35,6 +36,7 @@ import {
   X
 } from "lucide-react";
 
+import Link from "next/link";
 import { CopyButton } from "@/components/copy-button";
 import { ImageUploadField } from "@/components/image-upload-field";
 import { createManualPlaceDraft, PlaceRecommendationForm, type PlaceRecommendationDraft } from "@/components/place-recommendation-form";
@@ -1541,7 +1543,7 @@ function ShareCard({
         </div>
         <div>
           <ol className="grid gap-2 text-sm text-white/75">
-            <li><span className="font-semibold text-white">1.</span> Print the QR code, about 6 cm or larger.</li>
+            <li><span className="font-semibold text-white">1.</span> Print the welcome card, or the QR code about 6 cm or larger.</li>
             <li><span className="font-semibold text-white">2.</span> Put it by the door, the fridge or the router.</li>
             <li><span className="font-semibold text-white">3.</span> Send the link in your booking message.</li>
           </ol>
@@ -1557,6 +1559,15 @@ function ShareCard({
                   >
                     <Download size={15} aria-hidden="true" /> Download QR
                   </a>
+                ) : null}
+                {qrCode ? (
+                  <Link
+                    href="/dashboard/welcome-card"
+                    onClick={() => trackEvent("welcome_card_opened")}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#8FD3C9] px-4 text-sm font-semibold text-sn-ink transition hover:bg-[#8FD3C9]/90"
+                  >
+                    <Printer size={15} aria-hidden="true" /> Welcome card
+                  </Link>
                 ) : null}
                 {publicUrl ? (
                   <CopyButton value={publicUrl} label="Copy link" copiedLabel="Link copied" onCopied={() => trackEvent("guest_link_copied")} className="min-h-11 border-white/20 bg-transparent text-white hover:bg-white/10" />

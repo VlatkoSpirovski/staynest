@@ -100,3 +100,10 @@ Design system and redesign of the existing screens (landing, auth, dashboard edi
 - Funnel: admin page shows signed up, started a guide, finished the 4 essentials, paying (last 30 days and all time, `lib/host-funnel.ts`, tested). Google Analytics events: qr_downloaded, guest_link_copied, essentials_completed, guide_import_started.
 - Checked: tsc, next lint (no errors), 37 Vitest tests, `next build` OK on a copy of the project, screenshots of the new screens.
 
+
+## Printable welcome card (18.11.2026)
+
+- `/dashboard/welcome-card`, opened from the share card ("Welcome card" button). One card with the property name and cover photo (or an accent-colour gradient), a QR to the guide, Wi-Fi name and password with a scan-to-join Wi-Fi QR, check-in/out times and the host's name and phone.
+- Sizes: A6 card, A5 card, or 4 cards on A4 for home printing (`@page` sets the paper size). Labels in the six guest languages, default is the guide's first language. QR codes are SVG, so they print sharp.
+- Times are read from the free-text check-in/out notes (`extractCardTime` in `lib/welcome-card.ts`, tested); without a time the card says "See guide".
+- Checked: tsc, next lint, 48 Vitest tests, screenshots and printed PDFs (A6, A5, A4 each one page at the right size). `next build` not run (dev server was using `.next`).
