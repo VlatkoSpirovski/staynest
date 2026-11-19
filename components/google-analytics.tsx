@@ -21,6 +21,9 @@ export function GoogleAnalytics() {
   const measurementId =
     process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ||
     (process.env.NODE_ENV === "production" ? "G-GBKCWG08GL" : undefined);
+  const tagManagerId =
+    process.env.NEXT_PUBLIC_GTM_ID ||
+    (process.env.NODE_ENV === "production" ? "GTM-NLQL7MSQ" : undefined);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -57,20 +60,35 @@ export function GoogleAnalytics() {
     return () => document.removeEventListener("click", handleClick);
   }, [measurementId, pathname]);
 
-  if (!measurementId) return null;
+  if (!measurementId && !tagManagerId) return null;
 
   return (
     <>
-      <Script src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`} strategy="afterInteractive" />
-      <Script id="ga4-init" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){window.dataLayer.push(arguments);}
-          window.gtag = gtag;
-          gtag('js', new Date());
-          gtag('config', '${measurementId}', { send_page_view: false });
-        `}
-      </Script>
+      {tagManagerId ? (
+        <>
+          <Script id="google-tag-init" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+            `}
+          </Script>
+          <Script src={`https://www.googletagmanager.com/gtm.js?id=${tagManagerId}`} strategy="afterInteractive" />
+        </>
+      ) : null}
+      {measurementId ? (
+        <>
+          <Script src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`} strategy="afterInteractive" />
+          <Script id="ga4-init" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){window.dataLayer.push(arguments);}
+              window.gtag = gtag;
+              gtag('js', new Date());
+              gtag('config', '${measurementId}', { send_page_view: false });
+            `}
+          </Script>
+        </>
+      ) : null}
     </>
   );
 }
